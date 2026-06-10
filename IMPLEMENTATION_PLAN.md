@@ -42,7 +42,7 @@ Phase boundaries represent **logical milestones**, not strict gates. Some Phase 
 
 ## Phase 0 — Foundation (weeks 1-2)
 
-Goal: by end of phase 0, `./scripts/verify_baseline.sh` runs successfully end-to-end with a single trivial task on Colmena + 1 other framework, with the LLM proxy capturing tokens correctly.
+Goal: by end of phase 0, the LLM proxy captures tokens correctly when called directly (verified via `curl`), datasets are generated, schemas defined, orchestrator skeleton parses task YAMLs, and the pricing table is snapshotted. The first end-to-end test (`verify_baseline.sh`, T11) is gated by Phase 1's first two runners.
 
 ### T01 — Initialize git repo and basic structure
 - **Phase**: 0
@@ -207,21 +207,21 @@ Goal: all 6 framework runners implement Task 1 conforming to `runner_contract.md
 
 ### T15 — LangGraph runner: Task 1
 - **Phase**: 1
-- **Deps**: T04, T08, T09
+- **Deps**: T04, T08, T09, **T11 must have passed**
 - **Effort**: 2 days
 - **Deliverable**: análogo a T13
 - **Owner**: TBD
 
 ### T16 — LlamaIndex runner: Task 1
 - **Phase**: 1
-- **Deps**: T04, T08, T09
+- **Deps**: T04, T08, T09, **T11 must have passed**
 - **Effort**: 2 days
 - **Deliverable**: análogo a T13
 - **Owner**: TBD
 
 ### T17 — Google ADK runner: Task 1
 - **Phase**: 1
-- **Deps**: T04, T08, T09
+- **Deps**: T04, T08, T09, **T11 must have passed**
 - **Effort**: 2 days
 - **Deliverable**: análogo a T13
 - **Owner**: TBD
@@ -535,23 +535,28 @@ Phase 0:
    └──► T10                      │
                                  │
 Phase 1:                         ▼
-  (T04 + T08 + T09) ──► T12-T17 ──► T18 + T19
+  (T04 + T08 + T09) ──► T12 + T13 ──► T11 (GATE) ──► T14-T17 ──► T18 + T19
 
 Phase 2:
   T19 ──► T20 ──► T21
    │      │
    ├──► T22
    │
-   └──► T07 + T19 ──► T23 ──► T24 ──► T25 ──► T26 (killer demo charts ready)
+   └──► T07 + T19 ──► T23 ──► T24 ──► T25 ──► T26 ──► T26.5 (teaser blog)
+                                                       (killer demo charts ready)
 
 Phase 3:
   T19 ──► T27, T28, T29, T30, T31, T32
   T26 + T27 ──► T33
 
+  ┌── (in parallel, starts week 9-10) ──┐
+  │  T34.5 (source reviewers)            │
+  └──────────────────────────────────────┘
+
 Phase 4:
-  (T27..T33 complete) ──► T34 ──► T35 ──► T36 ──► T37 + T38 ──► T39
-                                                                   │
-                                                                   └──► T40 (optional)
+  (T27..T33 complete + T34.5 confirmed) ──► T34 ──► T35 ──► T36 ──► T37 + T38 ──► T39
+                                                                                     │
+                                                                                     └──► T40 (optional)
 ```
 
 ---
@@ -561,12 +566,12 @@ Phase 4:
 The **critical path to the killer demo** (earliest delivery of usable pitch material):
 
 ```
-T01 → T02 → T03 → T04 → T08 → T12-T17 (parallel) → T18 → T19 → T22 + T23 → T24 → T26
-                                                                                  │
-                                                                          KILLER DEMO READY
+T01 → T02 → T03 → T04 → T08 → T12 + T13 → T11 (gate) → T14-T17 → T18 → T19 → T22 + T23 → T24 → T26
+                                                                                                  │
+                                                                                          KILLER DEMO READY
 ```
 
-Approximate timeline: **6-8 weeks** to T26 if parallelized.
+Approximate timeline: **7-9 weeks** to T26 if parallelized with 2 engineers (revised up from 6-8 due to T22/T23 effort corrections).
 
 The **critical path to full publication**:
 
@@ -586,9 +591,13 @@ Approximate timeline: **12-14 weeks** total.
 |---|---|---|
 | Framework hardcodes provider URL (bypasses proxy) | 0 (T04) | TBD |
 | Token capture inconsistency across providers | 0 (T03) | TBD |
+| **Effort estimate too tight for 2 engineers** (~120 person-days, zero slack) | All | TBD — consider extending to 14 weeks or descoping Task 9/10 |
+| Harness bug propagates to all runners | 1 (T11 gate) | TBD |
 | Naive implementation accusations | 4 (T34/T35) | TBD |
+| **No adversarial reviewer found for a framework** | 4 (T34.5) | TBD — fallback plan in T34.5 risk note |
 | API budget overrun | 2-3 | TBD |
 | Frameworks publish breaking changes mid-bench | All | Pin in T02; document |
+| **Storage backend for HITL inconsistent across runners** | 3 (T31) | TBD — shared SQLite vs framework-native |
 
 ---
 
