@@ -1,0 +1,30 @@
+[project]
+name = "colmena-bench-runner-google-adk"
+version = "0.1.0"
+description = "Google ADK runner for colmena-bench"
+requires-python = ">=3.11,<3.13"
+
+# Snapshot: 2026-06-10. See /METHODOLOGY.md §1.
+# Note: google-adk 2.x ships breaking changes vs 1.x (agent API, event model,
+# session schema). Pin precisely.
+dependencies = [
+    "google-adk==2.2.0",
+    "google-genai",
+    "anthropic",
+    "openai",
+    "litellm==1.88.1",
+    "pydantic>=2.7",
+    "pyyaml",
+    "typer",
+    "psutil",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["runner"]

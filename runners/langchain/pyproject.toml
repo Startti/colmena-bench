@@ -1,0 +1,30 @@
+[project]
+name = "colmena-bench-runner-langchain"
+version = "0.1.0"
+description = "LangChain runner for colmena-bench"
+requires-python = ">=3.11,<3.13"
+
+# Snapshot: 2026-06-10. See /METHODOLOGY.md §1.
+dependencies = [
+    "langchain==1.3.6",
+    "langchain-core==1.4.3",
+    "langchain-community",
+    "langchain-google-genai",
+    "langchain-anthropic",
+    "langchain-openai",
+    "litellm==1.88.1",
+    "pydantic>=2.7",
+    "pyyaml",
+    "typer",
+    "psutil",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["runner"]

@@ -1,0 +1,63 @@
+# LiteLLM proxy configuration for colmena-bench.
+# Snapshot: 2026-06-10. See /METHODOLOGY.md §1 for the litellm version pin (1.88.1).
+#
+# What this proxy does for the bench:
+#   1. Single chokepoint for LLM credentials — runner code only sees
+#      `base_url=http://127.0.0.1:4000` and a dummy bearer token.
+#   2. Captures one JSONL span per LLM call under `proxy/spans/run-<id>.jsonl`,
+#      including input/output/cached token counts and TTFT. This is the
+#      *source of truth* for token-cost metrics (see METHODOLOGY §4).
+#   3. Lets us swap models without touching runner code — every runner uses
+#      the model alias (`gemini-2.5-flash`, `claude-haiku`, `gpt-4o-mini`)
+#      and the proxy resolves it to the real provider model + key.
+#
+# Start with: ./proxy/start_proxy.sh
+
+model_list:
+  # --- Primary model: gemini-2.5-flash via Google AI ---
+  - model_name: gemini-2.5-flash
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+      temperature: 0.0
+      # seed handled per-call where the provider supports it
+
+  # --- Cross-validation: Anthropic Haiku ---
+  - model_name: claude-haiku
+    litellm_params:
+      model: anthropic/claude-haiku-4-5-20251001
+      api_key: os.environ/ANTHROPIC_API_KEY
+      temperature: 0.0
+
+  # --- Cross-validation: OpenAI gpt-4o-mini ---
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+      temperature: 0.0
+
+litellm_settings:
+  # Surfaces input/output/cached tokens in the response under `usage`.
+  # Required for METHODOLOGY §4 ("Tokens cached" row).
+  return_response_headers: true
+  drop_params: false
+  set_verbose: false
+
+  # Per-call JSONL span. Path interpolated from BENCH_RUN_ID at proxy start
+  # (see start_proxy.sh). One file per benchmark run, appended on each call.
+  success_callback: ["custom_callback"]
+  failure_callback: ["custom_callback"]
+
+  # Custom callback module — defined alongside this file, loaded via
+  # `LITELLM_CALLBACK_FILE` env var by start_proxy.sh.
+  callbacks: ["spans_jsonl"]
+
+general_settings:
+  # Master key gates /admin endpoints only; runners use the dummy key below.
+  master_key: os.environ/LITELLM_MASTER_KEY
+
+  # Dummy bearer that runners send. We don't enforce per-runner keys for the
+  # benchmark — process isolation + outbound network blocks are how we keep
+  # frameworks honest, not auth on the proxy.
+  allowed_keys:
+    - "sk-bench-runner-do-not-use-in-prod"

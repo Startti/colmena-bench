@@ -1,0 +1,32 @@
+[package]
+name = "colmena-bench-runner"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Snapshot: 2026-06-10. See /METHODOLOGY.md §1.
+#
+# Colmena is tracked from the `develop` branch during the bench build-out.
+# Switch to a tag / specific commit before the first official `v1.0` run so
+# results are reproducible across days. See `runners/colmena/README.md` for
+# how to point this at a different branch, tag, or pinned commit SHA.
+#
+# Currently the runner shells out to the `colmena` CLI rather than depending
+# on the library directly — see src/engine.rs for rationale. The library
+# dependency is kept commented so it's a one-line flip once we settle on
+# library-vs-CLI integration. Uncomment when wiring T12.1.
+[dependencies]
+# colmena = { git = "ssh://git@github.com/Startti/colmena.git", branch = "develop" }
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+sysinfo = "0.30"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+regex = "1"
+
+[[bin]]
+name = "colmena-bench-runner"
+path = "src/main.rs"

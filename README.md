@@ -41,6 +41,20 @@ Demonstrate **quantitatively and reproducibly** how Colmena compares on:
 ./scripts/run_all.sh --N 30               # Full suite (overnight)
 ```
 
+## Secrets & environment
+
+API keys and local config live in a `.env` file at the repo root. **Never
+commit `.env`** — it is in [`.gitignore`](./.gitignore).
+
+1. Copy the template: `cp .env.example .env`
+2. Fill in `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`
+3. Adjust `LITELLM_PROXY_*` only if you need a non-default port
+4. CI reads the same variables from GitHub repo secrets — see `ci/`
+
+The LiteLLM proxy (T03) is the single chokepoint for LLM credentials at
+benchmark time: runners receive only `LITELLM_PROXY_BASE_URL` and a dummy key,
+the real provider keys never reach framework code.
+
 ## License
 
 MIT — see [LICENSE](./LICENSE).

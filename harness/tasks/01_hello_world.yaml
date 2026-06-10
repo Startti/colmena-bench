@@ -1,0 +1,43 @@
+# Task 1 — Hello world.
+#
+# Pure baseline: one LLM call, no tools, no dataset. Measures the framework
+# overhead of "spawn process, send prompt, parse response" without any real
+# work. The number we report here is the noise floor every other task is
+# measured above.
+#
+# Schema: ../schemas/task.schema.json
+
+id: "01_hello_world"
+title: "Hello world (baseline overhead)"
+version: "0.1.0"
+description: >
+  Single-turn LLM call. The agent receives a deterministic prompt and must
+  respond with the word "hello" somewhere in its answer. No tools, no
+  retrieval, no memory.
+
+variants:
+  - name: default
+
+prompt: |
+  You are a helpful assistant. Respond with the single word: hello
+
+tools: []
+
+metrics:
+  - latency
+  - tokens
+  - tokens_cached
+  - cost_usd
+  - ram_peak_mb
+  - cold_start_ms
+  - ttft_ms
+  - loc
+  - success
+
+success:
+  kind: regex
+  pattern: "(?i)\\bhello\\b"
+
+model_alias: gemini-2.5-flash
+timeout_seconds: 30
+n_runs: 30

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://colmena-bench/data/orders_synthetic/schema.json",
+  "title": "orders_synthetic row schema",
+  "description": "One row in seeds/{S,M,L,XL}.csv. Generator: data/orders_synthetic/generator.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "order_id",
+    "customer_id",
+    "order_date",
+    "country",
+    "channel",
+    "product_id",
+    "product_category",
+    "quantity",
+    "unit_price_usd",
+    "discount_pct",
+    "shipping_usd",
+    "status",
+    "payment_method"
+  ],
+  "properties": {
+    "order_id": {
+      "type": "string",
+      "pattern": "^O[0-9]{9}$",
+      "description": "Stable across sizes. Same row index ⇒ same order_id."
+    },
+    "customer_id": { "type": "string", "pattern": "^C[0-9]{6}$" },
+    "order_date": { "type": "string", "format": "date" },
+    "country": {
+      "type": "string",
+      "enum": ["MX", "AR", "CL", "CO", "PE", "BR", "US", "ES"]
+    },
+    "channel": { "type": "string", "enum": ["web", "mobile", "phone", "store"] },
+    "product_id": { "type": "string", "pattern": "^P[0-9]{5}$" },
+    "product_category": {
+      "type": "string",
+      "enum": ["electronics", "apparel", "home", "books", "grocery", "beauty", "toys"]
+    },
+    "quantity": { "type": "integer", "minimum": 1, "maximum": 20 },
+    "unit_price_usd": { "type": "number", "minimum": 0.99, "maximum": 9999.0 },
+    "discount_pct": { "type": "number", "minimum": 0, "maximum": 0.5 },
+    "shipping_usd": { "type": "number", "minimum": 0, "maximum": 199.0 },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "paid", "shipped", "delivered", "cancelled", "refunded"]
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": ["card", "cash", "transfer", "wallet"]
+    }
+  }
+}

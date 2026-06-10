@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "0.1.0",
+  "generated_at": "2026-06-10",
+  "description": "20 analytical questions over orders_synthetic. Used by Task 4 (CSV killer demo). Ground truth: ground_truth.json (per dataset size).",
+  "difficulty_breakdown": {"trivial": 5, "medium": 8, "advanced": 7},
+  "questions": [
+    {
+      "id": "Q01",
+      "difficulty": "trivial",
+      "kind": "count",
+      "text": "How many orders are in the dataset?",
+      "answer_type": "integer",
+      "expected_metric": "n_rows"
+    },
+    {
+      "id": "Q02",
+      "difficulty": "trivial",
+      "kind": "count_distinct",
+      "text": "How many distinct customers placed orders?",
+      "answer_type": "integer",
+      "expected_metric": "n_unique_customer_id"
+    },
+    {
+      "id": "Q03",
+      "difficulty": "trivial",
+      "kind": "max",
+      "text": "What is the highest unit_price_usd in the dataset?",
+      "answer_type": "float",
+      "expected_metric": "max_unit_price_usd"
+    },
+    {
+      "id": "Q04",
+      "difficulty": "trivial",
+      "kind": "count_filter",
+      "text": "How many orders have status = 'cancelled'?",
+      "answer_type": "integer",
+      "expected_metric": "n_cancelled"
+    },
+    {
+      "id": "Q05",
+      "difficulty": "trivial",
+      "kind": "min",
+      "text": "What is the earliest order_date in the dataset?",
+      "answer_type": "date",
+      "expected_metric": "min_order_date"
+    },
+    {
+      "id": "Q06",
+      "difficulty": "medium",
+      "kind": "groupby_sum",
+      "text": "What is the total gross revenue (sum of quantity * unit_price_usd) per country, sorted descending?",
+      "answer_type": "object_top_n",
+      "expected_metric": "gross_revenue_by_country",
+      "top_n": 8
+    },
+    {
+      "id": "Q07",
+      "difficulty": "medium",
+      "kind": "groupby_avg",
+      "text": "What is the average discount_pct per channel?",
+      "answer_type": "object",
+      "expected_metric": "avg_discount_by_channel"
+    },
+    {
+      "id": "Q08",
+      "difficulty": "medium",
+      "kind": "groupby_count",
+      "text": "How many orders per product_category, sorted descending?",
+      "answer_type": "object",
+      "expected_metric": "orders_by_category"
+    },
+    {
+      "id": "Q09",
+      "difficulty": "medium",
+      "kind": "filter_sum",
+      "text": "What is the total shipping_usd for orders shipped via channel='store'?",
+      "answer_type": "float",
+      "expected_metric": "shipping_for_store_channel"
+    },
+    {
+      "id": "Q10",
+      "difficulty": "medium",
+      "kind": "ratio",
+      "text": "What percentage of orders are paid with payment_method='card'? Answer as a decimal between 0 and 1.",
+      "answer_type": "float",
+      "expected_metric": "card_payment_ratio"
+    },
+    {
+      "id": "Q11",
+      "difficulty": "medium",
+      "kind": "top_k",
+      "text": "List the top 5 product_id values by total quantity sold, in descending order.",
+      "answer_type": "array",
+      "expected_metric": "top5_products_by_qty",
+      "top_n": 5
+    },
+    {
+      "id": "Q12",
+      "difficulty": "medium",
+      "kind": "date_filter_count",
+      "text": "How many orders were placed in 2025?",
+      "answer_type": "integer",
+      "expected_metric": "n_orders_2025"
+    },
+    {
+      "id": "Q13",
+      "difficulty": "medium",
+      "kind": "groupby_mean",
+      "text": "What is the average order value (quantity * unit_price_usd) per channel?",
+      "answer_type": "object",
+      "expected_metric": "avg_order_value_by_channel"
+    },
+    {
+      "id": "Q14",
+      "difficulty": "advanced",
+      "kind": "computed_revenue",
+      "text": "Compute the net revenue per order as quantity * unit_price_usd * (1 - discount_pct) + shipping_usd. What is the sum of net revenue across all orders with status in {'paid', 'shipped', 'delivered'}?",
+      "answer_type": "float",
+      "expected_metric": "net_revenue_active_orders"
+    },
+    {
+      "id": "Q15",
+      "difficulty": "advanced",
+      "kind": "two_axis_top",
+      "text": "For each country, what is the product_category with the highest total quantity sold? Return one (country, category) per country.",
+      "answer_type": "object",
+      "expected_metric": "top_category_per_country"
+    },
+    {
+      "id": "Q16",
+      "difficulty": "advanced",
+      "kind": "monthly_trend",
+      "text": "How many orders were placed each month? Return year-month strings sorted ascending. Example: '2024-01': 42.",
+      "answer_type": "object",
+      "expected_metric": "orders_by_year_month"
+    },
+    {
+      "id": "Q17",
+      "difficulty": "advanced",
+      "kind": "repeat_customers",
+      "text": "How many customers placed more than 3 orders?",
+      "answer_type": "integer",
+      "expected_metric": "n_repeat_customers_gt3"
+    },
+    {
+      "id": "Q18",
+      "difficulty": "advanced",
+      "kind": "filter_groupby",
+      "text": "Among delivered orders only, what is the average unit_price_usd per product_category?",
+      "answer_type": "object",
+      "expected_metric": "avg_unit_price_by_category_delivered"
+    },
+    {
+      "id": "Q19",
+      "difficulty": "advanced",
+      "kind": "cancellation_rate",
+      "text": "What is the cancellation rate (status='cancelled' / total) per country? Return one ratio per country (decimal between 0 and 1).",
+      "answer_type": "object",
+      "expected_metric": "cancellation_rate_by_country"
+    },
+    {
+      "id": "Q20",
+      "difficulty": "advanced",
+      "kind": "high_value",
+      "text": "How many orders have a net order value (quantity * unit_price_usd * (1 - discount_pct)) above 1000 USD?",
+      "answer_type": "integer",
+      "expected_metric": "n_high_value_orders"
+    }
+  ]
+}
