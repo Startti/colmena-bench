@@ -137,6 +137,13 @@ def test_task_rejects_malformed_id(schemas):
         Draft202012Validator(schemas["task.schema.json"]).validate(bad)
 
 
+def test_task_accepts_dataset_qa_success_kind(schemas):
+    task = _sample_task()
+    task["id"] = "04_csv_naive"
+    task["success"] = {"kind": "dataset_qa", "ground_truth_path": "data/orders_synthetic/ground_truth.json"}
+    Draft202012Validator(schemas["task.schema.json"]).validate(task)
+
+
 def test_sample_run_output_validates(schemas):
     Draft202012Validator(schemas["run_output.schema.json"]).validate(_sample_run_output())
 

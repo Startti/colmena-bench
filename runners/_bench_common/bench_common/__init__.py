@@ -23,6 +23,19 @@ Usage in a runner's __main__.py:
     if __name__ == "__main__":
         sys.exit(run("langchain", _version, build_llm, HANDLERS))
 """
-from .core import RunnerArgs, run, score_success, emit_output, load_task
+from .core import RunnerArgs, run, score_success, emit_output, load_task, variant_params
+from .datasets import read_csv_text, load_orders_sqlite
+from .answers import build_questions_block, extract_answer_dict
 
-__all__ = ["RunnerArgs", "run", "score_success", "emit_output", "load_task"]
+__all__ = [
+    "RunnerArgs",
+    "run",
+    "score_success",
+    "emit_output",
+    "load_task",
+    "variant_params",
+    "read_csv_text",
+    "load_orders_sqlite",
+    "build_questions_block",
+    "extract_answer_dict",
+]

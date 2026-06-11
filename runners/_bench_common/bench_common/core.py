@@ -61,6 +61,14 @@ def load_task(path: Path) -> dict[str, Any]:
     return yaml.safe_load(path.read_text())
 
 
+def variant_params(task: dict, variant: str) -> dict:
+    """Return the task's variant entry matching `variant`, or {} if absent."""
+    for v in task.get("variants", []) or []:
+        if v.get("name") == variant:
+            return v
+    return {}
+
+
 def host_info() -> dict[str, Any]:
     return {
         "hostname": socket.gethostname(),

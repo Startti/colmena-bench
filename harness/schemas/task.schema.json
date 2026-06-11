@@ -74,7 +74,7 @@
       "additionalProperties": false,
       "required": ["kind"],
       "properties": {
-        "kind": { "type": "string", "enum": ["regex", "exact_numeric", "llm_judge", "set_equality"] },
+        "kind": { "type": "string", "enum": ["regex", "exact_numeric", "llm_judge", "set_equality", "dataset_qa"] },
         "pattern": { "type": "string" },
         "ground_truth_path": { "type": "string" },
         "tolerance": { "type": "number", "minimum": 0 },
