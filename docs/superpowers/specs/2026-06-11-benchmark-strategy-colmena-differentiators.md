@@ -116,13 +116,33 @@ Routing through the proxy: `provider:"openai"` + `OPENAI_BASE_URL=<proxy>/v1` +
 single-shot path.)
 
 **HARD PREREQUISITE — Postgres.** `run_dag` fails with `DATABASE_URL must be set
-to build ColmenaEngine` (verified 2026-06-11). The DAG engine needs Postgres for
-run snapshots, `llm_node_history`, attachments, and `secure_value_mappings` —
-i.e. the very machinery that powers suspend/resume (#3) and attachment scrubbing
-(#1). So the enabler is: **stand up a Postgres** (docker), set `DATABASE_URL`,
-run migrations if Colmena needs them, then drive a trivial DAG and confirm the
-proxy captures a span. This is the first build task of the next arc. Competitors'
-equivalents use their native agent+tool APIs (the CrewAI tool path already works).
+to build ColmenaEngine`. The DAG engine needs Postgres for run snapshots,
+`llm_node_history`, attachments, and `secure_value_mappings` — i.e. the very
+machinery that powers suspend/resume (#3) and attachment scrubbing (#1).
+
+**BLOCKER (2026-06-11): `run_dag` hangs at engine startup.** With a healthy
+remote Postgres (`DATABASE_URL` set in `.env`), `run_dag` hangs indefinitely
+BEFORE making any LLM call (zero proxy hits) and emits NO logs (not even the
+Python `print` before the call flushes; `RUST_LOG=colmena=debug` produced
+nothing). DB verified healthy independently: auth OK, all 18 Colmena tables
+present and migrated (`dag_runs`, `llm_node_history`, `conversation_attachments`,
+`secure_value_mappings`, `_sqlx_migrations`, …), no active queries/locks. So the
+hang is in the native module's engine startup (tokio runtime + pool init against
+a remote DB), not the database. `scripts/_dag_smoke.py` + `runners/colmena/dags/
+smoke_hello.json` reproduce it.
+
+**Next-session diagnostics (in order):**
+1. Try a LOCAL docker Postgres to isolate remote-network vs engine-startup.
+2. Wire `tracing_subscriber` init into the PyO3 binding (or find why RUST_LOG is
+   silent) so the hang point is visible.
+3. Check whether `ColmenaEngine::build` does a blocking/synchronous setup step
+   (pool warmup, a startup query) that stalls on a high-latency remote DB; check
+   `pool_registry` acquire_timeout behavior.
+4. Escalate to the Colmena team — this is engine-side, not bench-side.
+
+The single-shot `ColmenaLlm.call` path (Tasks 1 + 4-naive) works fine; only the
+DAG path is blocked. Competitors' demos use their native agent+tool APIs (the
+CrewAI tool path already works).
 
 ## Build sequence (proposed)
 
