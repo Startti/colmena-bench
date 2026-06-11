@@ -17,9 +17,13 @@ variants:
 prompt: |
   You are a data analyst with a run_sql(query) tool over a SQLite table named
   `orders` (every column is TEXT — use CAST(... AS REAL/INTEGER) for math).
-  Use the tool to answer ALL questions. Then return ONLY a JSON object mapping
-  each question id to its answer, e.g. {"Q01": 500, ...}. Numbers must be plain
-  numbers. For mapping questions, return a JSON object.
+  Use the tool as many times as needed to answer ALL 20 questions.
+
+  Your FINAL answer must be ONLY a single JSON object mapping EVERY question id
+  (Q01 through Q20) to its answer — nothing else, no prose, no markdown. Example
+  shape: {"Q01": 500, "Q02": 494, "Q06": {"AR": 300237.17}, ...}. Numbers must
+  be plain numbers (no $ or commas). For mapping questions return a JSON object;
+  for list questions return a JSON array. Do not stop until all 20 are present.
 tools:
   - name: run_sql
 metrics: [latency, tokens, cost_usd, ram_peak_mb, success]

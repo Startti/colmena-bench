@@ -27,6 +27,21 @@ def test_no_json_returns_empty():
     assert extract_answer_dict("I could not answer.") == {}
 
 
+def test_prefers_answers_over_toolcall_json():
+    # A tool-call payload appears first; the real answers dict appears later.
+    text = (
+        'Calling tool {"query": "SELECT COUNT(*) FROM orders"}\n'
+        'Final answer:\n{"Q01": 500, "Q02": 494, "Q03": 9999.0}'
+    )
+    out = extract_answer_dict(text)
+    assert out == {"Q01": 500, "Q02": 494, "Q03": 9999.0}
+
+
+def test_picks_dict_with_most_question_keys():
+    text = '{"a": 1} and {"Q01": 1, "Q02": 2}'
+    assert extract_answer_dict(text) == {"Q01": 1, "Q02": 2}
+
+
 def test_build_questions_block_lists_all_20():
     qs = _json.loads((REPO / "data/orders_synthetic/questions_20.json").read_text())
     block = build_questions_block(qs)
