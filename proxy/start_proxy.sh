@@ -17,12 +17,20 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-# Load .env if present (does NOT override values already in the environment).
+# Load .env if present. `set -a; source` DOES override already-exported vars,
+# so preserve a caller-provided BENCH_RUN_ID (a per-run value the caller sets,
+# e.g. `BENCH_RUN_ID=$(uuidgen) ./proxy/start_proxy.sh`) across the source —
+# otherwise an empty `BENCH_RUN_ID=` line in .env would clobber it back to the
+# default and route every run's spans to run-adhoc.jsonl.
+_CALLER_BENCH_RUN_ID="${BENCH_RUN_ID:-}"
 if [[ -f .env ]]; then
   set -a
   # shellcheck disable=SC1091
   source .env
   set +a
+fi
+if [[ -n "$_CALLER_BENCH_RUN_ID" ]]; then
+  BENCH_RUN_ID="$_CALLER_BENCH_RUN_ID"
 fi
 
 : "${LITELLM_PROXY_HOST:=127.0.0.1}"
