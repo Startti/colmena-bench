@@ -19,10 +19,10 @@
 |---|---|---|---|---|
 | 1 | **Colmena** | `OPENAI_BASE_URL` env + drive via `provider=openai`, `model=gemini-2.5-flash` (after the base_url patch) | env / `runners/colmena` | ✅ (2026-06-11, smoke) |
 | 2 | **CrewAI** | `LLM(model="openai/<alias>", base_url=...)` — the `openai/` prefix is **required** (see finding) | `runners/crewai/runner/llm.py` | ✅ (2026-06-10, N=3) |
-| 3 | **LangChain** | `ChatOpenAI(base_url=...)` for OpenAI-style models, or `ChatLiteLLM` wrapper | `runners/langchain/tasks/task*.py` | 🟡 |
-| 4 | **LangGraph** | Same as LangChain (LangGraph uses LangChain model wrappers) | `runners/langgraph/tasks/task*.py` | 🟡 |
-| 5 | **Google ADK** | `LiteLlm(model=..., api_base=...)` wrapper from `google.adk.models.lite_llm` | `runners/google_adk/tasks/task*.py` | 🟡 |
-| 6 | **LlamaIndex** | `OpenAILike(api_base=...)` from `llama_index.llms.openai_like` | `runners/llamaindex/tasks/task*.py` | 🟡 |
+| 3 | **LangChain** | `ChatOpenAI(base_url=.../v1, default_headers={x-bench-run-id})` | `runners/langchain/runner/llm.py` | ✅ (2026-06-11, N=3) |
+| 4 | **LangGraph** | Same `ChatOpenAI` wiring, driven by a minimal StateGraph | `runners/langgraph/runner/llm.py` | ✅ (2026-06-11, N=3) |
+| 5 | **Google ADK** | `LiteLlm(model="openai/<alias>", api_base=.../v1, extra_headers={x-bench-run-id})` | `runners/google_adk/runner/llm.py` | ✅ (2026-06-11, N=3) |
+| 6 | **LlamaIndex** | `OpenAILike(api_base=.../v1, default_headers={x-bench-run-id})` | `runners/llamaindex/runner/llm.py` | ✅ (2026-06-11, N=3) |
 
 ## ✅ Resolved: Colmena reaches the proxy via the base_url patch (2026-06-11)
 

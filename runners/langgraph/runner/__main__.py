@@ -1,4 +1,4 @@
-"""CrewAI runner entry — `python -m runner`. Thin wrapper over bench_common."""
+"""LangGraph runner entry — `python -m runner`. Thin wrapper over bench_common."""
 from __future__ import annotations
 
 import sys
@@ -12,15 +12,12 @@ from .tasks import task01
 
 def _version() -> str:
     try:
-        return metadata.version("crewai")
+        return metadata.version("langgraph")
     except metadata.PackageNotFoundError:
         return "unknown"
 
 
-HANDLERS = {
-    "01_hello_world": task01.run,
-    # task02, task03, ... added in Phase 2.
-}
+HANDLERS = {"01_hello_world": task01.run}
 
 if __name__ == "__main__":
-    sys.exit(run("crewai", _version, build_llm, HANDLERS))
+    sys.exit(run("langgraph", _version, build_llm, HANDLERS))

@@ -1,32 +1,28 @@
-"""Shared runner helpers — argument parsing, timing, output emission.
+"""Framework-agnostic runner core. See bench_common/__init__.py for usage.
 
-Every framework runner imports these so the boilerplate (clock, host info,
-output JSON shape) lives in exactly one place. The framework-specific work
-is the `run_task_<N>(prompt, llm) -> answer` function in each
-`runner/tasks/task<N>.py`.
+This module has NO framework dependencies — only stdlib + pydantic-free
+helpers (psutil, pyyaml), which every runner venv already pins. The
+framework name and version are passed in by each runner so this code stays
+shared across all six.
 """
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import platform
 import re
 import socket
 import sys
 import time
-import uuid
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import datetime, timezone
-from importlib import metadata
 from pathlib import Path
 from typing import Any, Callable
 
 import psutil
 import yaml
 
-
-FRAMEWORK_NAME = "crewai"
+MODEL_ALIASES = ["gemini-2.5-flash", "claude-haiku", "gpt-4o-mini"]
 
 
 @dataclass
@@ -40,13 +36,12 @@ class RunnerArgs:
     timeout_seconds: int
 
 
-def parse_args(argv: list[str] | None = None) -> RunnerArgs:
-    p = argparse.ArgumentParser(description=f"{FRAMEWORK_NAME} runner")
+def parse_args(framework_name: str, argv: list[str] | None = None) -> RunnerArgs:
+    p = argparse.ArgumentParser(description=f"{framework_name} runner")
     p.add_argument("--task", required=True, type=Path)
     p.add_argument("--variant", required=True)
     p.add_argument("--run-id", required=True)
-    p.add_argument("--model-alias", required=True,
-                   choices=["gemini-2.5-flash", "claude-haiku", "gpt-4o-mini"])
+    p.add_argument("--model-alias", required=True, choices=MODEL_ALIASES)
     p.add_argument("--proxy-base-url", required=True)
     p.add_argument("--output", required=True, type=Path)
     p.add_argument("--timeout-seconds", type=int, default=300)
@@ -75,13 +70,6 @@ def host_info() -> dict[str, Any]:
     }
 
 
-def framework_version() -> str:
-    try:
-        return metadata.version("crewai")
-    except metadata.PackageNotFoundError:
-        return "unknown"
-
-
 def score_success(spec: dict[str, Any], answer: Any) -> dict[str, Any]:
     """Apply the task's `success.kind` rule to the answer."""
     kind = spec.get("kind")
@@ -105,6 +93,8 @@ def score_success(spec: dict[str, Any], answer: Any) -> dict[str, Any]:
 def emit_output(
     args: RunnerArgs,
     *,
+    framework_name: str,
+    framework_version: str,
     started_at: datetime,
     ended_at: datetime,
     cold_start_ms: int,
@@ -122,8 +112,8 @@ def emit_output(
         "run_id": args.run_id,
         "task_id": task["id"],
         "variant": args.variant,
-        "framework": FRAMEWORK_NAME,
-        "framework_version": framework_version(),
+        "framework": framework_name,
+        "framework_version": framework_version,
         "model_alias": args.model_alias,
         "started_at": started_at.isoformat().replace("+00:00", "Z"),
         "ended_at": ended_at.isoformat().replace("+00:00", "Z"),
@@ -147,27 +137,28 @@ def emit_output(
     args.output.write_text(json.dumps(payload, indent=2, default=str))
 
 
-TaskHandler = Callable[[dict[str, Any], Any, RunnerArgs], tuple[Any, dict[str, int]]]
+TaskHandler = Callable[[dict[str, Any], Any, RunnerArgs], "tuple[Any, dict[str, int]]"]
 """Signature: (task_dict, llm, args) -> (answer, usage)
 
 `usage` is an int dict with keys: input, output, cached, tool_calls.
 """
 
 
-def cold_start_ms_since_import(t0: float) -> int:
-    return int((time.perf_counter() - t0) * 1000)
-
-
-def main(handlers: dict[str, TaskHandler], llm_factory: Callable[[RunnerArgs], Any]) -> int:
-    """Generic main: dispatch by task.id to a handler, time it, emit output."""
+def run(
+    framework_name: str,
+    framework_version_fn: Callable[[], str],
+    llm_factory: Callable[[RunnerArgs], Any],
+    handlers: dict[str, TaskHandler],
+) -> int:
+    """Generic main: parse args, dispatch by task.id, time it, emit output."""
     t0_cold = time.perf_counter()
-    args = parse_args(sys.argv[1:])
+    args = parse_args(framework_name, sys.argv[1:])
     task = load_task(args.task)
     task_id = task["id"]
     if task_id not in handlers:
-        sys.stderr.write(f"runner has no handler for task {task_id!r}\n")
+        sys.stderr.write(f"{framework_name} runner has no handler for task {task_id!r}\n")
         return 1
-    cold = cold_start_ms_since_import(t0_cold)
+    cold_start_ms = int((time.perf_counter() - t0_cold) * 1000)
 
     llm = llm_factory(args)
     started = datetime.now(timezone.utc)
@@ -180,12 +171,18 @@ def main(handlers: dict[str, TaskHandler], llm_factory: Callable[[RunnerArgs], A
         error = f"{type(e).__name__}: {e}"
     ended = datetime.now(timezone.utc)
 
-    success = score_success(task["success"], answer) if error is None else {"ok": False, "reason": error}
+    success = (
+        score_success(task["success"], answer)
+        if error is None
+        else {"ok": False, "reason": error}
+    )
     emit_output(
         args,
+        framework_name=framework_name,
+        framework_version=framework_version_fn(),
         started_at=started,
         ended_at=ended,
-        cold_start_ms=cold,
+        cold_start_ms=cold_start_ms,
         answer=answer,
         tokens_input=usage.get("input", 0),
         tokens_output=usage.get("output", 0),

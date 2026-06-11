@@ -72,18 +72,17 @@ run_framework() {
   local cmd_prefix=()
   local framework_dir="$REPO_ROOT/runners/$framework"
 
+  # All runners are Python (`python -m runner`). Colmena drives the native
+  # `colmena` module via its OpenAI adapter pointed at the proxy.
   case "$framework" in
-    colmena)
-      local bin="$framework_dir/target/release/colmena-bench-runner"
-      [[ -x "$bin" ]] || bin="$framework_dir/target/debug/colmena-bench-runner"
-      [[ -x "$bin" ]] || { echo "[verify] ✗ $framework binary not built — cargo build first"; return 1; }
-      cmd_prefix=("$bin")
-      ;;
-    crewai|langchain|langgraph|google_adk|llamaindex)
+    colmena|crewai|langchain|langgraph|google_adk|llamaindex)
       cmd_prefix=("$PY" "-m" "runner")
       ;;
     *) echo "[verify] unknown framework: $framework"; return 1 ;;
   esac
+
+  # bench_common (shared runner core) must be importable by every runner.
+  local common_dir="$REPO_ROOT/runners/_bench_common"
 
   local rep
   local fail=0
@@ -96,7 +95,7 @@ run_framework() {
     BENCH_RUN_ID="$run_id" \
       LITELLM_PROXY_BASE_URL="$LITELLM_PROXY_BASE_URL" \
       LITELLM_PROXY_API_KEY="$LITELLM_PROXY_API_KEY" \
-      PYTHONPATH="$framework_dir:${PYTHONPATH:-}" \
+      PYTHONPATH="$framework_dir:$common_dir:${PYTHONPATH:-}" \
       "${cmd_prefix[@]}" \
         --task "$TASK" \
         --variant default \

@@ -11,7 +11,7 @@ from typing import Any
 
 from crewai import LLM
 
-from .common import RunnerArgs
+from bench_common import RunnerArgs
 
 
 def build_llm(args: RunnerArgs) -> Any:

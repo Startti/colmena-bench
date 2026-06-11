@@ -11,7 +11,7 @@ from typing import Any
 
 from crewai import Agent, Crew, Task
 
-from ..common import RunnerArgs
+from bench_common import RunnerArgs
 
 
 def run(task_def: dict[str, Any], llm: Any, args: RunnerArgs) -> tuple[Any, dict[str, int]]:
