@@ -24,5 +24,8 @@ success:
   kind: dataset_qa
   ground_truth_path: data/orders_synthetic/ground_truth.json
 model_alias: gemini-2.5-flash
-timeout_seconds: 180
+# Naive is slow: the whole CSV in context can take minutes (Colmena ~254s on
+# S). Generous timeout so the orchestrator doesn't kill a legitimately slow
+# run; the asymptote uses small N.
+timeout_seconds: 600
 n_runs: 3

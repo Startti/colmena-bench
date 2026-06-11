@@ -29,8 +29,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Resolve the task yaml (01 → harness/tasks/01_*.yaml).
-TASK_PATH=$(ls "$REPO_ROOT"/harness/tasks/"${TASK_NUM}"_*.yaml 2>/dev/null | head -1)
+# Resolve the task yaml. Accept either a bare number (01 → 01_*.yaml) or a full
+# task id (04_csv_naive → 04_csv_naive.yaml). `|| true` so a no-match doesn't
+# trip `set -e` before we print a clear error.
+TASK_PATH=$(ls "$REPO_ROOT"/harness/tasks/"${TASK_NUM}".yaml "$REPO_ROOT"/harness/tasks/"${TASK_NUM}"_*.yaml 2>/dev/null | head -1 || true)
 [[ -f "$TASK_PATH" ]] || { echo "✗ no task yaml for '$TASK_NUM' in harness/tasks/"; exit 2; }
 
 BENCH_PY="$REPO_ROOT/.venv-bench/bin/python"

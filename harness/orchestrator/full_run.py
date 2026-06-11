@@ -109,18 +109,24 @@ def run_framework(
             "LITELLM_PROXY_API_KEY": _proxy_key(),
             "PYTHONPATH": f"{runner_dir}:{common_dir}",
         })
-        proc = subprocess.run(
-            [str(py), "-m", "runner",
-             "--task", str(task_path), "--variant", variant,
-             "--run-id", run_id, "--model-alias", model_alias,
-             "--proxy-base-url", proxy_base_url, "--output", str(out_path),
-             "--timeout-seconds", str(task_def.get("timeout_seconds", 60))],
-            env=env, capture_output=True, text=True,
-            timeout=task_def.get("timeout_seconds", 60) + 30,
-        )
-        if proc.returncode != 0:
-            (out_path.with_suffix(".stderr")).write_text(proc.stderr)
-        print(f"  {framework} rep {rep + 1}/{n}: exit {proc.returncode}")
+        try:
+            proc = subprocess.run(
+                [str(py), "-m", "runner",
+                 "--task", str(task_path), "--variant", variant,
+                 "--run-id", run_id, "--model-alias", model_alias,
+                 "--proxy-base-url", proxy_base_url, "--output", str(out_path),
+                 "--timeout-seconds", str(task_def.get("timeout_seconds", 60))],
+                env=env, capture_output=True, text=True,
+                timeout=task_def.get("timeout_seconds", 60) + 30,
+            )
+            if proc.returncode != 0:
+                (out_path.with_suffix(".stderr")).write_text(proc.stderr)
+            print(f"  {framework} rep {rep + 1}/{n}: exit {proc.returncode}")
+        except subprocess.TimeoutExpired:
+            # Don't let one framework's hang kill the whole report — record a
+            # synthetic failed run the enrichment loop will skip (no output).
+            (out_path.with_suffix(".stderr")).write_text("TimeoutExpired")
+            print(f"  {framework} rep {rep + 1}/{n}: TIMEOUT")
 
     # Colmena session spans, consumed in order.
     session_spans = _read_spans(spans_dir / f"run-{session_id}.jsonl") if framework not in HEADER_CAPABLE else []
