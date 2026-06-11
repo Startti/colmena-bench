@@ -34,10 +34,34 @@ sys.path.insert(0, str(HARNESS_DIR))
 from orchestrator.aggregate import _stat  # noqa: E402
 from orchestrator import report as report_mod  # noqa: E402
 
+sys.path.insert(0, str(HARNESS_DIR / "scoring"))
+from task04_scorer import score_answers  # noqa: E402
+
 FRAMEWORKS = ["colmena", "crewai", "langchain", "langgraph", "llamaindex", "google_adk"]
 HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk"}
 
 PRICING = json.loads((HARNESS_DIR / "pricing_table.json").read_text())
+QUESTIONS = json.loads((REPO_ROOT / "data/orders_synthetic/questions_20.json").read_text())
+GROUND_TRUTH = json.loads((REPO_ROOT / "data/orders_synthetic/ground_truth.json").read_text())
+
+
+def _maybe_score_dataset_qa(ro: dict, task_def: dict, variant: str) -> None:
+    """For dataset_qa tasks, score the answer dict against ground truth."""
+    if (task_def.get("success") or {}).get("kind") != "dataset_qa":
+        return
+    ro.setdefault("extras", {})
+    if ro.get("error"):
+        ro["success"] = {"ok": False, "reason": ro["error"], "judge_score": 0.0}
+        return
+    answers = ro.get("answer")
+    if not isinstance(answers, dict) or not answers:
+        ro["success"] = {"ok": False, "reason": "no parseable answer dict", "judge_score": 0.0}
+        return
+    truth = GROUND_TRUTH["by_size"][variant]["answers"]
+    res = score_answers(answers, truth, QUESTIONS)
+    ro["success"] = {"ok": True, "judge_score": res["success_rate"]}
+    ro["extras"]["per_question"] = res["per_question"]
+    ro["extras"]["correct"] = res["correct"]
 
 
 def venv_python(framework: str) -> Path:
@@ -53,6 +77,7 @@ def _read_spans(path: Path) -> list[dict]:
 def run_framework(
     framework: str,
     task_path: Path,
+    task_def: dict,
     variant: str,
     model_alias: str,
     proxy_base_url: str,
@@ -89,8 +114,9 @@ def run_framework(
              "--task", str(task_path), "--variant", variant,
              "--run-id", run_id, "--model-alias", model_alias,
              "--proxy-base-url", proxy_base_url, "--output", str(out_path),
-             "--timeout-seconds", "60"],
+             "--timeout-seconds", str(task_def.get("timeout_seconds", 60))],
             env=env, capture_output=True, text=True,
+            timeout=task_def.get("timeout_seconds", 60) + 30,
         )
         if proc.returncode != 0:
             (out_path.with_suffix(".stderr")).write_text(proc.stderr)
@@ -120,6 +146,7 @@ def run_framework(
             if ttfts:
                 ro["ttft_ms"] = ttfts[0]
         ro["_span_count"] = len(spans)
+        _maybe_score_dataset_qa(ro, task_def, variant)
         enriched.append(ro)
         out_path.write_text(json.dumps(ro, indent=2))
     return enriched
@@ -190,11 +217,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--frameworks", nargs="*", default=FRAMEWORKS)
     args = p.parse_args(argv)
 
+    import yaml
+    task_def = yaml.safe_load(args.task.read_text())
+
     aggregates = []
     for fw in args.frameworks:
         print(f"==> {fw}")
         runs = run_framework(
-            fw, args.task, args.variant, args.model_alias, args.proxy_base_url,
+            fw, args.task, task_def, args.variant, args.model_alias, args.proxy_base_url,
             args.n, args.out_dir / "raw", args.session_id, args.spans_dir,
         )
         agg = aggregate_framework(fw, runs, args.model_alias)

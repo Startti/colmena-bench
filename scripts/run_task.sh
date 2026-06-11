@@ -19,10 +19,12 @@ shift || true
 
 N=30
 FRAMEWORKS=""
+VARIANT="default"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --n) N="$2"; shift 2 ;;
     --frameworks) FRAMEWORKS="$2"; shift 2 ;;
+    --variant) VARIANT="$2"; shift 2 ;;
     *) echo "unknown arg: $1"; exit 2 ;;
   esac
 done
@@ -60,6 +62,7 @@ EXTRA=()
 "$BENCH_PY" "$REPO_ROOT/harness/orchestrator/full_run.py" \
   --task "$TASK_PATH" \
   --n "$N" \
+  --variant "$VARIANT" \
   --session-id "$SESSION_ID" \
   --out-dir "$OUT_DIR" \
   ${EXTRA[@]+"${EXTRA[@]}"}

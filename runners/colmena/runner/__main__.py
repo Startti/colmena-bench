@@ -7,7 +7,7 @@ from importlib import metadata
 from bench_common import run
 
 from .llm import build_llm
-from .tasks import task01
+from .tasks import task01, task04_naive
 
 
 def _version() -> str:
@@ -22,6 +22,7 @@ def _version() -> str:
 
 HANDLERS = {
     "01_hello_world": task01.run,
+    "04_csv_naive": task04_naive.run,
 }
 
 if __name__ == "__main__":
