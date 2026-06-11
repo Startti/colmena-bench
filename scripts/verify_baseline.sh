@@ -44,6 +44,9 @@ fi
 : "${MODEL_ALIAS:=gemini-2.5-flash}"
 : "${N:=3}"
 : "${TASK:=$REPO_ROOT/harness/tasks/01_hello_world.yaml}"
+# Which runners to gate. Default = the two that landed first (T12 + T13).
+# Override e.g. `FRAMEWORKS=crewai` when the colmena binary isn't available.
+: "${FRAMEWORKS:=colmena crewai}"
 
 OUT_DIR="$REPO_ROOT/results/verify_baseline-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$OUT_DIR" "$LITELLM_SPANS_DIR"
@@ -121,7 +124,7 @@ PASS=()
 FAIL=()
 SKIP=()
 
-for fw in colmena crewai; do
+for fw in $FRAMEWORKS; do
   echo
   echo "[verify] ── $fw ──"
   if run_framework "$fw"; then

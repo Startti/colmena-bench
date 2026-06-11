@@ -17,12 +17,80 @@
 
 | # | Framework | Override mechanism | Where to set | Verified |
 |---|---|---|---|---|
-| 1 | **Colmena** | Built-in OpenAI-compatible client; `base_url` parameter on the LLM provider config | `runners/colmena/tasks/*.json` → `llm.base_url` | 🟡 |
-| 2 | **CrewAI** | `LLM(base_url=...)` from `crewai.llm` (LiteLLM under the hood) | `runners/crewai/tasks/task*.py` → `LLM(base_url=os.environ["LITELLM_PROXY_BASE_URL"], api_key="sk-bench-runner-do-not-use-in-prod")` | 🟡 |
+| 1 | **Colmena** | ❌ **No override path in `develop`** — see finding below | n/a | ❌ |
+| 2 | **CrewAI** | `LLM(model="openai/<alias>", base_url=...)` — the `openai/` prefix is **required** (see finding) | `runners/crewai/runner/llm.py` | ✅ (2026-06-10, N=3) |
 | 3 | **LangChain** | `ChatOpenAI(base_url=...)` for OpenAI-style models, or `ChatLiteLLM` wrapper | `runners/langchain/tasks/task*.py` | 🟡 |
 | 4 | **LangGraph** | Same as LangChain (LangGraph uses LangChain model wrappers) | `runners/langgraph/tasks/task*.py` | 🟡 |
 | 5 | **Google ADK** | `LiteLlm(model=..., api_base=...)` wrapper from `google.adk.models.lite_llm` | `runners/google_adk/tasks/task*.py` | 🟡 |
 | 6 | **LlamaIndex** | `OpenAILike(api_base=...)` from `llama_index.llms.openai_like` | `runners/llamaindex/tasks/task*.py` | 🟡 |
+
+## ⚠️ Finding: Colmena cannot reach the proxy on `develop` (2026-06-10)
+
+Source inspection of `Startti/colmena` @ `develop`:
+
+- The LLM client is selected by `LlmProviderFactory::create(kind)` in
+  `src/libs/colmena/src/llm/infrastructure/llm_provider_factory.rs`.
+- It hardcodes the default adapters: `GeminiAdapter::new()`,
+  `OpenAiAdapter::new()`, `AnthropicAdapter::new()` — each of which bakes in
+  the provider's production URL (e.g. `https://generativelanguage.googleapis.com/v1beta`).
+- Both public entry points route through this factory:
+  - `runDag(file)` → llm node at `dag_engine/.../nodes/llm.rs:1653` calls `LlmProviderFactory::create(...)`
+  - `ColmenaLlm.call(...)` → same factory.
+- There is **no env var and no config field** for the LLM endpoint. The only
+  override is `set_test_override()` — `#[doc(hidden)]`, Rust-test-only,
+  unreachable from the Node/Python bindings.
+- `NodeLlmConfigOptions` (the binding's options struct) has `apiKey, model,
+  temperature, maxTokens, topP, frequency/presencePenalty` — **no `baseUrl`**.
+
+**Consequence:** Colmena's LLM calls go straight to the providers, bypassing
+the LiteLLM proxy. We cannot capture Colmena's tokens the same
+(provider-authoritative) way as the other 5 frameworks. This is the exact
+risk in the risk register ("Framework hardcodes provider URL").
+
+**Good news — the fix is ~10 lines.** All three adapters already expose
+`with_base_url(String)` (verified: `openai_adapter.rs:32`,
+`anthropic_adapter.rs:34`, `gemini_adapter.rs:32`). The factory just needs to
+read an env var and use it:
+
+```rust
+// llm_provider_factory.rs
+fn base_url_override(kind: ProviderKind) -> Option<String> {
+    // e.g. COLMENA_LLM_BASE_URL routes every provider through one proxy.
+    std::env::var("COLMENA_LLM_BASE_URL").ok()
+}
+
+match kind {
+    ProviderKind::Google => match base_url_override(kind) {
+        Some(u) => Arc::new(GeminiAdapter::with_base_url(u)),
+        None => Arc::new(GeminiAdapter::new()),
+    },
+    // ... same for OpenAi / Anthropic
+}
+```
+
+With that env var honored, Colmena becomes a first-class proxy citizen and
+measurement stays symmetric across all 6 frameworks. **This is a patch to the
+`colmena` repo, tracked here as a bench prerequisite.** Until it lands, the
+Colmena runner cannot be gated by `verify_baseline.sh`.
+
+## ⚠️ Finding: "native providers" bypass the proxy (2026-06-10)
+
+CrewAI 1.x (and likely others) ship **native provider** clients. When you
+write `LLM(model="gemini-2.5-flash")`, CrewAI loads `GeminiCompletion`, which
+talks **straight to Google** and ignores `base_url` entirely — same failure
+mode as Colmena, just opt-out-able. Symptom observed:
+`ImportError: Google Gen AI native provider not available`.
+
+**Fix (universal pattern for all Python runners):** prefix the model with
+`openai/`. This forces the OpenAI-compatible HTTP path that honours
+`base_url`. Our LiteLLM proxy speaks OpenAI dialect for every alias, so
+`openai/gemini-2.5-flash` reaches the proxy, which resolves the alias to the
+real provider model. Verified: CrewAI run reported 77/43 tokens, matching the
+proxy span exactly.
+
+Rule of thumb: **never let a runner name a provider-native model directly.**
+Always go through `openai/<alias>` + `base_url=<proxy>`. Each runner's
+hello-world gate must assert a span landed, or the bypass goes unnoticed.
 
 ## Standard snippet per framework
 

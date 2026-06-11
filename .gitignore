@@ -47,6 +47,10 @@ data/multimodal/*.wav
 # Results: keep aggregated + reports, ignore raw
 results/*/raw/
 results/*/proxy_spans/
+results/verify_baseline-*/
+
+# Local bench venv (Python 3.11, litellm + frameworks)
+.venv-bench/
 
 # But keep committed dataset metadata
 !data/orders_synthetic/schema.json

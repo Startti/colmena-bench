@@ -39,25 +39,19 @@ model_list:
 litellm_settings:
   # Surfaces input/output/cached tokens in the response under `usage`.
   # Required for METHODOLOGY §4 ("Tokens cached" row).
-  return_response_headers: true
   drop_params: false
   set_verbose: false
 
-  # Per-call JSONL span. Path interpolated from BENCH_RUN_ID at proxy start
-  # (see start_proxy.sh). One file per benchmark run, appended on each call.
-  success_callback: ["custom_callback"]
-  failure_callback: ["custom_callback"]
-
-  # Custom callback module — defined alongside this file, loaded via
-  # `LITELLM_CALLBACK_FILE` env var by start_proxy.sh.
-  callbacks: ["spans_jsonl"]
+  # Custom callback: one JSONL span per call to proxy/spans/run-<id>.jsonl.
+  # Format is `<module>.<instance>`; `spans_callback.py` lives in proxy/ and
+  # start_proxy.sh puts proxy/ on PYTHONPATH. The CustomLogger instance
+  # handles both success and failure events, so one entry covers both.
+  callbacks: ["spans_callback.spans_jsonl"]
 
 general_settings:
-  # Master key gates /admin endpoints only; runners use the dummy key below.
+  # The master key is validated WITHOUT a database (virtual/DB-backed keys
+  # would need Postgres → "No connected db." errors). Runners and curl send
+  # this same key as their bearer; see LITELLM_PROXY_API_KEY in .env, which
+  # start_proxy.sh / verify_baseline.sh set equal to LITELLM_MASTER_KEY.
+  # Do NOT expose this proxy beyond localhost.
   master_key: os.environ/LITELLM_MASTER_KEY
-
-  # Dummy bearer that runners send. We don't enforce per-runner keys for the
-  # benchmark — process isolation + outbound network blocks are how we keep
-  # frameworks honest, not auth on the proxy.
-  allowed_keys:
-    - "sk-bench-runner-do-not-use-in-prod"
