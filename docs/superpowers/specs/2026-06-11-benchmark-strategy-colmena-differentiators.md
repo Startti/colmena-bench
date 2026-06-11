@@ -102,12 +102,27 @@ Ranked. Each: claim · evidence · metric · competitor reality.
 
 The current Colmena runner drives a single-shot `ColmenaLlm.call`. Demos #1–#3
 need Colmena to execute **real DAGs** with tool nodes, attachments, suspend.
-**Build a `runDag` driver** for the Colmena runner (Python binding exposes
-`run_dag(file, resume_id?, resume_answer?, inject_payload?, include_extra_info?)`)
-that: loads a DAG JSON, runs it through the proxy, captures `graph_usage_summary`
-tokens, and supports resume. This unblocks the three DAG-based demos. The
-competitors' equivalents use their native agent+tool APIs (we already proved
-the tool path works for CrewAI).
+**Build a `runDag` driver** for the Colmena runner. Python binding (verified):
+
+    run_dag(file_path, resume_id=None, resume_answer=None, inject_payload=None,
+            include_extra_info=False, agent_session_id=None) -> str  # JSON result
+
+DAG shape (verified from `tests/graphs/`): `{"nodes": {id: {"type":"llm_call",
+"config": {"provider","api_key":"${ENV}","model","prompt","enabled_tools",
+"connection_url":"${DATABASE_URL}"}}}, "edges":[...]}`.
+
+Routing through the proxy: `provider:"openai"` + `OPENAI_BASE_URL=<proxy>/v1` +
+`OPENAI_API_KEY=<proxy master key>`, model = the alias. (Same trick as the
+single-shot path.)
+
+**HARD PREREQUISITE — Postgres.** `run_dag` fails with `DATABASE_URL must be set
+to build ColmenaEngine` (verified 2026-06-11). The DAG engine needs Postgres for
+run snapshots, `llm_node_history`, attachments, and `secure_value_mappings` —
+i.e. the very machinery that powers suspend/resume (#3) and attachment scrubbing
+(#1). So the enabler is: **stand up a Postgres** (docker), set `DATABASE_URL`,
+run migrations if Colmena needs them, then drive a trivial DAG and confirm the
+proxy captures a span. This is the first build task of the next arc. Competitors'
+equivalents use their native agent+tool APIs (the CrewAI tool path already works).
 
 ## Build sequence (proposed)
 
