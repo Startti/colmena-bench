@@ -1,0 +1,42 @@
+{
+  "_comment": "Demo05 per-turn DAG template. ONE llm_call node with a STABLE node id ('assistant') so conversation memory persists across run_dag calls keyed by (agent_session_id, node_id) — see colmena docs 15_memory_guide.md. The handler (tasks/task05.py) fills the ${...} placeholders, attaches the report via files[] ONLY on turn 0, and calls run_dag(dag, None, None, None, True, session_id) every turn with the same session_id. The generate_chart tool is a python_script with FIXED code that returns the base64 PNG data URI; Colmena's always-on tool-output scrubber elides it to '[binary elided: ...]' before it ever reaches the LLM context (dag_tool_executor.rs scrub_value_for_llm).",
+  "nodes": {
+    "assistant": {
+      "type": "llm_call",
+      "config": {
+        "provider": "openai",
+        "model": "${MODEL_ALIAS}",
+        "api_key": "${OPENAI_API_KEY}",
+        "connection_url": "${DATABASE_URL}",
+        "attachments_enabled": true,
+        "temperature": 0.0,
+        "stream": false,
+        "system_message": "${SYSTEM_MESSAGE}",
+        "prompt": "${PROMPT}",
+        "tool_configurations": {
+          "generate_chart": {
+            "name": "generate_chart",
+            "node_type": "python_script",
+            "description": "Generate a chart image from a natural-language description. Returns the chart as a base64 PNG data URI.",
+            "node_schema": {
+              "sandbox_mode": { "type": "string", "fixed": "none" },
+              "code": { "type": "string", "fixed": "output = {\"chart\": chart_data_uri}" },
+              "chart_data_uri": { "type": "string", "fixed": "${CHART_DATA_URI}" },
+              "description": {
+                "type": "string",
+                "required": true,
+                "description": "Natural-language description of the chart to generate."
+              }
+            }
+          }
+        }
+      }
+    },
+    "log": {
+      "type": "log"
+    }
+  },
+  "edges": [
+    { "from": "assistant", "to": "log" }
+  ]
+}
