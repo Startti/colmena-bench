@@ -1,0 +1,22 @@
+# Hero Demo #1 — multi-turn "context tax". A fixed 10-turn conversation over an
+# attached report + a base64-chart tool. Measures cumulative input tokens/turn:
+# Colmena stays flat (ephemeral attachment + binary scrubbing); the others grow.
+# See docs/superpowers/specs/2026-06-16-context-scrubbing-demo-design.md.
+id: "05_context_scrubbing"
+title: "Context tax — multi-turn attachment + tool-output scrubbing"
+version: "0.1.0"
+description: >
+  A 10-turn report-assistant conversation. The runner replays a fixed script of
+  user messages (defined in bench_common.scenario05), keeping each framework's
+  native conversation memory, with one base64-returning chart tool and one
+  attached report document.
+variants:
+  - name: default
+prompt: ""   # the conversation script lives in bench_common.scenario05.TURNS
+tools: [generate_chart]
+metrics: [tokens_input_per_turn, cost_usd, lines_of_code]
+success:
+  kind: multi_turn_demo   # scored by demo05_run.py, not the runner
+model_alias: gemini-2.5-flash
+timeout_seconds: 300
+n_runs: 1
