@@ -172,9 +172,14 @@ def run(
     started = datetime.now(timezone.utc)
     answer: Any = None
     usage = {"input": 0, "output": 0, "cached": 0, "tool_calls": 0}
+    extras: dict[str, Any] = {}
     error: str | None = None
     try:
-        answer, usage = handlers[task_id](task, llm, args)
+        result = handlers[task_id](task, llm, args)
+        if len(result) == 3:
+            answer, usage, extras = result
+        else:
+            answer, usage = result
     except Exception as e:  # noqa: BLE001 — runner-level catch-all
         error = f"{type(e).__name__}: {e}"
     ended = datetime.now(timezone.utc)
@@ -198,5 +203,6 @@ def run(
         tool_calls=usage.get("tool_calls", 0),
         success=success,
         error=error,
+        extras=extras,
     )
     return 0
