@@ -1,4 +1,11 @@
-from bench_common import scenario05 as s
+import sys
+from pathlib import Path
+
+PKG = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PKG))
+REPO = PKG.parent.parent
+
+from bench_common import scenario05 as s  # noqa: E402
 
 
 def test_report_is_substantial_text():

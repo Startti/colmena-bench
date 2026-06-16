@@ -22,8 +22,7 @@ _REGIONS = [
     ("Middle East & Africa", 900, 720, 25),
 ]
 _MONTHS = [
-    ("January", 3400), ("February", 3550), ("March", 3720),
-    ("April", 3810), ("May", 3990), ("June", 4150),
+    ("July", 3990), ("August", 4070), ("September", 4150),
 ]
 _RISKS = [
     ("Supply chain concentration", "High",
@@ -85,7 +84,9 @@ def _build_report() -> str:
         "Monthly bookings rose every month of the quarter, from "
         f"{_MONTHS[0][1]} in {_MONTHS[0][0]} to {_MONTHS[-1][1]} in "
         f"{_MONTHS[-1][0]}, an unbroken upward trend that management reads as "
-        "evidence of strengthening demand rather than seasonal noise.\n"
+        "evidence of strengthening demand rather than seasonal noise. "
+        "The sequential acceleration across all three months reinforces "
+        "confidence in the Q4 revenue plan.\n"
     )
     lines.append("## 4. Principal risks\n")
     for i, (title, sev, detail) in enumerate(_RISKS, 1):
