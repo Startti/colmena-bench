@@ -33,6 +33,14 @@ if [[ -n "$_CALLER_BENCH_RUN_ID" ]]; then
   BENCH_RUN_ID="$_CALLER_BENCH_RUN_ID"
 fi
 
+# The proxy authenticates with master_key and writes spans to JSONL files — it
+# NEVER needs a database. If a DATABASE_URL is present, LiteLLM auto-starts its
+# Prisma client (not installed) → "ModuleNotFoundError: prisma" and refuses to
+# start. The Colmena DB lives in .env as COLMENA_DATABASE_URL (not DATABASE_URL)
+# precisely so LiteLLM never sees it; this unset is belt-and-suspenders for any
+# DATABASE_URL inherited from the parent environment.
+unset DATABASE_URL
+
 : "${LITELLM_PROXY_HOST:=127.0.0.1}"
 : "${LITELLM_PROXY_PORT:=4000}"
 : "${LITELLM_SPANS_DIR:=$REPO_ROOT/proxy/spans}"

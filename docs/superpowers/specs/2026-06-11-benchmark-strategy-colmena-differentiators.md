@@ -120,29 +120,58 @@ to build ColmenaEngine`. The DAG engine needs Postgres for run snapshots,
 `llm_node_history`, attachments, and `secure_value_mappings` — i.e. the very
 machinery that powers suspend/resume (#3) and attachment scrubbing (#1).
 
-**BLOCKER (2026-06-11): `run_dag` hangs at engine startup.** With a healthy
-remote Postgres (`DATABASE_URL` set in `.env`), `run_dag` hangs indefinitely
-BEFORE making any LLM call (zero proxy hits) and emits NO logs (not even the
-Python `print` before the call flushes; `RUST_LOG=colmena=debug` produced
-nothing). DB verified healthy independently: auth OK, all 18 Colmena tables
-present and migrated (`dag_runs`, `llm_node_history`, `conversation_attachments`,
-`secure_value_mappings`, `_sqlx_migrations`, …), no active queries/locks. So the
-hang is in the native module's engine startup (tokio runtime + pool init against
-a remote DB), not the database. `scripts/_dag_smoke.py` + `runners/colmena/dags/
-smoke_hello.json` reproduce it.
+**✅ RESOLVED (2026-06-16): `run_dag` works end-to-end.** The earlier "hang"
+was NOT a hang — it was three independent, fixable issues in the bench's
+Colmena binding, each masking the next. Root causes + fixes:
 
-**Next-session diagnostics (in order):**
-1. Try a LOCAL docker Postgres to isolate remote-network vs engine-startup.
-2. Wire `tracing_subscriber` init into the PyO3 binding (or find why RUST_LOG is
-   silent) so the hang point is visible.
-3. Check whether `ColmenaEngine::build` does a blocking/synchronous setup step
-   (pool warmup, a startup query) that stalls on a high-latency remote DB; check
-   `pool_registry` acquire_timeout behavior.
-4. Escalate to the Colmena team — this is engine-side, not bench-side.
+1. **Stale binding (pre-fix).** The bench binding was built Jun 11; the engine
+   `run_dag` fix landed in `develop` on Jun 14 (`engine.run_dag` routed to the
+   deprecated `DagRunUseCase::execute()` stub = `unimplemented!`, instead of
+   draining `execute_stream`; see `audit_python_bindings.md` P1). The old binding
+   panicked `run_use_case.rs:100: not implemented: execute() is deprecated` on
+   *every* graph. **Fix:** rebuild from current `develop`.
+2. **Wrong maturin build.** Rebuilding with `maturin develop --features python`
+   from the crate dir omits `pyo3/extension-module` and the root `pyproject.toml`
+   `[tool.maturin]` config → runtime `Fatal Python error: PyInterpreterState_Get
+   … GIL … released`. **Fix:** run `maturin develop --release` from the REPO
+   ROOT (`/Users/danielgarcia/startti/colmena`) so it uses
+   `features = ["pyo3/extension-module", "python"]`, `module-name = "colmena"`,
+   `python-source = "stubs"`. Builds into the active venv (set `VIRTUAL_ENV` to
+   `runners/colmena/.venv`, Python 3.11 — pyo3 0.21 supports ≤3.12).
+3. **Missing `SECURE_VALUES_KEY`.** The Postgres secure-value backend refuses to
+   start without a ≥32-char pgcrypto key (`postgres_secure_value_repository.rs`)
+   — it panics with a clear message (it was never a silent hang). **Fix:**
+   `SECURE_VALUES_KEY` in `.env`.
 
-The single-shot `ColmenaLlm.call` path (Tasks 1 + 4-naive) works fine; only the
-DAG path is blocked. Competitors' demos use their native agent+tool APIs (the
-CrewAI tool path already works).
+Verified: `power.json` (pure compute, no DB) → `pow_step.output = 125.0`;
+`smoke_hello.json` (LLM node) through the proxy + the GCP Colmena DB →
+`result: "hello"`, `usage {prompt 246, completion 1}`, and the proxy captured a
+matching span (`tokens_input 246, tokens_output 1, latency 728ms, ok:true`) —
+**token parity on the DAG path confirmed.** The DB was always healthy; nothing
+was environment-specific. Demos #1/#2/#3 are now unblocked.
+
+**Proxy footgun fixed alongside.** `DATABASE_URL` in `.env` made LiteLLM
+auto-start its (uninstalled) Prisma client and refuse to boot. `unset`/empty
+don't work (LiteLLM reloads `.env` via python-dotenv from its package dir under
+`.venv-bench`, and treats `""` as present via an `is None` check). **Fix:** store
+the Colmena DB as `COLMENA_DATABASE_URL` in `.env`; the DAG path re-exports it as
+`DATABASE_URL` for its own subprocess. Proxy never sees it.
+
+**Reproduce the working DAG path:**
+```bash
+# 1. rebuild binding (once, after pulling colmena develop)
+cd /Users/danielgarcia/startti/colmena
+VIRTUAL_ENV=/Users/danielgarcia/startti/colmena-bench/runners/colmena/.venv \
+  PATH="$VIRTUAL_ENV/bin:$PATH" maturin develop --release
+# 2. proxy up (reads .env, ignores COLMENA_DATABASE_URL)
+cd /Users/danielgarcia/startti/colmena-bench
+PATH="$PWD/.venv-bench/bin:$PATH" BENCH_RUN_ID=dagsmoke ./proxy/start_proxy.sh &
+# 3. run a DAG: export DATABASE_URL=$COLMENA_DATABASE_URL, OPENAI_API_KEY=$LITELLM_MASTER_KEY,
+#    OPENAI_BASE_URL=.../v1, SECURE_VALUES_KEY set → colmena.run_dag(...)
+```
+
+The single-shot `ColmenaLlm.call` path (Tasks 1 + 4-naive) also works.
+Competitors' demos use their native agent+tool APIs (CrewAI tool path works).
 
 ## Build sequence (proposed)
 
