@@ -94,7 +94,30 @@ def main(argv: list[str] | None = None) -> int:
     outpath = args.out or (REPO_ROOT / f"runs/demo05/report/agg_n{n_passes}.json")
     outpath.parent.mkdir(parents=True, exist_ok=True)
     outpath.write_text(json.dumps(out, indent=2))
+
+    # --- also write CSVs so the data is reusable without re-running the tests ---
+    import csv
+    summ = outpath.with_name(outpath.stem + "_summary.csv")
+    with summ.open("w", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["framework", "version", "n_passes", "loc",
+                    "total_in_mean", "total_in_std", "turn10_in_mean", "turn10_in_std",
+                    "usd_mean", "usd_std", "output_mean", "output_std"])
+        for r in out["frameworks"]:
+            w.writerow([r["framework"], r["framework_version"], n_passes, r["loc"],
+                        f"{r['total_mean']:.1f}", f"{r['total_std']:.1f}",
+                        f"{r['turn10_mean']:.1f}", f"{r['turn10_std']:.1f}",
+                        f"{r['usd_mean']:.6f}", f"{r['usd_std']:.6f}",
+                        f"{r['output_mean']:.1f}", f"{r['output_std']:.1f}"])
+    perturn = outpath.with_name(outpath.stem + "_per_turn.csv")
+    with perturn.open("w", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["framework", "turn", "cumulative_in_mean", "cumulative_in_std", "per_turn_in_mean"])
+        for r in out["frameworks"]:
+            for t, (cm, cs, pm) in enumerate(zip(r["cum_mean"], r["cum_std"], r["per_turn_mean"]), 1):
+                w.writerow([r["framework"], t, f"{cm:.1f}", f"{cs:.1f}", f"{pm:.1f}"])
     print(f"aggregated {n_passes} passes → {outpath}")
+    print(f"  csv: {summ.name}, {perturn.name}")
     for r in out["frameworks"]:
         print(f"  {r['framework']:11s} total {r['total_mean']:>9,.0f} ± {r['total_std']:>7,.0f}"
               f"  turn10 {r['turn10_mean']:>7,.0f} ± {r['turn10_std']:>6,.0f}"

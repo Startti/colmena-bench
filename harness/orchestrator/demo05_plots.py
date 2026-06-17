@@ -29,9 +29,20 @@ HARNESS_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = HARNESS_DIR.parent
 
 COLMENA = "colmena"
-C_HI = "#1f9d55"   # colmena green
-C_COMP = "#9aa0a6"  # competitor grey
+C_HI = "#1f9d55"   # colmena green (the hero — always bold/highlighted)
 C_ACCENT = "#c0392b"
+
+# Distinct per-competitor colors so each library is identifiable; Colmena stays
+# the bold green hero (also drawn thicker/bigger via the `hi` flag in each chart).
+COLORS = {
+    "colmena": C_HI,
+    "crewai": "#e15759",      # red
+    "langchain": "#4e79a7",   # blue
+    "langgraph": "#f28e2b",   # orange
+    "llamaindex": "#b07aa1",  # purple
+    "google_adk": "#17a2b8",  # teal
+}
+_FALLBACK = ["#8c564b", "#bcbd22", "#7f7f7f", "#e377c2"]
 
 # Scenario constants for the ILLUSTRATIVE composition chart (estimated, not measured)
 DOC_TOK = 3000          # report tokens, re-sent each turn by competitors
@@ -44,7 +55,9 @@ def _fw(agg, name):
 
 
 def _color(name):
-    return C_HI if name == COLMENA else C_COMP
+    if name in COLORS:
+        return COLORS[name]
+    return _FALLBACK[hash(name) % len(_FALLBACK)]
 
 
 def bar_total_tokens(agg, outdir):
