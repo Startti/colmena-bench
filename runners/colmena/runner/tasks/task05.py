@@ -24,20 +24,22 @@ Token accounting is done by the proxy spans (the orchestrator buckets them per
 turn using the ``turn_boundaries`` timestamps in ``extras``), so ``usage`` here
 is all zeros by contract.
 
-KNOWN LIMITATION (engine, not this handler) — attachment via the proxy:
-  Colmena's ``FileProviderFactory::create`` (src/libs/colmena/.../files/
-  file_provider_factory.rs) builds ``OpenAiFilesApiAdapter::new(api_key)`` which
-  HARDCODES ``base_url = "https://api.openai.com"`` and ignores
-  ``OPENAI_BASE_URL``. So every ``files[]`` entry is uploaded to the real OpenAI
-  Files API, NOT through the LiteLLM proxy. With the proxy master key as the
-  bearer that upload is rejected and the node fails with "all files in the
-  request failed to materialize", so turn 0 errors and the doc turns answer
-  "please provide the report". The api_key is coupled across the chat call (proxy)
-  and the file upload (api.openai.com), so no single key satisfies both. The
-  engine exposes ``OpenAiFilesApiAdapter::with_base_url`` but the factory never
-  uses it — wiring it to ``OPENAI_BASE_URL`` would unblock the attachment half.
-  The chart-scrubbing half works fully through the proxy (verified: chart turns
-  add no ~30KB base64 to input tokens).
+ATTACHMENT VIA THE PROXY (resolved 2026-06-16, engine fix
+``fix/text-attachment-no-files-api`` on the colmena ``develop`` line):
+  Previously, every ``files[]`` entry — even inline TEXT — was POSTed to the
+  provider Files API (``OpenAiFilesApiAdapter``, hardcoded to api.openai.com),
+  which the proxy has no backend for, so turn 0 failed with "all files failed to
+  materialize" and the doc turns answered "please provide the report". The engine
+  now short-circuits text-like mimes (``text/*``, ``application/json``,
+  ``*+json``): it SKIPS the Files API, sends the bytes inline to the model
+  (OpenAI Responses API ``input_file``/``file_data``, which the proxy translates
+  to Gemini), and persists the bytes to ``OutputStorageRepository`` + registers a
+  catalog row WITHOUT a ``provider_file_id``. ``load_attachment`` then serves the
+  text back from storage on later turns. This requires DURABLE cross-process
+  storage — see ``_ensure_env`` (``COLMENA_LOCAL_STORAGE_DIR``); the default
+  in-memory adapter would lose the bytes between per-turn ``run_dag`` processes.
+  The chart-scrubbing half always worked through the proxy (chart turns add no
+  ~30KB base64 to input tokens).
 """
 from __future__ import annotations
 
@@ -74,12 +76,26 @@ def _ensure_env(caller: Any) -> None:
     * ``DATABASE_URL`` — the engine needs Postgres for memory/attachments. The
       repo names it ``COLMENA_DATABASE_URL`` (so the proxy doesn't auto-load it);
       copy it over if ``DATABASE_URL`` isn't already set.
+    * ``COLMENA_LOCAL_STORAGE_DIR`` — DURABLE attachment-byte storage. Each turn
+      is a separate ``run_dag`` (separate process), and the engine's default
+      ``LocalCacheStorageAdapter`` keeps bytes in-process only, so the Q3 report
+      bytes persisted on turn 0 would be GONE by the time a later turn calls
+      ``load_attachment`` (the catalog row survives in Postgres, but the bytes
+      don't) — the model would see ``attachment_expired_unrecoverable``. Pointing
+      the engine at a filesystem-backed ``LocalHttpStorageAdapter`` via this env
+      var makes the bytes survive across turns so ``load_attachment`` resolves
+      the inline-text report on every doc turn. Port ``0`` lets the OS pick.
     """
     os.environ["OPENAI_API_KEY"] = caller.api_key
     if not os.environ.get("DATABASE_URL"):
         colmena_db = os.environ.get("COLMENA_DATABASE_URL")
         if colmena_db:
             os.environ["DATABASE_URL"] = colmena_db
+    if not os.environ.get("COLMENA_LOCAL_STORAGE_DIR"):
+        storage_dir = Path("/tmp") / "colmena-bench-storage"
+        storage_dir.mkdir(parents=True, exist_ok=True)
+        os.environ["COLMENA_LOCAL_STORAGE_DIR"] = str(storage_dir)
+        os.environ.setdefault("COLMENA_LOCAL_STORAGE_PORT", "0")
 
 
 def _build_dag(
