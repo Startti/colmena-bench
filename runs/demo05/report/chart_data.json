@@ -1,0 +1,92 @@
+[
+  {
+    "framework": "colmena",
+    "framework_version": "0.4.0",
+    "per_turn_input": [
+      4711,
+      1344,
+      2759,
+      5478,
+      1379,
+      5821,
+      6087,
+      6921,
+      4063,
+      1965
+    ],
+    "cumulative_input": [
+      4711,
+      6055,
+      8814,
+      14292,
+      15671,
+      21492,
+      27579,
+      34500,
+      38563,
+      40528
+    ],
+    "total_input": 40528,
+    "total_output": 3193,
+    "turn10_input": 1965,
+    "usd_total": 0.0201409,
+    "loc": 201,
+    "answers": [
+      "Here are the key findings from the Q3 2026 report:\n\n*   **Total Revenue**: Acme Analytics, Inc. achieved $12,600k in total revenue for Q3 2026, marking a 16.5% quarter-over-quarter growth from $10,820k in Q2 2026.\n*   **Regional Growth**: Growth was primarily driven by Latin America (38% QoQ growth) and Asia Pacific (24% QoQ growth), while North America remained the largest absolute contributor ($4,200k).\n*   **Monthly Demand**: Monthly bookings showed an unbroken upward trend throughout the quarter, from $3,990k in July to $4,150k in September, indicating strengthening demand.\n*   **Product Performance**: The Platform product line was the primary driver of aggregate performance, contributing 68% of total revenue ($8,568k) and growing 18% QoQ.\n*   **Customer Metrics**: The company ended Q3 with 412 paying accounts (up from 387), a Net Revenue Retention (NRR) of 118%, and an increased median contract value of $31k ARR.\n*   **Principal Risks**: The dominant risk identified is supply chain concentration (62% of components from a single region), followed by FX exposure in Latin America and customer concentration (top 3 accounts represent 28% of ARR).\n*   **Q4 Outlook**: Management projects total bookings of $14,200k for Q4 2026, a 12.7% sequential increase, with continued momentum across all regions.",
+      "North America had the highest revenue in Q3 2026, contributing $4,200k.",
+      "The chart has been generated.",
+      "The quarter-over-quarter revenue growth rate was 16.5%.",
+      "Yes, a 16.5% quarter-over-quarter revenue growth rate indicates a positive overall trend.",
+      "",
+      "Here are the key findings from the Q3 2026 report:\n\nAcme Analytics achieved a total revenue of $12,600k in Q3 2026, marking a 16.5% quarter-over-quarter growth, primarily led by Latin America (38% growth) and Asia Pacific (24% growth), with North America remaining the largest contributor at $4,200k. Monthly bookings showed a consistent upward trend throughout the quarter, from $3,990k in July to $4,150k in September, indicating strengthening demand. The Platform product line was the primary driver of performance, contributing 68% of total revenue with 18% QoQ growth. The company ended the quarter with 412 paying accounts, a net increase of 25, and a strong Net Revenue Retention (NRR) of 118%. The dominant risk identified is supply chain concentration, with 62% of components sourced from a single region. For Q4 2026, the company targets $14,200k in bookings, assuming no macro deterioration, resolution of FX hedging, and successful onboarding of enterprise accounts.\n\nTogether, the two charts illustrate that while North America is the largest revenue contributor, the company is experiencing positive overall momentum with increasing monthly bookings across the quarter.",
+      "The top 3 risks listed in the report are:\n\n1.  **Supply chain concentration (severity: High)**: 62% of components are sourced from a single region, meaning a disruption would stall fulfillment.\n2.  **FX exposure in Latin America (severity: Medium)**: Revenue is booked in volatile local currencies without full hedging.\n3.  **Customer concentration (severity: Medium)**: The top 3 accounts represent 28% of Annual Recurring Revenue (ARR), so churn of any one would materially dent revenue.",
+      "The chart has been generated.",
+      "This conversation focused on analyzing the Q3 2026 report for Acme Analytics. Key findings included a total revenue of $8,500k, with North America contributing the highest at $4,200k, and a positive quarter-over-quarter revenue growth rate of 16.5%. Charts were generated for revenue by region, monthly bookings trend, and risk severity, with the top risks identified as supply chain concentration (High), FX exposure in Latin America (Medium), and customer concentration (Medium)."
+    ]
+  },
+  {
+    "framework": "crewai",
+    "framework_version": "1.14.6",
+    "per_turn_input": [
+      3362,
+      3625,
+      29765,
+      26124,
+      26152,
+      74793,
+      48623,
+      48667,
+      119830,
+      71137
+    ],
+    "cumulative_input": [
+      3362,
+      6987,
+      36752,
+      62876,
+      89028,
+      163821,
+      212444,
+      261111,
+      380941,
+      452078
+    ],
+    "total_input": 452078,
+    "total_output": 2491,
+    "turn10_input": 71137,
+    "usd_total": 0.1418509,
+    "loc": 165,
+    "answers": [
+      "Acme Analytics, Inc. reported total revenue of $12,600k in Q3 2026, a 16.5% quarter-over-quarter growth. This growth was primarily driven by Latin America (38% growth) and Asia Pacific (24% growth), while North America remained the largest revenue contributor. Monthly bookings showed a consistent upward trend throughout the quarter.\n\nKey risks identified include high supply chain concentration, medium FX exposure in Latin America, and customer concentration. The Platform product line was the primary revenue driver, contributing 68% of total revenue and growing 18% QoQ. The company ended Q3 with 412 paying accounts, adding 25 net new logos, and achieved a Net Revenue Retention (NRR) of 118%.\n\nOperating expenses increased by 8% QoQ to $9,840k. The competitive win rate improved to 64%, with pricing and missing predictive analytics features being the most common reasons for losses. For Q4 2026, the company targets $14,200k in bookings, a 12.7% sequential increase.",
+      "North America had the highest revenue in Q3 2026, at $4,200k.",
+      "The chart was generated.",
+      "The quarter-over-quarter revenue growth rate was 16.5%.",
+      "Yes, management views the trend as positive, with a 16.5% quarter-over-quarter growth rate.",
+      "The chart was generated.",
+      "The charts together illustrate that while North America is the largest revenue contributor, the company is experiencing a positive overall trend with increasing monthly bookings across all regions.",
+      "The top 3 risks listed in the report are: supply chain concentration (High severity), FX exposure in Latin America (Medium severity), and customer concentration (Medium severity).",
+      "The chart was generated.",
+      "Acme Analytics, Inc. reported a positive Q3 2026 with $12,600k in revenue, a 16.5% QoQ growth led by Latin America and Asia Pacific, while North America remained the largest contributor. Monthly bookings showed a consistent upward trend, reinforcing confidence in Q4. The principal risks identified are high supply chain concentration, medium FX exposure in Latin America, and medium customer concentration. Charts were generated to visualize revenue by region, monthly bookings, and risk severity."
+    ]
+  }
+]
