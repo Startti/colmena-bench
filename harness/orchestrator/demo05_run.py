@@ -31,7 +31,7 @@ from orchestrator.full_run import venv_python, _read_spans, _proxy_key, usd_per_
 HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk"}
 
 LOC_TARGETS = {
-    "colmena": ["runners/colmena/runner/tasks/task05.py", "runners/colmena/dags/demo05_turn.json"],
+    "colmena": ["runners/colmena/runner/tasks/task05.py"],
     "crewai": ["runners/crewai/runner/tasks/task05.py"],
     "langchain": ["runners/langchain/runner/tasks/task05.py"],
     "langgraph": ["runners/langgraph/runner/tasks/task05.py"],
