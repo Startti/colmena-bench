@@ -74,8 +74,11 @@ Ranked. Each: claim · evidence · metric · competitor reality.
     are the 3 legitimate chart turns. The token win is NOT a quality trade.
     Honest caveat: the llamaindex run returned empty text on turns 3–4 (its own
     agent quirk; exited 0, no crash) — noted but does not affect tokens.
-  - **Required engine branch:** colmena `fix/text-attachment-no-files-api`
-    (inline text attachments skip the Files API), built into the colmena venv.
+  - **Engine fixes MERGED to `develop` (2026-06-17):** colmena #103 (inline text
+    attachments skip the provider Files API → served via `load_attachment` from
+    storage) + #104 (Files API factory honors `*_BASE_URL`). The bench binding is
+    now built from `develop` (no local-branch dependency); verified end-to-end
+    with a fresh session (real doc answers + base64 charts elided).
   - **Report:** `runs/demo05/report/report.md` (+ `chart_data.json`,
     `quality_check.md`). **Design spec:**
     `docs/superpowers/specs/2026-06-16-context-scrubbing-demo-design.md`.
