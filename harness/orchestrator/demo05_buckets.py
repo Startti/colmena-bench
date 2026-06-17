@@ -29,6 +29,10 @@ def bucket_spans_by_turn(spans: list[dict], boundaries: list[str]) -> dict:
     n_turns = max(0, len(edges) - 1)
     per_in = [0 for _ in range(n_turns)]
     per_out = [0 for _ in range(n_turns)]
+    per_cached = [0 for _ in range(n_turns)]
+    per_lat = [0.0 for _ in range(n_turns)]    # summed provider latency_ms of calls in the turn
+    per_calls = [0 for _ in range(n_turns)]    # number of LLM calls in the turn
+    per_ttft = [None for _ in range(n_turns)]  # first call's ttft_ms in the turn
     for sp in spans:
         t = _to_epoch(sp.get("ts_start", 0))
         idx = 0
@@ -36,6 +40,11 @@ def bucket_spans_by_turn(spans: list[dict], boundaries: list[str]) -> dict:
             idx += 1
         per_in[idx] += int(sp.get("tokens_input", 0))
         per_out[idx] += int(sp.get("tokens_output", 0))
+        per_cached[idx] += int(sp.get("tokens_cached", 0) or 0)
+        per_lat[idx] += float(sp.get("latency_ms", 0) or 0)
+        per_calls[idx] += 1
+        if per_ttft[idx] is None and sp.get("ttft_ms"):
+            per_ttft[idx] = sp.get("ttft_ms")
     cum, running = [], 0
     for v in per_in:
         running += v
@@ -44,4 +53,11 @@ def bucket_spans_by_turn(spans: list[dict], boundaries: list[str]) -> dict:
         "per_turn_input": per_in,
         "per_turn_output": per_out,
         "cumulative_input": cum,
+        # richer per-turn metrics (additive; existing keys unchanged)
+        "per_turn_cached": per_cached,
+        "per_turn_latency_ms": per_lat,
+        "per_turn_calls": per_calls,
+        "per_turn_ttft_ms": per_ttft,
+        "total_calls": sum(per_calls),
+        "total_latency_ms": sum(per_lat),
     }

@@ -70,6 +70,19 @@ def _run_one(fw: str, task_path: Path, model_alias: str, proxy_base_url: str,
     return json.loads(out_path.read_text())
 
 
+# Light quality guardrail: doc-turn answers must contain these substrings
+# (0-based turn idx -> expected substring). Mirrors bench_common.scenario05.QUALITY_CHECKS.
+_QUALITY_CHECKS = {0: "positive", 1: "North America", 7: "Supply chain"}
+
+
+def _quality_ok(answers: list) -> bool:
+    """True if every checked doc-turn answer contains its expected substring (ci)."""
+    for i, sub in _QUALITY_CHECKS.items():
+        if i >= len(answers) or sub.lower() not in str(answers[i]).lower():
+            return False
+    return True
+
+
 def _spans_for(fw: str, run_id: str, session_id: str, spans_dir: Path) -> list[dict]:
     name = run_id if fw in HEADER_CAPABLE else session_id
     return _read_spans(spans_dir / f"run-{name}.jsonl")
@@ -103,22 +116,43 @@ def main(argv: list[str] | None = None) -> int:
         buckets = bucket_spans_by_turn(spans, boundaries)
         total_in = sum(buckets["per_turn_input"])
         total_out = sum(buckets["per_turn_output"])
-        ro_tok = {"input": total_in, "output": total_out, "cached": 0}
+        total_cached = sum(buckets["per_turn_cached"])
+        ro_tok = {"input": total_in, "output": total_out, "cached": total_cached}
         usd = usd_per_run({"tokens": ro_tok}, args.model_alias)
         loc = sum(count_loc(REPO_ROOT / f) for f in LOC_TARGETS.get(fw, []) if (REPO_ROOT / f).exists())
+        answers = ro.get("answer") or []
         results.append({
             "framework": fw,
             "framework_version": ro.get("framework_version", ""),
+            # tokens (per-turn + totals)
             "per_turn_input": buckets["per_turn_input"],
+            "per_turn_output": buckets["per_turn_output"],
+            "per_turn_cached": buckets["per_turn_cached"],
             "cumulative_input": buckets["cumulative_input"],
             "total_input": total_in,
             "total_output": total_out,
+            "total_cached": total_cached,
             "turn10_input": buckets["per_turn_input"][-1] if buckets["per_turn_input"] else 0,
+            # latency / calls (provider-side, from spans)
+            "per_turn_latency_ms": buckets["per_turn_latency_ms"],
+            "per_turn_calls": buckets["per_turn_calls"],
+            "per_turn_ttft_ms": buckets["per_turn_ttft_ms"],
+            "total_calls": buckets["total_calls"],
+            "total_latency_ms": buckets["total_latency_ms"],
+            # wall-clock + resources (from the runner process)
+            "wall_latency_ms": ro.get("latency_ms"),
+            "cold_start_ms": ro.get("cold_start_ms"),
+            "ram_peak_mb": ro.get("ram_peak_mb"),
+            "ttft_ms": ro.get("ttft_ms"),
+            # cost, code, quality
             "usd_total": usd,
             "loc": loc,
-            "answers": ro.get("answer"),
+            "quality_ok": _quality_ok(answers),
+            "answers": answers,
         })
-        print(f"  {fw}: total_in={total_in} turn10_in={results[-1]['turn10_input']} loc={loc}")
+        print(f"  {fw}: total_in={total_in} turn10_in={results[-1]['turn10_input']} "
+              f"calls={buckets['total_calls']} wall_ms={ro.get('latency_ms')} loc={loc} "
+              f"quality_ok={results[-1]['quality_ok']}")
 
     if not results:
         print("no results")

@@ -54,16 +54,27 @@ def main(argv: list[str] | None = None) -> int:
         for r in data:
             fw = r["framework"]
             a = acc.setdefault(fw, {
-                "total": [], "turn10": [], "usd": [], "output": [],
-                "cum": [], "per_turn": [], "loc": r.get("loc"),
-                "version": r.get("framework_version", ""),
+                "total": [], "turn10": [], "usd": [], "output": [], "cached": [],
+                "calls": [], "lat": [], "wall": [], "cold": [], "ram": [], "ttft": [],
+                "quality": [], "cum": [], "per_turn": [], "pt_lat": [], "pt_calls": [],
+                "loc": r.get("loc"), "version": r.get("framework_version", ""),
             })
             a["total"].append(r["total_input"])
             a["turn10"].append(r["turn10_input"])
             a["usd"].append(r["usd_total"])
             a["output"].append(r.get("total_output", 0))
+            a["cached"].append(r.get("total_cached", 0))
+            a["calls"].append(r.get("total_calls", 0))
+            a["lat"].append(r.get("total_latency_ms", 0))
+            a["wall"].append(r.get("wall_latency_ms") or 0)
+            a["cold"].append(r.get("cold_start_ms") or 0)
+            a["ram"].append(r.get("ram_peak_mb") or 0)
+            a["ttft"].append(r.get("ttft_ms") or 0)
+            a["quality"].append(1 if r.get("quality_ok") else 0)
             a["cum"].append(r["cumulative_input"])
             a["per_turn"].append(r["per_turn_input"])
+            a["pt_lat"].append(r.get("per_turn_latency_ms") or [])
+            a["pt_calls"].append(r.get("per_turn_calls") or [])
             a["loc"] = r.get("loc")
 
     out = {"n_passes": n_passes, "frameworks": []}
@@ -71,23 +82,39 @@ def main(argv: list[str] | None = None) -> int:
         tm, ts = _mean_std(a["total"])
         t10m, t10s = _mean_std(a["turn10"])
         um, us = _mean_std(a["usd"])
-        om, os = _mean_std(a["output"])
+        om, os_ = _mean_std(a["output"])
+        cm, cs = _mean_std(a["cached"])
+        callm, calls = _mean_std(a["calls"])
+        latm, lats = _mean_std(a["lat"])
+        wm, ws = _mean_std(a["wall"])
+        coldm, colds = _mean_std(a["cold"])
+        ramm, rams = _mean_std(a["ram"])
+        ttftm, ttfts = _mean_std(a["ttft"])
+        qrate = sum(a["quality"]) / len(a["quality"]) if a["quality"] else 0.0
         n_turns = max((len(c) for c in a["cum"]), default=0)
-        cum_mean, cum_std, pt_mean = [], [], []
+        cum_mean, cum_std, pt_mean, pt_lat_mean, pt_calls_mean = [], [], [], [], []
         for t in range(n_turns):
-            col = [c[t] for c in a["cum"] if t < len(c)]
-            m, s = _mean_std(col)
+            m, s = _mean_std([c[t] for c in a["cum"] if t < len(c)])
             cum_mean.append(m); cum_std.append(s)
-            ptcol = [c[t] for c in a["per_turn"] if t < len(c)]
-            pm, _ = _mean_std(ptcol)
-            pt_mean.append(pm)
+            pt_mean.append(_mean_std([c[t] for c in a["per_turn"] if t < len(c)])[0])
+            pt_lat_mean.append(_mean_std([c[t] for c in a["pt_lat"] if t < len(c)])[0])
+            pt_calls_mean.append(_mean_std([c[t] for c in a["pt_calls"] if t < len(c)])[0])
         out["frameworks"].append({
             "framework": fw, "framework_version": a["version"], "loc": a["loc"],
             "total_mean": tm, "total_std": ts,
             "turn10_mean": t10m, "turn10_std": t10s,
             "usd_mean": um, "usd_std": us,
-            "output_mean": om, "output_std": os,
+            "output_mean": om, "output_std": os_,
+            "cached_mean": cm, "cached_std": cs,
+            "calls_mean": callm, "calls_std": calls,
+            "latency_ms_mean": latm, "latency_ms_std": lats,
+            "wall_latency_ms_mean": wm, "wall_latency_ms_std": ws,
+            "cold_start_ms_mean": coldm, "cold_start_ms_std": colds,
+            "ram_peak_mb_mean": ramm, "ram_peak_mb_std": rams,
+            "ttft_ms_mean": ttftm, "ttft_ms_std": ttfts,
+            "quality_pass_rate": qrate,
             "cum_mean": cum_mean, "cum_std": cum_std, "per_turn_mean": pt_mean,
+            "per_turn_latency_ms_mean": pt_lat_mean, "per_turn_calls_mean": pt_calls_mean,
         })
     out["frameworks"].sort(key=lambda r: r["total_mean"])
 
@@ -102,13 +129,24 @@ def main(argv: list[str] | None = None) -> int:
         w = csv.writer(fh)
         w.writerow(["framework", "version", "n_passes", "loc",
                     "total_in_mean", "total_in_std", "turn10_in_mean", "turn10_in_std",
-                    "usd_mean", "usd_std", "output_mean", "output_std"])
+                    "output_mean", "output_std", "cached_mean",
+                    "usd_mean", "usd_std",
+                    "calls_mean", "calls_std",
+                    "provider_latency_ms_mean", "provider_latency_ms_std",
+                    "wall_latency_ms_mean", "wall_latency_ms_std",
+                    "ttft_ms_mean", "cold_start_ms_mean", "ram_peak_mb_mean",
+                    "quality_pass_rate"])
         for r in out["frameworks"]:
             w.writerow([r["framework"], r["framework_version"], n_passes, r["loc"],
                         f"{r['total_mean']:.1f}", f"{r['total_std']:.1f}",
                         f"{r['turn10_mean']:.1f}", f"{r['turn10_std']:.1f}",
+                        f"{r['output_mean']:.1f}", f"{r['output_std']:.1f}", f"{r['cached_mean']:.1f}",
                         f"{r['usd_mean']:.6f}", f"{r['usd_std']:.6f}",
-                        f"{r['output_mean']:.1f}", f"{r['output_std']:.1f}"])
+                        f"{r['calls_mean']:.2f}", f"{r['calls_std']:.2f}",
+                        f"{r['latency_ms_mean']:.1f}", f"{r['latency_ms_std']:.1f}",
+                        f"{r['wall_latency_ms_mean']:.1f}", f"{r['wall_latency_ms_std']:.1f}",
+                        f"{r['ttft_ms_mean']:.1f}", f"{r['cold_start_ms_mean']:.1f}",
+                        f"{r['ram_peak_mb_mean']:.2f}", f"{r['quality_pass_rate']:.2f}"])
     perturn = outpath.with_name(outpath.stem + "_per_turn.csv")
     with perturn.open("w", newline="") as fh:
         w = csv.writer(fh)

@@ -225,6 +225,39 @@ def stacked_composition(agg, outdir):
     fig.tight_layout(); fig.savefig(outdir / "8_stacked_composition.png", dpi=150); plt.close(fig)
 
 
+def bar_latency(agg, outdir):
+    fws = agg["frameworks"]
+    names = [r["framework"] for r in fws]
+    # total provider latency over the conversation (sum of all LLM calls), seconds
+    means = [r.get("latency_ms_mean", 0) / 1000 for r in fws]
+    stds = [r.get("latency_ms_std", 0) / 1000 for r in fws]
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    bars = ax.bar(names, means, yerr=stds, capsize=5, color=[_color(n) for n in names])
+    for b, m in zip(bars, means):
+        ax.text(b.get_x() + b.get_width() / 2, m, f"{m:.1f}s", ha="center", va="bottom", fontsize=8)
+    ax.set_ylabel("Total provider latency over 10 turns (s)")
+    ax.set_title(f"Provider latency (sum of LLM calls, mean ± std, N={agg['n_passes']})\n"
+                 "note: dominated by the model; reflects context size + #calls")
+    ax.grid(axis="y", alpha=0.3)
+    fig.tight_layout(); fig.savefig(outdir / "9_bar_latency.png", dpi=150); plt.close(fig)
+
+
+def line_calls(agg, outdir):
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    for r in agg["frameworks"]:
+        cc = r.get("per_turn_calls_mean") or []
+        if not cc:
+            continue
+        x = list(range(1, len(cc) + 1))
+        hi = r["framework"] == COLMENA
+        ax.plot(x, cc, marker="o", linewidth=2.5 if hi else 1.5,
+                color=_color(r["framework"]), label=r["framework"], zorder=3 if hi else 2)
+    ax.set_xlabel("Conversation turn"); ax.set_ylabel("LLM calls that turn")
+    ax.set_title(f"LLM calls per turn (mean, N={agg['n_passes']})")
+    ax.legend(fontsize=8); ax.grid(alpha=0.3)
+    fig.tight_layout(); fig.savefig(outdir / "10_line_calls.png", dpi=150); plt.close(fig)
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="render demo05 charts")
     p.add_argument("--agg", type=Path, default=None)
@@ -240,7 +273,8 @@ def main(argv: list[str] | None = None) -> int:
     outdir = REPO_ROOT / "runs/demo05/report/plots"
     outdir.mkdir(parents=True, exist_ok=True)
     for fn in (bar_total_tokens, line_cumulative, line_per_turn, bar_usd,
-               multiplier_curve, quadrant, loc_bar, stacked_composition):
+               multiplier_curve, quadrant, loc_bar, stacked_composition,
+               bar_latency, line_calls):
         try:
             fn(agg, outdir)
             print(f"  ok: {fn.__name__}")
