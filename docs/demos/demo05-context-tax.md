@@ -40,38 +40,26 @@ turns, 3 pure follow-ups.
 the model decides on each turn whether to re-read the doc via `load_attachment`,
 while the competitors are stable ~385k–452k. The gap is consistently **≥6×**.)
 
-| Framework | ver | total input tok | turn-10 input tok | USD (10 turns) |
+**N=12 runs, mean ± std** (data: `runs/demo05/report/agg_n12_summary.csv`; charts:
+`runs/demo05/report/plots/`).
+
+| Framework | ver | total input tok (mean±std) | turn-10 tok | USD (10 turns) |
 |---|---|--:|--:|--:|
-| **colmena** | 0.4.0 | **37,134** | **1,951** | **$0.016988** |
-| langgraph | 1.2.4 | 385,312 | 71,147 | $0.119129 |
-| llamaindex | 0.14.22 | 386,491 | 71,214 | $0.120267 |
-| google_adk | 2.2.0 | 432,002 | 71,329 | $0.134848 |
-| crewai | 1.14.6 | 452,407 | 71,167 | $0.141940 |
-| langchain | 1.3.6 | 452,428 | 71,170 | $0.140161 |
+| **colmena** | 0.4.0 | **37,619 ± 5,603** | **1,927** | **$0.0184** |
+| langgraph | 1.2.4 | 404,095 ± 23,121 | 71,181 | $0.1255 |
+| llamaindex | 0.14.22 | 419,934 ± 34,873 | 71,225 | $0.1306 |
+| google_adk | 2.2.0 | 445,370 ± 11,614 | 71,395 | $0.1390 |
+| langchain | 1.3.6 | 452,158 ± 456 | 71,144 | $0.1406 |
+| crewai | 1.14.6 | 452,358 ± 285 | 71,202 | $0.1420 |
 
-**Headline (Colmena vs competitor median 432,002 / 71,170):**
-- **~11.6×** fewer total input tokens this run (consistently ≥6× across runs)
-- **~36×** lower at turn 10 alone — and the gap widens with every turn
-- **~7.9×** lower USD
+**Headline (Colmena vs competitor median ~448k / ~71.2k):**
+- **~12×** fewer total input tokens (Colmena's wider ±std is the model choosing
+  per turn whether to re-read the doc; competitors are near-deterministic)
+- **~37×** lower at turn 10 alone — the gap widens with every turn
+- **~7.6×** lower USD
 
-### Cumulative input tokens per turn
-
-| turn | colmena | langgraph | llamaindex | google_adk | crewai | langchain |
-|--:|--:|--:|--:|--:|--:|--:|
-| 1 | 4,713 | 3,338 | 3,400 | 3,351 | 3,362 | 3,353 |
-| 2 | 6,066 | 7,066 | 7,172 | 7,185 | 7,019 | 6,997 |
-| 3 | 8,838 | 10,829 | 10,979 | 11,054 | 36,854 | 36,758 |
-| 4 | 14,332 | 14,606 | 14,800 | 41,256 | 63,022 | 62,859 |
-| 5 | 15,714 | 18,395 | 18,633 | 67,611 | 89,218 | 88,988 |
-| 6 | 18,771 | 96,993 | 97,727 | 142,786 | 164,090 | 163,680 |
-| 7 | 24,822 | 145,629 | 146,433 | 191,603 | 212,771 | 212,241 |
-| 8 | 31,193 | 194,311 | 195,182 | 240,461 | 261,497 | 260,846 |
-| 9 | 35,183 | 314,275 | 315,285 | 360,812 | 381,493 | 380,573 |
-| 10 | 37,134 | 385,312 | 386,491 | 432,002 | 452,407 | 452,428 |
-
-Colmena's curve grows sub-linearly (it re-reads the doc only when a turn needs it,
-and charts never accumulate); the competitors step up at the doc turn and at every
-chart turn and never come back down.
+Per-turn cumulative curve: see `plots/2_line_cumulative.png` (Colmena flat with a
+±std band; the five competitors climb). Per-turn CSV: `agg_n12_per_turn.csv`.
 
 ---
 
@@ -119,6 +107,35 @@ amplified node-vs-code comparison is **Demo #4**. For Demo 05, both the token
 asymptote (≥6×) **and** the leaner maintained-code count hold.
 
 ---
+
+## 4b. Resources — RAM, CPU, latency (N=12, honest)
+
+Measured per runner process (the shared proxy/provider are excluded; for Colmena
+the in-process Rust engine IS included). Peak RSS is sampled during the run (true
+peak, not an end snapshot); CPU is `getrusage` user+sys.
+
+| Framework | Peak RAM (MB) | CPU (s) | LLM calls | provider latency |
+|---|--:|--:|--:|--:|
+| **colmena** | **49 ± 3** | 0.80 ± 0.11 | 18.8 | lowest |
+| langchain | 96 | 0.54 | 13 | |
+| langgraph | 107 | 0.60 | 13 | |
+| llamaindex | 174 | 1.06 | 13 | |
+| google_adk | 250 | 1.39 | 13 | |
+| crewai | 279 ± 1 | 1.48 | 13 | |
+
+- **RAM → clear Colmena win:** 49 MB vs 96–279 MB (2–6× less). The Rust core has a
+  far smaller footprint than the heavy Python agent frameworks. (`plots/11_bar_ram.png`)
+- **CPU → honest tie/mid:** Colmena 0.80 s sits *mid-pack* — langchain (0.54) and
+  langgraph (0.60) use less, because Colmena rebuilds its engine (tokio + Postgres
+  pool) on each `run_dag` call. Not a Colmena win. (`plots/12_bar_cpu.png`)
+- **LLM calls:** Colmena makes ~19 vs 13 — the extra `load_attachment` round-trips,
+  which count *against* it in tokens/latency and it still wins on tokens.
+- **Wall-clock latency (NOT shown as a win):** Colmena's end-to-end wall time is
+  high in this bench because the handler calls `run_dag` once per turn and the
+  engine is rebuilt each call. That is a **bench-harness artifact** — a production
+  deployment keeps the engine warm (`serve_dag`/persistent session). We disclose it
+  and do not feature it; the **provider-side** latency (actual model time) is the
+  lowest of the six.
 
 ## 5. Fairness controls
 
