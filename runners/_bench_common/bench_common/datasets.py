@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import csv
 import sqlite3
+import threading
 from pathlib import Path
 from typing import Callable
 
@@ -19,7 +20,12 @@ def load_orders_sqlite(csv_path: Path | str) -> tuple[sqlite3.Connection, Callab
     columns are stored as TEXT; SQL CAST as needed for math.
     """
     path = Path(csv_path)
-    conn = sqlite3.connect(":memory:")
+    # check_same_thread=False so agents that execute tools on worker threads
+    # (LangGraph/LlamaIndex/ADK run tools off the main thread) can reuse the
+    # same in-memory connection.  A lock serializes access — sqlite is not
+    # safe for concurrent use of one connection.
+    conn = sqlite3.connect(":memory:", check_same_thread=False)
+    lock = threading.Lock()
     with path.open(newline="", encoding="utf-8") as f:
         reader = csv.reader(f)
         header = next(reader)
@@ -30,12 +36,13 @@ def load_orders_sqlite(csv_path: Path | str) -> tuple[sqlite3.Connection, Callab
     conn.commit()
 
     def run_sql(query: str) -> str:
-        try:
-            cur = conn.execute(query)
-        except Exception as e:  # noqa: BLE001 — surface to the agent, don't crash
-            return f"ERROR: {type(e).__name__}: {e}"
-        rows = cur.fetchall()
-        names = [d[0] for d in cur.description] if cur.description else []
+        with lock:
+            try:
+                cur = conn.execute(query)
+                rows = cur.fetchall()
+                names = [d[0] for d in cur.description] if cur.description else []
+            except Exception as e:  # noqa: BLE001 — surface to the agent, don't crash
+                return f"ERROR: {type(e).__name__}: {e}"
         lines = [" | ".join(names)] if names else []
         for r in rows[:200]:  # cap output so a bad query can't blow up tokens
             lines.append(" | ".join("" if v is None else str(v) for v in r))
