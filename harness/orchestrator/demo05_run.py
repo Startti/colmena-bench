@@ -196,13 +196,24 @@ def _reading_section(results: list[dict]) -> str:
         f"about **{x_usd:.1f}x** on USD.",
         "",
         "**Why.** Two built-in Colmena behaviors, zero extra code:",
-        "1. **Ephemeral `load_attachment`** — the report document is loaded for "
-        "the turn that needs it and is NOT pinned into conversation history, so "
-        "it is not re-sent on every subsequent turn.",
-        "2. **Always-on base64 tool-output scrubbing** — generated chart bytes "
-        "(~32KB base64 each) are elided from history instead of accumulating. "
-        "Competitors on their default memory retain both, which is why their "
-        "curves jump at the doc turn and at every chart turn.",
+        "1. **Ephemeral `load_attachment`** — the report document (~3,000 tokens) "
+        "is loaded for the turn that needs it and is NOT pinned into conversation "
+        "history, so it is not re-sent on every subsequent turn.",
+        "2. **Always-on base64 tool-output scrubbing** — each generated chart is "
+        "~32KB base64 ≈ **8,000 tokens**; on default memory these accumulate, so "
+        "by turn 10 a competitor re-sends ~24,000 tokens of useless image bytes "
+        "every call. Colmena elides them at the tool boundary. This is the "
+        "dominant lever in the gap (3 charts re-sent every later turn), larger "
+        "than the pinned-doc effect. Competitors' curves jump at the doc turn and "
+        "step up at each chart turn.",
+        "",
+        "**Anticipated objection (\"you forced competitors to hoard base64 they'd "
+        "never keep\").** No — that IS the default. None of the 5 frameworks scrub "
+        "binary/oversize tool results out of the box; retaining the tool message "
+        "is standard memory behavior. Matching Colmena requires hand-written "
+        "elision (detect `data:…;base64,`/oversize, replace with a marker, "
+        "re-thread history). The synthetic chart (~32KB) is representative of a "
+        "real chart PNG (20–100KB), not a worst case.",
         "",
         "**LOC framing (honest).** In THIS multi-turn demo the handler LOC is "
         "comparable across frameworks — Colmena needs a per-turn `run_dag` driver "
