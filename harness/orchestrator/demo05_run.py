@@ -143,6 +143,10 @@ def main(argv: list[str] | None = None) -> int:
             "wall_latency_ms": ro.get("latency_ms"),
             "cold_start_ms": ro.get("cold_start_ms"),
             "ram_peak_mb": ro.get("ram_peak_mb"),
+            "cpu_user_s": ro.get("cpu_user_s"),
+            "cpu_sys_s": ro.get("cpu_sys_s"),
+            "cpu_total_s": (None if ro.get("cpu_user_s") is None
+                            else round((ro.get("cpu_user_s") or 0) + (ro.get("cpu_sys_s") or 0), 3)),
             "ttft_ms": ro.get("ttft_ms"),
             # cost, code, quality
             "usd_total": usd,

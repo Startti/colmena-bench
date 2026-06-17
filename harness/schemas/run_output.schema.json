@@ -54,6 +54,8 @@
     },
     "tool_calls": { "type": "integer", "minimum": 0 },
     "ram_peak_mb": { "type": "number", "minimum": 0 },
+    "cpu_user_s": { "type": ["number", "null"], "minimum": 0 },
+    "cpu_sys_s": { "type": ["number", "null"], "minimum": 0 },
     "success": {
       "type": "object",
       "additionalProperties": false,

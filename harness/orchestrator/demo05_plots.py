@@ -258,6 +258,42 @@ def line_calls(agg, outdir):
     fig.tight_layout(); fig.savefig(outdir / "10_line_calls.png", dpi=150); plt.close(fig)
 
 
+def bar_ram(agg, outdir):
+    fws = agg["frameworks"]
+    names = [r["framework"] for r in fws]
+    means = [r.get("ram_peak_mb_mean", 0) for r in fws]
+    stds = [r.get("ram_peak_mb_std", 0) for r in fws]
+    order = sorted(range(len(names)), key=lambda i: means[i])
+    names = [names[i] for i in order]; means = [means[i] for i in order]; stds = [stds[i] for i in order]
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    bars = ax.bar(names, means, yerr=stds, capsize=5, color=[_color(n) for n in names])
+    for b, m in zip(bars, means):
+        ax.text(b.get_x() + b.get_width() / 2, m, f"{m:,.0f}", ha="center", va="bottom", fontsize=8)
+    ax.set_ylabel("Peak RSS (MB)")
+    ax.set_title(f"Peak memory of the runner process (mean ± std, N={agg['n_passes']})\n"
+                 "in-process work only (shared proxy excluded); Colmena incl. its Rust engine")
+    ax.grid(axis="y", alpha=0.3)
+    fig.tight_layout(); fig.savefig(outdir / "11_bar_ram.png", dpi=150); plt.close(fig)
+
+
+def bar_cpu(agg, outdir):
+    fws = agg["frameworks"]
+    names = [r["framework"] for r in fws]
+    means = [r.get("cpu_total_s_mean", 0) for r in fws]
+    stds = [r.get("cpu_total_s_std", 0) for r in fws]
+    order = sorted(range(len(names)), key=lambda i: means[i])
+    names = [names[i] for i in order]; means = [means[i] for i in order]; stds = [stds[i] for i in order]
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    bars = ax.bar(names, means, yerr=stds, capsize=5, color=[_color(n) for n in names])
+    for b, m in zip(bars, means):
+        ax.text(b.get_x() + b.get_width() / 2, m, f"{m:.1f}s", ha="center", va="bottom", fontsize=8)
+    ax.set_ylabel("CPU time over 10 turns (user+sys, s)")
+    ax.set_title(f"CPU work of the runner process (mean ± std, N={agg['n_passes']})\n"
+                 "actual compute, excludes time waiting on the model")
+    ax.grid(axis="y", alpha=0.3)
+    fig.tight_layout(); fig.savefig(outdir / "12_bar_cpu.png", dpi=150); plt.close(fig)
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="render demo05 charts")
     p.add_argument("--agg", type=Path, default=None)
@@ -274,7 +310,7 @@ def main(argv: list[str] | None = None) -> int:
     outdir.mkdir(parents=True, exist_ok=True)
     for fn in (bar_total_tokens, line_cumulative, line_per_turn, bar_usd,
                multiplier_curve, quadrant, loc_bar, stacked_composition,
-               bar_latency, line_calls):
+               bar_latency, line_calls, bar_ram, bar_cpu):
         try:
             fn(agg, outdir)
             print(f"  ok: {fn.__name__}")

@@ -11,8 +11,10 @@ import argparse
 import json
 import platform
 import re
+import resource
 import socket
 import sys
+import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -114,6 +116,9 @@ def emit_output(
     success: dict[str, Any],
     error: str | None = None,
     extras: dict[str, Any] | None = None,
+    ram_peak_mb: float | None = None,
+    cpu_user_s: float | None = None,
+    cpu_sys_s: float | None = None,
 ) -> None:
     task = load_task(args.task)
     payload = {
@@ -134,7 +139,13 @@ def emit_output(
             "cached": int(tokens_cached),
         },
         "tool_calls": int(tool_calls),
-        "ram_peak_mb": round(psutil.Process().memory_info().rss / (1024 ** 2), 2),
+        # True peak RSS sampled during the handler (not an end snapshot) + CPU
+        # seconds of THIS runner process (RUSAGE_SELF — includes in-process Rust
+        # for Colmena). Falls back to an end snapshot if not provided.
+        "ram_peak_mb": (round(ram_peak_mb, 2) if ram_peak_mb is not None
+                        else round(psutil.Process().memory_info().rss / (1024 ** 2), 2)),
+        "cpu_user_s": (round(cpu_user_s, 3) if cpu_user_s is not None else None),
+        "cpu_sys_s": (round(cpu_sys_s, 3) if cpu_sys_s is not None else None),
         "success": success,
         "answer": answer,
         "error": error,
@@ -169,6 +180,25 @@ def run(
     cold_start_ms = int((time.perf_counter() - t0_cold) * 1000)
 
     llm = llm_factory(args)
+
+    # Sample this process's RSS during the handler to get a TRUE peak (not an
+    # end snapshot). For Colmena the Rust engine runs in-process (PyO3), so its
+    # allocations + tokio threads are included — same process, same RSS.
+    _proc = psutil.Process()
+    _peak = {"rss": _proc.memory_info().rss}
+    _stop = threading.Event()
+
+    def _sample() -> None:
+        while not _stop.is_set():
+            try:
+                _peak["rss"] = max(_peak["rss"], _proc.memory_info().rss)
+            except Exception:  # noqa: BLE001
+                pass
+            _stop.wait(0.05)
+
+    _sampler = threading.Thread(target=_sample, daemon=True)
+    _sampler.start()
+
     started = datetime.now(timezone.utc)
     answer: Any = None
     usage = {"input": 0, "output": 0, "cached": 0, "tool_calls": 0}
@@ -183,6 +213,12 @@ def run(
     except Exception as e:  # noqa: BLE001 — runner-level catch-all
         error = f"{type(e).__name__}: {e}"
     ended = datetime.now(timezone.utc)
+    _stop.set()
+    _sampler.join(timeout=1.0)
+    _peak["rss"] = max(_peak["rss"], _proc.memory_info().rss)
+    ram_peak_mb = _peak["rss"] / (1024 ** 2)
+    _ru = resource.getrusage(resource.RUSAGE_SELF)
+    cpu_user_s, cpu_sys_s = _ru.ru_utime, _ru.ru_stime
 
     success = (
         score_success(task["success"], answer)
@@ -204,5 +240,8 @@ def run(
         success=success,
         error=error,
         extras=extras,
+        ram_peak_mb=ram_peak_mb,
+        cpu_user_s=cpu_user_s,
+        cpu_sys_s=cpu_sys_s,
     )
     return 0

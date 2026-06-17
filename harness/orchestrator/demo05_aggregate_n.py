@@ -55,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
             fw = r["framework"]
             a = acc.setdefault(fw, {
                 "total": [], "turn10": [], "usd": [], "output": [], "cached": [],
-                "calls": [], "lat": [], "wall": [], "cold": [], "ram": [], "ttft": [],
+                "calls": [], "lat": [], "wall": [], "cold": [], "ram": [], "cpu": [], "ttft": [],
                 "quality": [], "cum": [], "per_turn": [], "pt_lat": [], "pt_calls": [],
                 "loc": r.get("loc"), "version": r.get("framework_version", ""),
             })
@@ -69,6 +69,7 @@ def main(argv: list[str] | None = None) -> int:
             a["wall"].append(r.get("wall_latency_ms") or 0)
             a["cold"].append(r.get("cold_start_ms") or 0)
             a["ram"].append(r.get("ram_peak_mb") or 0)
+            a["cpu"].append(r.get("cpu_total_s") or 0)
             a["ttft"].append(r.get("ttft_ms") or 0)
             a["quality"].append(1 if r.get("quality_ok") else 0)
             a["cum"].append(r["cumulative_input"])
@@ -89,6 +90,7 @@ def main(argv: list[str] | None = None) -> int:
         wm, ws = _mean_std(a["wall"])
         coldm, colds = _mean_std(a["cold"])
         ramm, rams = _mean_std(a["ram"])
+        cpum, cpus = _mean_std(a["cpu"])
         ttftm, ttfts = _mean_std(a["ttft"])
         qrate = sum(a["quality"]) / len(a["quality"]) if a["quality"] else 0.0
         n_turns = max((len(c) for c in a["cum"]), default=0)
@@ -111,6 +113,7 @@ def main(argv: list[str] | None = None) -> int:
             "wall_latency_ms_mean": wm, "wall_latency_ms_std": ws,
             "cold_start_ms_mean": coldm, "cold_start_ms_std": colds,
             "ram_peak_mb_mean": ramm, "ram_peak_mb_std": rams,
+            "cpu_total_s_mean": cpum, "cpu_total_s_std": cpus,
             "ttft_ms_mean": ttftm, "ttft_ms_std": ttfts,
             "quality_pass_rate": qrate,
             "cum_mean": cum_mean, "cum_std": cum_std, "per_turn_mean": pt_mean,
@@ -134,7 +137,9 @@ def main(argv: list[str] | None = None) -> int:
                     "calls_mean", "calls_std",
                     "provider_latency_ms_mean", "provider_latency_ms_std",
                     "wall_latency_ms_mean", "wall_latency_ms_std",
-                    "ttft_ms_mean", "cold_start_ms_mean", "ram_peak_mb_mean",
+                    "ttft_ms_mean", "cold_start_ms_mean",
+                    "ram_peak_mb_mean", "ram_peak_mb_std",
+                    "cpu_total_s_mean", "cpu_total_s_std",
                     "quality_pass_rate"])
         for r in out["frameworks"]:
             w.writerow([r["framework"], r["framework_version"], n_passes, r["loc"],
@@ -146,7 +151,9 @@ def main(argv: list[str] | None = None) -> int:
                         f"{r['latency_ms_mean']:.1f}", f"{r['latency_ms_std']:.1f}",
                         f"{r['wall_latency_ms_mean']:.1f}", f"{r['wall_latency_ms_std']:.1f}",
                         f"{r['ttft_ms_mean']:.1f}", f"{r['cold_start_ms_mean']:.1f}",
-                        f"{r['ram_peak_mb_mean']:.2f}", f"{r['quality_pass_rate']:.2f}"])
+                        f"{r['ram_peak_mb_mean']:.2f}", f"{r['ram_peak_mb_std']:.2f}",
+                        f"{r['cpu_total_s_mean']:.3f}", f"{r['cpu_total_s_std']:.3f}",
+                        f"{r['quality_pass_rate']:.2f}"])
     perturn = outpath.with_name(outpath.stem + "_per_turn.csv")
     with perturn.open("w", newline="") as fh:
         w = csv.writer(fh)
