@@ -62,3 +62,5 @@ results/verify_baseline-*/
 
 # demo run scratch artifacts (keep report/, not raw per-run json)
 runs/*/raw/
+
+runs/**/raw/
