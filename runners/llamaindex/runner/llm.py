@@ -24,6 +24,7 @@ def build_llm(args: RunnerArgs) -> Any:
             "LITELLM_PROXY_API_KEY", "sk-bench-runner-do-not-use-in-prod"
         ),
         is_chat_model=True,
+        is_function_calling_model=True,  # required for FunctionAgent tool dispatch
         temperature=0.0,
         default_headers={"x-bench-run-id": args.run_id},
     )
