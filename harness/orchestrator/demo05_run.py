@@ -166,7 +166,61 @@ def render_report(results: list[dict]) -> str:
         "extra code Colmena provides built-in (extra LOC = 0)._",
         "",
     ]
+    lines.append(_reading_section(results))
     return "\n".join(lines) + "\n"
+
+
+def _reading_section(results: list[dict]) -> str:
+    """Append the honest 'Reading this result' analysis with computed multiples."""
+    import statistics
+    col = next((r for r in results if r["framework"] == "colmena"), None)
+    comp = [r for r in results if r["framework"] != "colmena"]
+    if not col or not comp:
+        return ""
+    med_total = statistics.median(r["total_input"] for r in comp)
+    med_t10 = statistics.median(r["turn10_input"] for r in comp)
+    med_usd = statistics.median(r["usd_total"] for r in comp)
+    x_total = med_total / col["total_input"] if col["total_input"] else 0
+    x_t10 = med_t10 / col["turn10_input"] if col["turn10_input"] else 0
+    x_usd = med_usd / col["usd_total"] if col["usd_total"] else 0
+    return "\n".join([
+        "## Reading this result",
+        "",
+        "**Headline.** Colmena's cumulative-input curve stays comparatively flat "
+        "while every competitor grows roughly linearly in conversation history. "
+        f"At turn 10 Colmena spends **{col['turn10_input']:,}** input tokens vs a "
+        f"competitor median of **{med_t10:,.0f}** (**{x_t10:.1f}x** tax that "
+        "turn). Over the whole 10-turn conversation Colmena spends "
+        f"**{col['total_input']:,}** input tokens vs a competitor median of "
+        f"**{med_total:,.0f}** — a **{x_total:.1f}x** total-token multiple, and "
+        f"about **{x_usd:.1f}x** on USD.",
+        "",
+        "**Why.** Two built-in Colmena behaviors, zero extra code:",
+        "1. **Ephemeral `load_attachment`** — the report document is loaded for "
+        "the turn that needs it and is NOT pinned into conversation history, so "
+        "it is not re-sent on every subsequent turn.",
+        "2. **Always-on base64 tool-output scrubbing** — generated chart bytes "
+        "(~32KB base64 each) are elided from history instead of accumulating. "
+        "Competitors on their default memory retain both, which is why their "
+        "curves jump at the doc turn and at every chart turn.",
+        "",
+        "**LOC framing (honest).** In THIS multi-turn demo the handler LOC is "
+        "comparable across frameworks — Colmena needs a per-turn `run_dag` driver "
+        "plus a DAG JSON, so it is not the smallest here. LOC is reported for "
+        "completeness but is NOT the headline of this demo; the node-vs-code LOC "
+        "advantage is the subject of a separate demo (#4). The real Colmena "
+        "\"LOC win\" embedded here is that matching its scrubbing + attachment "
+        "management would cost the competitors EXTRA code (manual history "
+        "trimming, attachment caching, base64 elision) that their default "
+        "baseline does not include.",
+        "",
+        "**Fairness.** Same model, same proxy, same fixed 10-turn script, same "
+        "report + chart payload for all six. Competitors use their own default "
+        "idiomatic memory (no hand-tuning against them). Token counts are "
+        "provider-authoritative — captured at the proxy, not self-reported by "
+        "the frameworks.",
+        "",
+    ])
 
 
 if __name__ == "__main__":

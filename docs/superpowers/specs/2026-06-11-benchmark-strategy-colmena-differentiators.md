@@ -53,6 +53,35 @@ Ranked. Each: claim · evidence · metric · competitor reality.
   by the proxy we already built.
 - **Competitor reality:** none of the 5 has an always-on binary scrubber or a
   read/forward/ignore attachment catalog. Genuine, unique win.
+- **✅ DONE (2026-06-16) — measured, all 6 frameworks, live.**
+  Fixed 10-turn report-assistant conversation (doc summarize + region/growth/
+  risk questions + 3 chart-generation turns), same model (`gemini-2.5-flash`),
+  same proxy, provider-authoritative tokens bucketed per turn.
+  - **Total input tokens:** colmena **65,680** vs competitor cluster
+    **386,508–452,610** (median 432,002) → **~6.6x** total-token tax,
+    **~5.9x–6.9x** range.
+  - **Turn-10 input tokens:** colmena **20,770** vs competitor median
+    **71,211** → **~3.4x** per-turn tax at turn 10 (and growing).
+  - **USD (10 turns):** colmena **$0.028952** vs competitor median
+    **$0.134668** → **~4.7x**.
+  - **Curve:** colmena cumulative-input stays comparatively flat; the 5
+    competitors grow roughly linearly in history (jumps at the doc turn and at
+    every chart turn). Caused by built-in ephemeral `load_attachment` (doc not
+    pinned in history) + always-on base64 tool-output scrubbing (chart bytes
+    elided) — zero extra code.
+  - **Quality kept:** colmena's doc-turn answers are correct (turn 1 "North
+    America", turn 7 "Supply chain", turn 0 "positive"); its only empty turns
+    are the 3 legitimate chart turns. The token win is NOT a quality trade.
+    Honest caveat: the llamaindex run returned empty text on turns 3–4 (its own
+    agent quirk; exited 0, no crash) — noted but does not affect tokens.
+  - **Required engine branch:** colmena `fix/text-attachment-no-files-api`
+    (inline text attachments skip the Files API), built into the colmena venv.
+  - **Report:** `runs/demo05/report/report.md` (+ `chart_data.json`,
+    `quality_check.md`). **Design spec:**
+    `docs/superpowers/specs/2026-06-16-context-scrubbing-demo-design.md`.
+  - **Note on LOC:** in this multi-turn demo handler LOC is comparable across
+    frameworks (colmena needs a per-turn `run_dag` driver + DAG JSON), so LOC is
+    reported but is NOT the headline here — the node-vs-code LOC win is demo #4.
 
 ### #2 — Encrypted secrets + outbound masking (security)
 - **Claim:** credentials are injected as opaque handles; the plaintext never
