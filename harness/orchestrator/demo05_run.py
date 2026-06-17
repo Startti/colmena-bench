@@ -72,7 +72,7 @@ def _run_one(fw: str, task_path: Path, model_alias: str, proxy_base_url: str,
 
 # Light quality guardrail: doc-turn answers must contain these substrings
 # (0-based turn idx -> expected substring). Mirrors bench_common.scenario05.QUALITY_CHECKS.
-_QUALITY_CHECKS = {0: "positive", 1: "North America", 7: "Supply chain"}
+_QUALITY_CHECKS = {0: "12,600", 1: "North America", 7: "Supply chain"}
 
 
 def _quality_ok(answers: list) -> bool:
