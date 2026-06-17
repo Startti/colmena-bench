@@ -1,0 +1,70 @@
+{
+  "run_id": "b12bfbd1-cc78-4167-b837-46764011ccc6",
+  "task_id": "05_context_scrubbing",
+  "variant": "default",
+  "framework": "llamaindex",
+  "framework_version": "0.14.22",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-17T02:44:53.987298Z",
+  "ended_at": "2026-06-17T02:45:19.676446Z",
+  "latency_ms": 25689,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 173.91,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'multi_turn_demo' not implemented in T1 scaffold"
+  },
+  "answer": [
+    "Acme Analytics, Inc. reported total revenue of $12,600k in Q3 2026, a 16.5% quarter-over-quarter growth from $10,820k in Q2 2026. Growth was primarily driven by Latin America (38% QoQ) and Asia Pacific (24% QoQ), while North America remained the largest revenue contributor at $4,200k. Monthly bookings showed an unbroken upward trend throughout the quarter, from $3,990k in July to $4,150k in September.\n\nThe principal risks identified are supply chain concentration (High severity), FX exposure in Latin America (Medium severity), customer concentration (Medium severity), and talent attrition in engineering (Low severity).\n\nPlatform was the primary revenue driver, contributing 68% of total revenue ($8,568k) with an 18% QoQ growth. Connectors revenue was flat, and Services grew by 9%. The company added 25 net new logos, ending Q3 with 412 paying accounts, and achieved a Net Revenue Retention (NRR) of 118%. The median contract value increased from $28k to $31k ARR.\n\nTotal headcount increased to 284, and operating expenses rose by 8% to $9,840k. The competitive win rate improved to 64%, with pricing and missing predictive analytics features being the most common reasons for losses. For Q4 2026, the company targets total bookings of $14,200k, a 12.7% sequential increase.",
+    "North America had the highest revenue in Q3 2026, at $4,200k.",
+    "",
+    "",
+    "",
+    "A line chart of the monthly bookings trend was generated.",
+    "The charts collectively illustrate the regional distribution of revenue in Q3 2026 and the positive upward trend in monthly bookings throughout that quarter.",
+    "The top 3 risks listed in the report are supply chain concentration, FX exposure in Latin America, and customer concentration.",
+    "A chart of risk severity was generated.",
+    "Acme Analytics, Inc. experienced a positive Q3 2026, with total revenue growing 16.5% quarter-over-quarter, driven primarily by Latin America and Asia Pacific, and a consistent upward trend in monthly bookings, while facing principal risks related to supply chain concentration, FX exposure, and customer concentration, which were visualized through generated charts."
+  ],
+  "error": null,
+  "host": {
+    "hostname": "192.168.40.20",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-17T02:44:54.035481Z",
+      "2026-06-17T02:44:57.540956Z",
+      "2026-06-17T02:44:58.070127Z",
+      "2026-06-17T02:44:59.164894Z",
+      "2026-06-17T02:44:59.831419Z",
+      "2026-06-17T02:45:01.751297Z",
+      "2026-06-17T02:45:07.439303Z",
+      "2026-06-17T02:45:09.545924Z",
+      "2026-06-17T02:45:12.173815Z",
+      "2026-06-17T02:45:16.286761Z",
+      "2026-06-17T02:45:19.675886Z"
+    ],
+    "turn_types": [
+      "doc",
+      "doc",
+      "chart",
+      "doc",
+      "follow_up",
+      "chart",
+      "follow_up",
+      "doc",
+      "chart",
+      "follow_up"
+    ]
+  }
+}

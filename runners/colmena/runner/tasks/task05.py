@@ -1,20 +1,27 @@
 """Task 5 — Colmena context-scrubbing demo (Hero Demo #1, "context tax").
 
-The agent IS the DAG: a single ``trigger_webhook → llm_call(assistant) → log``
-graph, built ONCE. Each of the 10 turns just feeds that turn's user message
-through ``inject_payload={"prompt": ...}`` — the ``llm_call`` node sources its
-prompt from the trigger payload (``inputs["prompt"]`` takes priority over
-``config.prompt``; see colmena llm.rs). All turns share ONE stable
-``agent_session_id`` and the same node id (``assistant``), so Colmena's
+The agent is a DECLARATIVE DAG: ``runners/colmena/dags/demo05_turn.json`` defines
+a single ``trigger_webhook → llm_call(assistant) → log`` graph. This module is a
+THIN runner — it loads that JSON once, then feeds each of the 10 turns' user
+message through ``inject_payload={"prompt": ...}``. The ``llm_call`` node carries
+NO static ``config.prompt``; the prompt arrives per-turn via the trigger payload
+(``inputs["prompt"]`` takes priority; see colmena llm.rs). All turns share ONE
+stable ``agent_session_id`` and the same node id (``assistant``), so Colmena's
 conversation memory — keyed by ``(agent_session_id, node_id)`` — carries history
 across runs. No per-turn templating, no JSON reload, no nested-key stamping.
 
+The JSON carries config literals: the ``system_message`` and the turn-0 Q3 report
+attachment (baked-in data URI). The only value stamped from Python is the chart
+data URI — replaced ONCE at load via the ``${CHART_DATA_URI}`` placeholder so the
+~32KB blob stays sourced from ``bench_common.generate_chart()`` (single source of
+truth). The per-turn loop does NOTHING but ``inject_payload``.
+
 Why Colmena stays flat on the token asymptote:
 
-* The Q3 report is attached via ``files[]`` ONLY on turn 0 (the static DAG). The
-  engine registers it in the session attachment catalog but does NOT inject the
-  bytes into context — the model calls ``load_attachment`` when it needs the
-  content. Later turns read it from the persisted catalog without re-attaching.
+* The Q3 report is attached via ``files[]`` ONLY on turn 0 (turns 1-9 drop the
+  ``files`` key). The engine registers it in the session attachment catalog but
+  does NOT inject the bytes into context — the model calls ``load_attachment``
+  when it needs the content. Later turns read it from the persisted catalog.
 * The ``generate_chart`` tool returns a ~32KB base64 PNG data URI. Colmena's
   always-on tool-output scrubber (dag_tool_executor.rs ``scrub_value_for_llm``)
   elides any ``data:<mime>;base64,...`` string to ``[binary elided: ...]`` before
@@ -29,22 +36,15 @@ Cross-turn ``load_attachment`` needs durable cross-process byte storage
 """
 from __future__ import annotations
 
-import base64
 import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from bench_common import (
-    RunnerArgs,
-    REPORT_TEXT,
-    REPORT_DOC_ID,
-    REPORT_FILENAME,
-    TURNS,
-    SYSTEM_MESSAGE,
-    generate_chart,
-)
+from bench_common import RunnerArgs, TURNS, generate_chart
+
+_DAG_PATH = Path(__file__).resolve().parents[2] / "dags" / "demo05_turn.json"
 
 
 def _now_iso() -> str:
@@ -63,32 +63,12 @@ def _ensure_env(caller: Any) -> None:
         os.environ.setdefault("COLMENA_LOCAL_STORAGE_PORT", "0")
 
 
-def _build_dag(model_alias: str, chart_data_uri: str) -> dict[str, Any]:
-    """The whole agent, built once. Per-turn prompt arrives via inject_payload."""
-    report_b64 = base64.b64encode(REPORT_TEXT.encode("utf-8")).decode("ascii")
-    return {
-        "nodes": {
-            "trigger": {"type": "trigger_webhook", "config": {"path": "/turn"}},
-            "assistant": {"type": "llm_call", "config": {
-                "provider": "openai", "model": model_alias, "api_key": "${OPENAI_API_KEY}",
-                "connection_url": "${DATABASE_URL}", "attachments_enabled": True,
-                "temperature": 0.0, "stream": False, "system_message": SYSTEM_MESSAGE,
-                "files": [{"id": REPORT_DOC_ID, "filename": REPORT_FILENAME,
-                           "mime_type": "text/markdown", "label": "Q3 2026 Business Review",
-                           "data": f"data:text/markdown;base64,{report_b64}"}],
-                "tool_configurations": {"generate_chart": {
-                    "name": "generate_chart", "node_type": "python_script",
-                    "description": "Generate a chart image from a natural-language description. Returns the chart as a base64 PNG data URI.",
-                    "node_schema": {
-                        "sandbox_mode": {"type": "string", "fixed": "none"},
-                        "code": {"type": "string", "fixed": 'output = {"chart": chart_data_uri}'},
-                        "chart_data_uri": {"type": "string", "fixed": chart_data_uri},
-                        "description": {"type": "string", "required": True,
-                                        "description": "Natural-language description of the chart to generate."}}}}}},
-            "log": {"type": "log"},
-        },
-        "edges": [{"from": "trigger", "to": "assistant"}, {"from": "assistant", "to": "log"}],
-    }
+def _load_dag(model_alias: str) -> dict[str, Any]:
+    """Load the declarative agent once; stamp the two values the JSON can't carry."""
+    text = _DAG_PATH.read_text()
+    text = text.replace("${MODEL_ALIAS}", model_alias)
+    text = text.replace("${CHART_DATA_URI}", generate_chart(""))
+    return json.loads(text)
 
 
 def run(
@@ -98,7 +78,7 @@ def run(
 
     _ensure_env(caller)
     session_id = f"demo05_{args.run_id}"
-    dag = _build_dag(caller.model_alias, generate_chart(""))
+    dag = _load_dag(caller.model_alias)
 
     answers: list[str] = []
     turn_boundaries: list[str] = [_now_iso()]

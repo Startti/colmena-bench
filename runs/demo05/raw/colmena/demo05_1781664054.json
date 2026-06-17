@@ -1,0 +1,70 @@
+{
+  "run_id": "demo05_1781664054",
+  "task_id": "05_context_scrubbing",
+  "variant": "default",
+  "framework": "colmena",
+  "framework_version": "0.4.0",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-17T02:40:58.116999Z",
+  "ended_at": "2026-06-17T02:43:40.234433Z",
+  "latency_ms": 162117,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 50.66,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'multi_turn_demo' not implemented in T1 scaffold"
+  },
+  "answer": [
+    "Here are the key findings from the Q3 2026 report:\n\n*   **Total Revenue**: Acme Analytics, Inc. achieved $12,600k in total revenue for Q3 2026, marking a 16.5% quarter-over-quarter growth from $10,820k in Q2 2026.\n*   **Regional Growth**: Growth was primarily driven by Latin America (38% QoQ growth) and Asia Pacific (24% QoQ growth), while North America remained the largest absolute contributor ($4,200k).\n*   **Monthly Demand**: Monthly bookings showed an unbroken upward trend throughout the quarter, from $3,990k in July to $4,150k in September, indicating strengthening demand.\n*   **Principal Risks**: The dominant risk identified is supply chain concentration (62% of components from a single region), followed by FX exposure in Latin America and customer concentration (top 3 accounts represent 28% of ARR).\n*   **Product Performance**: The Platform product line was the primary driver of aggregate performance, contributing 68% of total revenue ($8,568k) with 18% QoQ growth.\n*   **Customer Metrics**: The company ended Q3 with 412 paying accounts (up from 387), a Net Revenue Retention (NRR) of 118%, and an increase in median contract value from $28k to $31k ARR.\n*   **Q4 Outlook**: Management views the trend as positive and expects continued momentum into Q4, with a revenue plan calling for total bookings of $14,200k, a 12.7% sequential increase.",
+    "North America had the highest revenue in Q3 2026, with $4,200k.",
+    "",
+    "Here are the key findings from the Q3 2026 report:\n\n*   **Total Revenue**: Acme Analytics, Inc. reported total revenue of $12,600k for Q3 2026, an increase from $10,820k in Q2 2026.\n*   **Quarter-over-Quarter Growth Rate**: The company achieved a quarter-over-quarter revenue growth rate of 16.5%.\n*   **Regional Performance**: Growth was primarily led by Latin America (38%) and Asia Pacific (24%), while North America remained the largest absolute contributor with $4,200k and 11% growth.\n*   **Monthly Demand Trend**: Monthly bookings showed an unbroken upward trend, rising from $3,990k in July to $4,150k in September, indicating strengthening demand.\n*   **Principal Risks**: The dominant risk identified is supply-chain concentration (62% of components from a single region), followed by FX exposure in Latin America and customer concentration.\n*   **Product Line Performance**: The Platform product line was the primary driver of aggregate performance, contributing 68% of total revenue ($8,568k) and growing 18% QoQ.\n*   **Customer Growth**: The company ended Q3 2026 with 412 paying accounts, adding 25 net new logos. Net Revenue Retention (NRR) stood at 118%, reflecting strong expansion activity.\n*   **Operating Expenses**: Operating expenditure increased by 8% QoQ to $9,840k, with employee costs being the largest line item.\n*   **Competitive Landscape**: Acme Analytics improved its competitive win rate to 64% (from 59% in Q2), driven by its data-residency architecture, broad Connectors library, and mobile-first reporting.\n*   **Q4 Outlook**: The Q4 2026 revenue plan calls for total bookings of $14,200k, a 12.7% sequential increase.",
+    "Yes, based on the report, the overall trend is positive. The company experienced significant revenue growth, strong customer acquisition and retention, improved competitive performance, and has a positive outlook for Q4.",
+    "",
+    "I haven't generated any charts yet. Please let me know if you'd like me to generate them.",
+    "The top 3 risks listed in the report are:\n\n1.  **Supply chain concentration** (severity: High): 62% of components are sourced from a single region, meaning a disruption would stall fulfillment.\n2.  **FX exposure in Latin America** (severity: Medium): Revenue is booked in volatile local currencies without full hedging.\n3.  **Customer concentration** (severity: Medium): The top 3 accounts represent 28% of ARR, so churn of any one would materially dent revenue.",
+    "",
+    "Here are the key findings from the Q3 2026 report:\n\n*   **Total Revenue**: Acme Analytics, Inc. achieved $12,600k in total revenue for Q3 2026, marking a 16.5% quarter-over-quarter growth from $10,820k in Q2 2026.\n*   **Regional Growth**: Growth was primarily driven by Latin America (38% QoQ growth) and Asia Pacific (24% QoQ growth), while North America remained the largest absolute contributor ($4,200k).\n*   **Monthly Demand**: Monthly bookings showed an unbroken upward trend throughout the quarter, from $3,990k in July to $4,150k in September, indicating strengthening demand.\n*   **Principal Risks**: The dominant risk identified is supply chain concentration (62% of components from a single region), followed by FX exposure in Latin America and customer concentration (top 3 accounts represent 28% of ARR).\n*   **Product Performance**: The Platform product line was the primary driver of aggregate performance, contributing 68% of total revenue ($8,568k) with 18% QoQ growth.\n*   **Customer Metrics**: The company ended Q3 with 412 paying accounts (up from 387), a Net Revenue Retention (NRR) of 118%, and an increase in median contract value from $28k to $31k ARR.\n*   **Q4 Outlook**: Management views the trend as positive and expects continued momentum into Q4, with a revenue plan calling for total bookings of $14,200k, a 12.7% sequential increase."
+  ],
+  "error": null,
+  "host": {
+    "hostname": "192.168.40.20",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-17T02:40:58.117190Z",
+      "2026-06-17T02:41:18.049706Z",
+      "2026-06-17T02:41:32.861338Z",
+      "2026-06-17T02:41:47.969400Z",
+      "2026-06-17T02:42:04.079485Z",
+      "2026-06-17T02:42:17.040425Z",
+      "2026-06-17T02:42:32.203570Z",
+      "2026-06-17T02:42:45.392616Z",
+      "2026-06-17T02:43:01.490087Z",
+      "2026-06-17T02:43:17.039543Z",
+      "2026-06-17T02:43:40.234315Z"
+    ],
+    "turn_types": [
+      "doc",
+      "doc",
+      "chart",
+      "doc",
+      "follow_up",
+      "chart",
+      "follow_up",
+      "doc",
+      "chart",
+      "follow_up"
+    ]
+  }
+}

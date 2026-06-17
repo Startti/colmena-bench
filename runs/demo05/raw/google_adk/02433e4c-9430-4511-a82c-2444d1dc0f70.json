@@ -1,0 +1,70 @@
+{
+  "run_id": "02433e4c-9430-4511-a82c-2444d1dc0f70",
+  "task_id": "05_context_scrubbing",
+  "variant": "default",
+  "framework": "google_adk",
+  "framework_version": "2.2.0",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-17T02:45:20.452796Z",
+  "ended_at": "2026-06-17T02:45:46.903072Z",
+  "latency_ms": 26450,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 229.56,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'multi_turn_demo' not implemented in T1 scaffold"
+  },
+  "answer": [
+    "Here are the key findings from the Q3 2026 report:\n\n*   **Total Revenue**: Q3 2026 revenue was $12,600k, a 16.5% quarter-over-quarter (QoQ) growth from $10,820k in Q2 2026.\n*   **Regional Growth**: Growth was primarily led by Latin America (38% QoQ) and Asia Pacific (24% QoQ), while North America remained the largest contributor at $4,200k.\n*   **Demand Trend**: Monthly bookings showed an unbroken upward trend throughout the quarter, from $3,990k in July to $4,150k in September, indicating strengthening demand.\n*   **Principal Risks**: The dominant risk identified is supply-chain concentration (62% of components from a single region), followed by FX exposure in Latin America and customer concentration (top 3 accounts represent 28% of ARR).\n*   **Product Line Performance**: The Platform product line was the primary driver of performance, contributing 68% of total revenue ($8,568k) and growing 18% QoQ. Connectors revenue was flat, and Services grew 9% QoQ.\n*   **Customer Growth**: The company added 25 net new logos, ending Q3 with 412 paying accounts. Net Revenue Retention (NRR) stood at 118%, and the median contract value increased from $28k to $31k ARR.\n*   **Operating Expenses**: Operating expenditure increased by 8% QoQ to $9,840k, with employee costs being the largest line item.\n*   **Competitive Performance**: Acme Analytics won 64% of tracked competitive deals, an improvement from 59% in Q2 2026. Pricing and missing features in predictive analytics were common loss reasons.\n*   **Q4 Outlook**: The Q4 2026 revenue plan targets total bookings of $14,200k, a 12.7% sequential increase, with all regions expected to continue growth.",
+    "North America had the highest revenue in Q3 2026, with $4,200k.",
+    "",
+    "The chart was generated.\n\nThe quarter-over-quarter revenue growth rate was 16.5%.",
+    "Yes, management views the overall trend as positive.",
+    "The chart was generated.",
+    "The charts show that North America is the largest revenue contributor, and the overall demand trend for the quarter is positive with increasing monthly bookings.",
+    "The top 3 risks listed in the report are supply chain concentration (High severity), FX exposure in Latin America (Medium severity), and customer concentration (Medium severity).",
+    "The chart was generated.",
+    "Acme Analytics, Inc. reported a positive Q3 2026 with total revenue of $12,600k, representing a 16.5% QoQ growth, led by Latin America and Asia Pacific, while North America remained the largest contributor. Monthly bookings showed a consistent upward trend, reinforcing confidence in Q4. The primary risks identified are supply chain concentration (High severity), FX exposure in Latin America (Medium severity), and customer concentration (Medium severity). Charts were generated to visualize regional revenue, monthly bookings, and risk severity."
+  ],
+  "error": null,
+  "host": {
+    "hostname": "192.168.40.20",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-17T02:45:20.456511Z",
+      "2026-06-17T02:45:25.501347Z",
+      "2026-06-17T02:45:26.534730Z",
+      "2026-06-17T02:45:28.008896Z",
+      "2026-06-17T02:45:30.795726Z",
+      "2026-06-17T02:45:33.868835Z",
+      "2026-06-17T02:45:37.656749Z",
+      "2026-06-17T02:45:39.910055Z",
+      "2026-06-17T02:45:41.504021Z",
+      "2026-06-17T02:45:44.242510Z",
+      "2026-06-17T02:45:46.902047Z"
+    ],
+    "turn_types": [
+      "doc",
+      "doc",
+      "chart",
+      "doc",
+      "follow_up",
+      "chart",
+      "follow_up",
+      "doc",
+      "chart",
+      "follow_up"
+    ]
+  }
+}
