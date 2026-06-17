@@ -7,7 +7,7 @@ from importlib import metadata
 from bench_common import run
 
 from .llm import build_llm
-from .tasks import task01
+from .tasks import task01, task05
 
 
 def _version() -> str:
@@ -17,7 +17,10 @@ def _version() -> str:
         return "unknown"
 
 
-HANDLERS = {"01_hello_world": task01.run}
+HANDLERS = {
+    "01_hello_world": task01.run,
+    "05_context_scrubbing": task05.run,
+}
 
 if __name__ == "__main__":
     sys.exit(run("langchain", _version, build_llm, HANDLERS))
