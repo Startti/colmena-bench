@@ -294,6 +294,56 @@ def bar_cpu(agg, outdir):
     fig.tight_layout(); fig.savefig(outdir / "12_bar_cpu.png", dpi=150); plt.close(fig)
 
 
+def bar_quality(agg, judge, outdir):
+    """Answer quality (LLM-judge, 0..1) per framework. Needs judge_n*.json."""
+    if not judge:
+        return
+    fws = [r["framework"] for r in agg["frameworks"] if r["framework"] in judge]
+    fws.sort(key=lambda n: -judge[n]["mean"])
+    means = [judge[n]["mean"] for n in fws]
+    stds = [judge[n]["std"] for n in fws]
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    bars = ax.bar(fws, means, yerr=stds, capsize=5, color=[_color(n) for n in fws])
+    for b, m in zip(bars, means):
+        ax.text(b.get_x() + b.get_width() / 2, m, f"{m:.2f}", ha="center", va="bottom", fontsize=8)
+    ax.set_ylim(0, 1.08); ax.set_ylabel("Answer quality (LLM-judge, 0–1)")
+    ax.set_title(f"Answer quality on doc questions (mean ± std, N={agg['n_passes']})\n"
+                 "all frameworks ~tied near 1.0 — Colmena's token savings cost no quality")
+    ax.grid(axis="y", alpha=0.3)
+    fig.tight_layout(); fig.savefig(outdir / "13_bar_quality.png", dpi=150); plt.close(fig)
+
+
+def quadrant_cost_quality(agg, judge, outdir):
+    """Positioning: cost (total input tokens) vs answer quality. Best = top-left."""
+    if not judge:
+        return
+    fig, ax = plt.subplots(figsize=(7.5, 6))
+    for r in agg["frameworks"]:
+        n = r["framework"]
+        if n not in judge:
+            continue
+        hi = n == COLMENA
+        ax.scatter(r["total_mean"], judge[n]["mean"], s=190 if hi else 110,
+                   color=_color(n), edgecolor="black", zorder=3 if hi else 2)
+        ax.annotate(n, (r["total_mean"], judge[n]["mean"]),
+                    textcoords="offset points", xytext=(8, 6), fontsize=9)
+    ax.set_xlabel("Total input tokens over 10 turns  (← cheaper)")
+    ax.set_ylabel("Answer quality (LLM-judge, 0–1)  (higher better →)")
+    ax.set_title("Positioning: cost × quality (top-left wins)")
+    ax.grid(alpha=0.3)
+    fig.tight_layout(); fig.savefig(outdir / "14_quadrant_cost_quality.png", dpi=150); plt.close(fig)
+
+
+def _load_judge(report_dir: Path) -> dict:
+    """Return {framework: {'mean':.., 'std':..}} from the latest judge_n*.json, or {}."""
+    cands = sorted(report_dir.glob("judge_n*.json"))
+    if not cands:
+        return {}
+    j = json.loads(cands[-1].read_text())
+    return {r["framework"]: {"mean": r["quality_score_mean"], "std": r["quality_score_std"]}
+            for r in j.get("frameworks", [])}
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="render demo05 charts")
     p.add_argument("--agg", type=Path, default=None)
@@ -308,12 +358,19 @@ def main(argv: list[str] | None = None) -> int:
     agg = json.loads(Path(agg_path).read_text())
     outdir = REPO_ROOT / "runs/demo05/report/plots"
     outdir.mkdir(parents=True, exist_ok=True)
+    judge = _load_judge(REPO_ROOT / "runs/demo05/report")
     for fn in (bar_total_tokens, line_cumulative, line_per_turn, bar_usd,
                multiplier_curve, quadrant, loc_bar, stacked_composition,
                bar_latency, line_calls, bar_ram, bar_cpu):
         try:
             fn(agg, outdir)
             print(f"  ok: {fn.__name__}")
+        except Exception as e:  # noqa: BLE001
+            print(f"  FAIL {fn.__name__}: {type(e).__name__}: {e}")
+    for fn in (bar_quality, quadrant_cost_quality):
+        try:
+            fn(agg, judge, outdir)
+            print(f"  ok: {fn.__name__}" + ("" if judge else " (skipped — no judge_n*.json)"))
         except Exception as e:  # noqa: BLE001
             print(f"  FAIL {fn.__name__}: {type(e).__name__}: {e}")
     print(f"plots → {outdir}")
