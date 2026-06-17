@@ -215,15 +215,20 @@ def _reading_section(results: list[dict]) -> str:
         "re-thread history). The synthetic chart (~32KB) is representative of a "
         "real chart PNG (20–100KB), not a worst case.",
         "",
-        "**LOC framing (honest).** In THIS multi-turn demo the handler LOC is "
-        "comparable across frameworks — Colmena needs a per-turn `run_dag` driver "
-        "plus a DAG JSON, so it is not the smallest here. LOC is reported for "
-        "completeness but is NOT the headline of this demo; the node-vs-code LOC "
-        "advantage is the subject of a separate demo (#4). The real Colmena "
-        "\"LOC win\" embedded here is that matching its scrubbing + attachment "
-        "management would cost the competitors EXTRA code (manual history "
-        "trimming, attachment caching, base64 elision) that their default "
-        "baseline does not include.",
+        "**LOC framing (node vs code).** The agent itself is a declarative DAG "
+        "(`runners/colmena/dags/demo05_turn.json`, ~71 lines of JSON config — no "
+        "loops, no conditionals, not counted as code). The Python that drives it "
+        "is a THIN runner: load the DAG once, then feed each turn's message via "
+        "`inject_payload`. Counting only the imperative code a developer writes "
+        "and maintains, Colmena's handler is the leanest here (53 LOC) vs 67–124 "
+        "for the competitors, which express the agent in imperative Python. (If "
+        "you instead count the 71-line DAG as the agent definition, it is "
+        "comparable to a competitor's agent code — the honest point is that the "
+        "code you maintain is smaller AND you get scrubbing + attachment "
+        "management for free, which competitors would need extra code to match.) "
+        "The node-vs-code gap widens with agent complexity — a production agent "
+        "(HITL + retries + critic + masking) stays declarative JSON in Colmena "
+        "while competitor glue grows into the hundreds of lines (Demo #4).",
         "",
         "**Fairness.** Same model, same proxy, same fixed 10-turn script, same "
         "report + chart payload for all six. Competitors use their own default "

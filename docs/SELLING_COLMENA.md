@@ -11,8 +11,10 @@ what evidence, and — just as important — what NOT to claim.
 > **Colmena keeps your LLM context lean by design.** Documents and large/binary
 > tool outputs are managed by the engine — not pinned into history — so a
 > multi-turn agent costs a fraction of the tokens, with no extra code. In our
-> 10-turn benchmark across 6 frameworks, Colmena used **~6.6× fewer input tokens**
-> and **~4.7× less money** than the median competitor, with identical answers.
+> 10-turn benchmark across 6 frameworks, Colmena used **≥6× fewer input tokens**
+> (11.6× this run) and **~8× less money** than the median competitor, with
+> identical answers — and the **least imperative code you maintain** (53 lines vs
+> 67–124; the agent itself is a declarative JSON DAG).
 
 That sentence is fully backed by [demos/demo05-context-tax.md](demos/demo05-context-tax.md).
 
@@ -23,8 +25,10 @@ That sentence is fully backed by [demos/demo05-context-tax.md](demos/demo05-cont
 ### Win #1 — Context efficiency (MEASURED, the hero) ✅
 - **Claim:** built-in context scrubbing + ephemeral attachments keep token cost
   flat as a conversation grows; competitors pay for the whole history every turn.
-- **Evidence:** Demo 05 — **65,680 vs 386k–452k** total input tokens over 10 turns
-  (~6.6×); the gap *compounds* with turn count; answer quality preserved.
+- **Evidence:** Demo 05 — **37,134 vs 385k–452k** total input tokens over 10 turns
+  (~11.6× this run; ≥6× across runs); the gap *compounds* with turn count; answer
+  quality preserved. Bonus: Colmena's maintained Python is the leanest (53 LOC) —
+  the agent is a ~71-line declarative JSON DAG, driven by a thin runner.
 - **Why competitors can't easily match it:** none of the 5 scrub binary/oversize
   tool outputs by default; you'd hand-write history trimming + attachment caching
   + base64 elision. Colmena ships it.
@@ -74,11 +78,14 @@ That sentence is fully backed by [demos/demo05-context-tax.md](demos/demo05-cont
 - **❌ "Runs more agents in parallel / higher throughput."** Colmena's engine is a
   *sequential* worklist; even `parallel:true` tasks await in a loop. Rust buys
   lower per-node overhead and RAM, **not** concurrency. You lose this comparison.
-- **❌ "Fewer lines of code" for trivial/multi-turn-chat agents.** Measured: on a
-  simple multi-turn chat, Colmena needs a per-turn `run_dag` driver and has the
-  *highest* agent-construction LOC (62) because competitors ship a ready chat
-  primitive. The LOC win is real only for **production** agents (Win #4) — make
-  that scope explicit. Never cite Demo 05 LOC as a Colmena win.
+- **⚠️ "Fewer lines of code" — frame it precisely.** You CAN say Colmena has the
+  least *imperative code you maintain* (Demo 05: 53 LOC vs 67–124), because the
+  agent is a declarative JSON DAG (~71 lines of config, not code) driven by a thin
+  runner. Always disclose that framing — a skeptic will note the DAG is 71 lines;
+  the honest claim is "smaller maintained code AND free context management." The
+  *unqualified* "fewer lines" win is strongest for **production** agents (Win #4),
+  where competitor glue balloons. Don't claim Colmena is leaner on a hello-world
+  (that's a wash).
 - **❌ "Cheaper per token / same strategy is cheaper."** Token *price* is the same
   model through the same provider. Colmena wins on **how much context it sends**,
   not on unit price. (The old CSV naive-vs-expert result is a *strategy*
