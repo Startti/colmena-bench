@@ -12,6 +12,24 @@ provider-authoritative tokens (proxy), mean ± std over 12 runs.
 
 ---
 
+## ★ Recommended pitch set (5 charts, in order)
+
+A tight, non-redundant sequence — the rest below are backup/detail.
+
+1. **`2_line_cumulative`** — *"Watch what a normal multi-turn agent costs."* The
+   asymptote: Colmena flat, everyone else climbing. The single most convincing slide.
+2. **`14_quadrant_cost_quality`** — *"And it's not a quality tradeoff."* Colmena alone
+   in the cheap + high-quality corner (LLM-judged 0.99, tied).
+3. **`4_bar_usd`** — *"In money, at scale."* USD/conversation + the $/year projection.
+4. **`11_bar_ram`** — *"And it's lighter."* Rust footprint: 49 MB vs 96–279.
+5. **`5_multiplier_curve`** — *"And it compounds — the longer the chat, the bigger the gap."*
+
+Honesty slide to keep handy: CPU is mid-pack and wall-clock isn't featured (bench
+artifact) — leading with these makes the strong claims land. See
+[`../../../docs/SELLING_COLMENA.md`](../../../docs/SELLING_COLMENA.md).
+
+---
+
 ## Headliners (the pitch)
 
 ### Cumulative input tokens per turn — the asymptote

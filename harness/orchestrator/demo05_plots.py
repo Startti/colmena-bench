@@ -318,15 +318,16 @@ def quadrant_cost_quality(agg, judge, outdir):
     if not judge:
         return
     fig, ax = plt.subplots(figsize=(7.5, 6))
-    for r in agg["frameworks"]:
-        n = r["framework"]
-        if n not in judge:
-            continue
+    # anti-overlap: nudge labels of points that are close on the y (quality) axis
+    pts = [(r["framework"], r["total_mean"], judge[r["framework"]]["mean"])
+           for r in agg["frameworks"] if r["framework"] in judge]
+    pts.sort(key=lambda p: (-p[2], p[1]))
+    for i, (n, x, y) in enumerate(pts):
         hi = n == COLMENA
-        ax.scatter(r["total_mean"], judge[n]["mean"], s=190 if hi else 110,
-                   color=_color(n), edgecolor="black", zorder=3 if hi else 2)
-        ax.annotate(n, (r["total_mean"], judge[n]["mean"]),
-                    textcoords="offset points", xytext=(8, 6), fontsize=9)
+        ax.scatter(x, y, s=190 if hi else 110, color=_color(n),
+                   edgecolor="black", zorder=3 if hi else 2)
+        dy = 9 if (i % 2 == 0) else -16   # alternate above/below to avoid collisions
+        ax.annotate(n, (x, y), textcoords="offset points", xytext=(8, dy), fontsize=9)
     ax.set_xlabel("Total input tokens over 10 turns  (← cheaper)")
     ax.set_ylabel("Answer quality (LLM-judge, 0–1)  (higher better →)")
     ax.set_title("Positioning: cost × quality (top-left wins)")
