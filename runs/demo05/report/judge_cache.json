@@ -1,0 +1,350 @@
+{
+  "colmena:0:a848cbf9d9e4fe05": {
+    "score": 1.0,
+    "reason": "The answer accurately and completely summarizes the key findings from the report, with all facts correctly extracted and presented."
+  },
+  "colmena:1:1f5e350dd60d6da9": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies North America as the region with the highest revenue in Q3 2026 and provides the correct revenue figure of $4,200k."
+  },
+  "colmena:3:e73b2bb7b2e7f56b": {
+    "score": 1.0,
+    "reason": "The answer accurately states the quarter-over-quarter revenue growth rate as reported in the executive summary."
+  },
+  "colmena:7:acbacf96c0f809da": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks, their descriptions, and their severity as listed in the report."
+  },
+  "crewai:0:6a27660b6ea4b352": {
+    "score": 1.0,
+    "reason": "The answer accurately and comprehensively summarizes the key findings from the report, with all facts correctly stated and supported by the source."
+  },
+  "crewai:1:01b84fd8b4271a47": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies North America as the region with the highest revenue in Q3 2026 and provides the correct amount of $4,200k, as stated in the report."
+  },
+  "crewai:3:3eca4a100cd0e844": {
+    "score": 1.0,
+    "reason": "The answer correctly states the quarter-over-quarter revenue growth rate as 16.5%, which is directly supported by the executive summary of the report."
+  },
+  "crewai:7:2b9f5bf1353069ff": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three principal risks and their severities as listed in the report."
+  },
+  "langchain:0:f7e50bdaffa2f868": {
+    "score": 1.0,
+    "reason": "The answer accurately and comprehensively summarizes all key findings from the report, with every detail factually correct and directly supported by the source."
+  },
+  "langchain:1:6828e57104e7987a": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies North America as the region with the highest revenue in Q3 2026 and provides the correct revenue figure of $4,200k."
+  },
+  "langchain:3:81e6a7dc2422fe37": {
+    "score": 1.0,
+    "reason": "The answer correctly states the quarter-over-quarter revenue growth rate as 16.5%, which is directly supported by the executive summary of the report."
+  },
+  "langchain:7:6a1f1ceea1d07ddd": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three principal risks and their severities as listed in the report."
+  },
+  "langgraph:0:84c94045c1744125": {
+    "score": 1.0,
+    "reason": "The answer accurately and completely summarizes the key findings from the report, covering all major sections with correct factual details."
+  },
+  "langgraph:1:32b963d41544307e": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies North America as the region with the highest revenue in Q3 2026 and provides the correct revenue figure of $4,200k."
+  },
+  "langgraph:3:dd3fcadd45154dc2": {
+    "score": 1.0,
+    "reason": "The answer correctly states the quarter-over-quarter revenue growth rate as 16.5%, which is directly supported by the executive summary in the report."
+  },
+  "langgraph:7:fdc8978d4467166e": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks and their severities as listed in the report."
+  },
+  "llamaindex:0:e5f2a5f6a032dc56": {
+    "score": 0.95,
+    "reason": "The answer accurately summarizes the key findings, with only a minor discrepancy regarding Connectors revenue being described as 'flat' while the table shows a 1% growth."
+  },
+  "llamaindex:1:55e75a757d631028": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies North America as the region with the highest revenue in Q3 2026 and provides the correct amount of $4,200k, as stated in the report."
+  },
+  "llamaindex:3:b4014280c19a5b06": {
+    "score": 1.0,
+    "reason": "The report explicitly states the quarter-over-quarter growth rate was 16.5%."
+  },
+  "llamaindex:7:72e1536b3c09cc61": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks as listed in the report's 'Principal risks' section."
+  },
+  "google_adk:0:5c7b99fd577de0f0": {
+    "score": 0.9,
+    "reason": "The answer is mostly correct but incorrectly states Asia Pacific is projected for the highest regional growth in Q4, when Middle East & Africa is projected higher."
+  },
+  "google_adk:1:8db8d9e0e41b0848": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies North America as the region with the highest revenue in Q3 2026 and provides the correct revenue figure of $4,200k."
+  },
+  "google_adk:3:1305e3a1f1722118": {
+    "score": 1.0,
+    "reason": "The answer accurately states the quarter-over-quarter revenue growth rate as reported in the executive summary."
+  },
+  "google_adk:7:a72223be73a83acf": {
+    "score": 1.0,
+    "reason": "The answer accurately lists the top three principal risks exactly as detailed in the report, including their severity and descriptions."
+  },
+  "colmena:0:4c219f78254b051f": {
+    "score": 1.0,
+    "reason": "The answer accurately and completely summarizes the key findings from the report, including all specified figures and trends without any factual errors."
+  },
+  "colmena:1:5d27f4cde8aabf78": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies North America as the region with the highest revenue in Q3 2026 and provides the correct amount of $4,200k."
+  },
+  "colmena:7:92823b4c3a787da1": {
+    "score": 1.0,
+    "reason": "The answer accurately lists the top three principal risks exactly as detailed in the report, including their severity and descriptions."
+  },
+  "langchain:0:875cb9c665371aab": {
+    "score": 0.8,
+    "reason": "The answer is mostly correct but incorrectly attributes Q3 marketing and sales development achievements to Q4 targets in the final sentence."
+  },
+  "langgraph:0:93c348b8d6691454": {
+    "score": 1.0,
+    "reason": "The answer accurately and completely summarizes the key findings from the report, with all factual statements verified against the source."
+  },
+  "langgraph:3:a60e87ee1eb05aa8": {
+    "score": 1.0,
+    "reason": "The report explicitly states the quarter-over-quarter growth rate was 16.5%."
+  },
+  "langgraph:7:974bfa3dc53dc397": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies and describes the top three principal risks exactly as listed in the report."
+  },
+  "llamaindex:0:f5133b9e5fd1b9d3": {
+    "score": 0.9,
+    "reason": "The answer accurately summarizes most key findings but incorrectly attributes qualified opportunities to marketing instead of the sales development team."
+  },
+  "llamaindex:3:4f4ebb716bf532fb": {
+    "score": 1.0,
+    "reason": "The answer correctly states the quarter-over-quarter revenue growth rate as 16.5%, which is directly supported by the executive summary of the report."
+  },
+  "llamaindex:7:785c5c51594798ed": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks and their severities as listed in the report."
+  },
+  "google_adk:7:029fc87a074b3521": {
+    "score": 1.0,
+    "reason": "The answer accurately lists the top three principal risks, including their severity and descriptions, exactly as presented in the source report."
+  },
+  "colmena:0:9f27a2b38e049bc1": {
+    "score": 0.85,
+    "reason": "The summary is mostly accurate and comprehensive, but incorrectly states Asia Pacific is projected to be the fastest-growing region for Q4, when Middle East & Africa has a higher projected growth rate"
+  },
+  "colmena:3:0e97e0496521f34f": {
+    "score": 1.0,
+    "reason": "The answer accurately states the quarter-over-quarter revenue growth rate as reported in the executive summary."
+  },
+  "colmena:7:d6695e95dad01110": {
+    "score": 1.0,
+    "reason": "The answer accurately identifies and describes the top three principal risks as detailed in the report, including their severity and specific details."
+  },
+  "crewai:0:efd993bd207a67ab": {
+    "score": 1.0,
+    "reason": "The answer accurately summarizes all key findings from the report, including financial performance, growth drivers, risks, product line contributions, customer metrics, operating expenses, competitive"
+  },
+  "crewai:7:fa611164ace4c82e": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks and their associated severity levels as listed in the report."
+  },
+  "langchain:7:6539f11ff51aa5f2": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks and their severities as listed in the report."
+  },
+  "langgraph:7:3675580e9979f83c": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks and their associated severity levels as listed in the report."
+  },
+  "google_adk:7:be933de906caa32c": {
+    "score": 1.0,
+    "reason": "The answer accurately lists the top three principal risks exactly as detailed in the report, including their severity and descriptions."
+  },
+  "colmena:0:603a88b65f80e70b": {
+    "score": 1.0,
+    "reason": "The answer accurately summarizes all key findings from the report, including financial performance, regional drivers, risks, product line contributions, customer metrics, competitive performance, and "
+  },
+  "colmena:3:0f1155af1aa609f0": {
+    "score": 1.0,
+    "reason": "The answer correctly states the quarter-over-quarter revenue growth rate as 16.5%, directly matching the report."
+  },
+  "colmena:7:5f585f29cebebf78": {
+    "score": 1.0,
+    "reason": "The answer accurately lists the top three risks, their severity, and descriptions as detailed in the report."
+  },
+  "langchain:7:07636b86ff7ab2e9": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks as listed in the report's 'Principal risks' section."
+  },
+  "llamaindex:7:230687e1a9c7571c": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks and their severities as listed in the report."
+  },
+  "google_adk:0:eb4a37de7c25ab15": {
+    "score": 1.0,
+    "reason": "The answer accurately and completely summarizes the key findings from the report, with all facts correctly extracted and presented."
+  },
+  "google_adk:3:276c562d70c545b0": {
+    "score": 1.0,
+    "reason": "The answer correctly states the quarter-over-quarter revenue growth rate as 16.5%, which is directly supported by the report."
+  },
+  "colmena:0:9cc9a439604bb6e4": {
+    "score": 1.0,
+    "reason": "The answer accurately and completely summarizes the key findings from the report, with all facts correctly extracted and presented."
+  },
+  "colmena:3:1289eb264e4a107e": {
+    "score": 1.0,
+    "reason": "The answer correctly states the quarter-over-quarter revenue growth rate as 16.5% and provides the accurate supporting revenue figures from the report."
+  },
+  "colmena:7:8eb58d84a0d624b0": {
+    "score": 1.0,
+    "reason": "The answer accurately lists the top three risks, their severity, and descriptions as detailed in the report."
+  },
+  "google_adk:3:77bcd2c9aa5221a7": {
+    "score": 1.0,
+    "reason": "The answer correctly states the quarter-over-quarter revenue growth rate of 16.5% as reported in the executive summary."
+  },
+  "google_adk:7:d14e28f6eb7460b3": {
+    "score": 1.0,
+    "reason": "The answer accurately lists the top three risks, their severity, and descriptions exactly as presented in the source report."
+  },
+  "colmena:0:471777fab7ed8a28": {
+    "score": 1.0,
+    "reason": "The answer accurately and completely summarizes the key findings from the report, with all facts directly supported by the source material."
+  },
+  "colmena:3:5b0756687aa32c10": {
+    "score": 1.0,
+    "reason": "The answer correctly states the quarter-over-quarter revenue growth rate as 16.5% and provides the supporting revenue figures, matching the report exactly."
+  },
+  "colmena:7:fc2165c187634e00": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks and provides accurate supporting details from the report."
+  },
+  "crewai:7:cead0b933a20d4ac": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks and their severities as listed in the report."
+  },
+  "langgraph:3:31f5fae365a13da5": {
+    "score": 1.0,
+    "reason": "The answer correctly states the quarter-over-quarter revenue growth rate as 16.5%, which is accurate according to the report's executive summary."
+  },
+  "llamaindex:7:6909bc94945e4051": {
+    "score": 1.0,
+    "reason": "The answer accurately lists the top three risks, their descriptions, and severity as detailed in the report."
+  },
+  "google_adk:7:8800e6b8a6c2f74e": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks and their severities as listed in the report."
+  },
+  "colmena:0:34c08e0f44c2ae4d": {
+    "score": 0.8,
+    "reason": "The answer incorrectly states that only Latin America and Asia Pacific were the fastest-growing regions, when the report explicitly identifies Middle East & Africa with the same distinction."
+  },
+  "colmena:7:83019f1c716fc6b9": {
+    "score": 1.0,
+    "reason": "The answer accurately lists the top three principal risks, including their severity and descriptions, as detailed in the report."
+  },
+  "crewai:7:15cb2f0ef7693868": {
+    "score": 1.0,
+    "reason": "The answer accurately lists the top three principal risks exactly as described in the report, including their severity and descriptions."
+  },
+  "langgraph:3:05133f3547b74f1f": {
+    "score": 1.0,
+    "reason": "The answer correctly states the quarter-over-quarter revenue growth rate as 16.5%, which is directly supported by the report."
+  },
+  "langgraph:7:4d551795c5c7f78f": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks and their severities as listed in the report."
+  },
+  "colmena:0:948a11195d9fc7ff": {
+    "score": 0.98,
+    "reason": "The answer accurately summarizes all key findings from the report, including specific figures and growth rates, with only a minor ambiguity inherited from the source regarding 'fastest-growing region'"
+  },
+  "colmena:7:4f98c965162ad46b": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies and describes the top three principal risks as listed in the report, including their severity and specific details."
+  },
+  "google_adk:7:ed48a6f48ff1ab0d": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks and their severities as listed in the report."
+  },
+  "colmena:0:2227bcfd49e58b18": {
+    "score": 1.0,
+    "reason": "The answer accurately and completely summarizes the key findings from the report, with all figures and descriptions matching the source."
+  },
+  "colmena:7:f5307ebe0bcd0597": {
+    "score": 1.0,
+    "reason": "The answer accurately lists the top three principal risks, their severity, and descriptions as detailed in the report."
+  },
+  "crewai:7:9bc17a89db7f4e8f": {
+    "score": 1.0,
+    "reason": "The answer accurately lists the top three principal risks exactly as described in the report, including their severity and details."
+  },
+  "langchain:7:9d46da7df2fdacf0": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks and their severities as listed in the report."
+  },
+  "colmena:0:4181b70ffdfef21a": {
+    "score": 0.8,
+    "reason": "The answer accurately summarizes many key findings but omits significant details regarding operating expenses, competitive performance, and specific go-to-market metrics."
+  },
+  "colmena:3:05fcd132e1a5fce3": {
+    "score": 1.0,
+    "reason": "The answer correctly states the quarter-over-quarter revenue growth rate and provides accurate supporting details from the report."
+  },
+  "colmena:7:1b550c96586a2ac6": {
+    "score": 1.0,
+    "reason": "The answer accurately lists the top three risks, their severity, and descriptions as detailed in the report."
+  },
+  "langgraph:7:15a61c80c2e7388c": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks and their severities as listed in the report."
+  },
+  "colmena:0:1b6ec1aa1f2c265c": {
+    "score": 1.0,
+    "reason": "The answer accurately and comprehensively summarizes all key findings from the report, with no factual errors or omissions."
+  },
+  "colmena:3:fbe412a575de8a65": {
+    "score": 1.0,
+    "reason": "The answer correctly states the quarter-over-quarter revenue growth rate as 16.5%, matching the report's executive summary."
+  },
+  "colmena:7:a82860c4b2516011": {
+    "score": 1.0,
+    "reason": "The answer accurately lists the top three principal risks from the report, including their severity and descriptions."
+  },
+  "langgraph:7:d48865e36b7aaf56": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks as listed in the report's 'Principal risks' section."
+  },
+  "colmena:0:8405d560a4fe0f24": {
+    "score": 1.0,
+    "reason": "The answer accurately and completely summarizes the key findings from the report, with all facts directly supported by the source."
+  },
+  "colmena:3:37a55e9c88981cd1": {
+    "score": 1.0,
+    "reason": "The answer accurately states the quarter-over-quarter revenue growth rate and the corresponding Q3 and Q2 revenue figures as reported in the executive summary."
+  },
+  "colmena:7:9edb9152faf0cbf7": {
+    "score": 1.0,
+    "reason": "The answer accurately lists the top three principal risks, their severity, and descriptions exactly as presented in the source report."
+  },
+  "langgraph:7:90c04282a2531545": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three principal risks and their severities as listed in the report."
+  },
+  "google_adk:7:10844b39b93ac921": {
+    "score": 1.0,
+    "reason": "The answer correctly identifies the top three risks and their severities as listed in the report."
+  }
+}

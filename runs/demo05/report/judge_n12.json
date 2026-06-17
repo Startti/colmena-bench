@@ -1,0 +1,49 @@
+{
+  "judged_turns": [
+    0,
+    1,
+    3,
+    7
+  ],
+  "n_passes": 12,
+  "cache_hits": 225,
+  "judge_calls": 63,
+  "frameworks": [
+    {
+      "framework": "crewai",
+      "quality_score_mean": 1.0,
+      "quality_score_std": 0.0,
+      "n_judged": 48
+    },
+    {
+      "framework": "langgraph",
+      "quality_score_mean": 1.0,
+      "quality_score_std": 0.0,
+      "n_judged": 48
+    },
+    {
+      "framework": "colmena",
+      "quality_score_mean": 0.9881,
+      "quality_score_std": 0.0452,
+      "n_judged": 48
+    },
+    {
+      "framework": "google_adk",
+      "quality_score_mean": 0.9854,
+      "quality_score_std": 0.0357,
+      "n_judged": 48
+    },
+    {
+      "framework": "llamaindex",
+      "quality_score_mean": 0.9812,
+      "quality_score_std": 0.0352,
+      "n_judged": 48
+    },
+    {
+      "framework": "langchain",
+      "quality_score_mean": 0.9708,
+      "quality_score_std": 0.0713,
+      "n_judged": 48
+    }
+  ]
+}
