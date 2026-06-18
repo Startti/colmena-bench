@@ -14,6 +14,13 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
+# Load .env so the orchestrator's environment carries COLMENA_DATABASE_URL +
+# SECURE_VALUES_KEY. The Colmena DAG runner copies COLMENA_DATABASE_URL →
+# DATABASE_URL for its subprocess; without this, colmena expert/DAG handlers fail
+# with "DATABASE_URL must be set to build ColmenaEngine". The 5 Python runners
+# don't need it. .env does not set BENCH_RUN_ID, so this is safe.
+if [[ -f "$REPO_ROOT/.env" ]]; then set -a; source "$REPO_ROOT/.env"; set +a; fi
+
 TASK_NUM="${1:?usage: run_task.sh <task-number> [--n N] [--frameworks \"...\"]}"
 shift || true
 
