@@ -25,6 +25,48 @@ REPO_ROOT = HARNESS_DIR.parent
 PRICING = json.loads((HARNESS_DIR / "pricing_table.json").read_text())
 
 VARIANT_ORDER = {"S": 0, "M": 1, "L": 2}
+
+
+def _epoch(ts):
+    from datetime import datetime
+    if ts is None:
+        return None
+    if isinstance(ts, (int, float)):
+        return float(ts)
+    return datetime.fromisoformat(str(ts).replace("Z", "+00:00")).timestamp()
+
+
+def _colmena_window_tokens(run_file: str, ro: dict):
+    """full_run.py attributes only ONE session-span per colmena run, which
+    undercounts multi-call tasks (e.g. the SQL-tool expert ReAct loop). Recompute
+    by summing the run's proxy session spans within its [started_at, ended_at]
+    window. Returns (tokens_in, tokens_out) or (None, None) if spans unavailable.
+    """
+    p = Path(run_file)
+    # results/<DATE>-task<NUM>/raw/colmena/<uuid>.json  →  session task<NUM>-<DATE>
+    try:
+        result_dir = p.parents[2].name                       # "<DATE>-task04_csv_expert"
+        date, _, tasknum = result_dir.partition("-task")     # "<DATE>", "04_csv_expert"
+        span_file = REPO_ROOT / "proxy" / "spans" / f"run-task{tasknum}-{date}.jsonl"
+    except Exception:
+        return None, None
+    if not span_file.exists():
+        return None, None
+    t0, t1 = _epoch(ro.get("started_at")), _epoch(ro.get("ended_at"))
+    if t0 is None or t1 is None:
+        return None, None
+    tin = tout = 0
+    pad = 2.0  # small clock-skew pad
+    for line in span_file.read_text().splitlines():
+        if not line.strip():
+            continue
+        s = json.loads(line)
+        ts = _epoch(s.get("ts_start"))
+        if ts is None or not (t0 - pad <= ts <= t1 + pad):
+            continue
+        tin += int(s.get("tokens_input", 0))
+        tout += int(s.get("tokens_output", 0))
+    return (tin, tout) if tin else (None, None)
 COLORS = {"colmena": "#1f9d55", "crewai": "#e15759", "langchain": "#4e79a7",
           "langgraph": "#f28e2b", "llamaindex": "#b07aa1", "google_adk": "#17a2b8"}
 
@@ -42,8 +84,15 @@ def main() -> int:
     # (strategy, variant, framework) -> {tin:[], tout:[], acc:[], ok:int, n:int}
     g: dict[tuple, dict] = {}
     model = "gemini-2.5-flash"
+    skipped = 0
     for f in files:
         ro = json.loads(Path(f).read_text())
+        # Drop failed/empty runs (e.g. the early colmena-expert attempts that
+        # errored with tin=0 before the run_task.sh .env fix) so they don't
+        # pollute the means. A real run has no error and nonzero input tokens.
+        if ro.get("error") or (ro.get("tokens") or {}).get("input", 0) == 0:
+            skipped += 1
+            continue
         tid = ro.get("task_id", "")
         if "naive" in tid:
             strat = "naive"
@@ -62,8 +111,14 @@ def main() -> int:
             d["ok"] += 1
         if succ.get("judge_score") is not None:
             d["acc"].append(float(succ["judge_score"]))
-        d["tin"].append(int((ro.get("tokens") or {}).get("input", 0)))
-        d["tout"].append(int((ro.get("tokens") or {}).get("output", 0)))
+        tin = int((ro.get("tokens") or {}).get("input", 0))
+        tout = int((ro.get("tokens") or {}).get("output", 0))
+        if fw == "colmena":  # full_run undercounts multi-call colmena → recompute from session spans
+            wtin, wtout = _colmena_window_tokens(f, ro)
+            if wtin is not None:
+                tin, tout = wtin, wtout
+        d["tin"].append(tin)
+        d["tout"].append(tout)
 
     rows = []
     for (strat, var, fw), d in g.items():
@@ -94,7 +149,7 @@ def main() -> int:
     _chart_tokens(rows, out / "plots" / "tokens_asymptote.png")
     _chart_accuracy(rows, out / "plots" / "accuracy.png")
 
-    print(f"Task4 summary → {out}/task4_summary.csv ({len(rows)} groups)")
+    print(f"Task4 summary → {out}/task4_summary.csv ({len(rows)} groups, {skipped} failed/empty runs skipped)")
     for r in rows:
         acc = f"{r['accuracy_mean']*100:.0f}%" if r["accuracy_mean"] is not None else "—"
         print(f"  {r['strategy']:7s} {r['variant']} {r['framework']:11s} "
