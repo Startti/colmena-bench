@@ -31,6 +31,7 @@ from .scenario05 import (  # noqa: F401
     REPORT_TEXT, REPORT_DOC_ID, REPORT_FILENAME, TURNS, generate_chart,
     CHART_TOOL_NAME, CHART_TOOL_DESCRIPTION, SYSTEM_MESSAGE, QUALITY_CHECKS,
 )
+from . import scenario_refund  # noqa: F401
 
 __all__ = [
     "RunnerArgs",
@@ -53,4 +54,5 @@ __all__ = [
     "CHART_TOOL_DESCRIPTION",
     "SYSTEM_MESSAGE",
     "QUALITY_CHECKS",
+    "scenario_refund",
 ]
