@@ -1,6 +1,7 @@
 # Demo #4 — production refund agent (HITL + critic-retry + masking).
 # Scored by the dedicated driver harness/orchestrator/demo_refund_run.py
 # (two-process HITL + pass/fail + two-column LOC + masking audit), not full_run.
+id: "06_refund"
 prompt: |
   You are a refund support agent. Decide the refund for the customer's order using
   the run_payment tool to look up the order. Respect this policy strictly:
