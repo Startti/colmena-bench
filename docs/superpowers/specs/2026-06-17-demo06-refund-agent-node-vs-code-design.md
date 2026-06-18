@@ -54,14 +54,24 @@ Three differentiators exercised: **masking** (step 4), **critic-retry** (step 3)
 
 Three axes; everything that could bias the result is shared across frameworks.
 
-### 3.1 LOC (primary metric — node-vs-code)
-Count maintained imperative code with the existing counter
-(`harness/orchestrator/demo05_loc.py`), same rules as Demo 05:
-- **Colmena:** the DAG JSON is **declarative config, shown separately, NOT counted**;
-  only the thin runner Python counts.
-- **Competitors:** the full handler that implements HITL persistence, the
-  critic-retry loop, masking, and routing — all counts.
-- Prompt strings are not counted as code (shared content), per existing rules.
+### 3.1 LOC — TWO separate columns (decided 2026-06-17)
+Report **two distinct numbers** for every framework, never collapsed into one, to
+pre-empt the "the JSON IS the program" objection:
+- **Imperative code lines** — maintained control-flow code you debug/test. Colmena's
+  thin runner counts here; competitors' full handlers (HITL persistence, critic-retry
+  loop, masking, routing) count here.
+- **Declarative config lines** — Colmena's DAG JSON counts here; competitors typically
+  have ~0. Shown alongside, labeled clearly as config, not hidden and not summed into
+  the code column.
+
+The pitch: even counting the JSON, Colmena is leaner, and its lines are *declarative
+config you don't debug* rather than *imperative code you maintain*. Counting via
+`harness/orchestrator/demo05_loc.py`.
+
+**Pre-registered counting rule (identical for all 4):** exclude blank lines, comments,
+and the shared bench-harness boilerplate that is byte-identical across frameworks
+(the runner contract); count only agent-logic lines. Prompt strings are not code
+(shared content). The same rule is applied mechanically by the counter, not by hand.
 
 ### 3.2 Capability matrix (native vs DIY)
 | Feature | Colmena | CrewAI | LangChain | LlamaIndex |
@@ -75,13 +85,22 @@ Count maintained imperative code with the existing counter
 Each framework must actually pass the same checks (see §6).
 
 ### 3.4 Fairness rules
-- Each competitor feature is implemented **by hand, idiomatic, minimal-but-complete**
-  — the least code that makes the feature genuinely work (no strawman, no over-build).
+- Each competitor feature is implemented using **the pattern that framework's own
+  official docs recommend** for HITL / retry / secret-handling, **with the doc URL
+  cited in the handler**. The defense against "you inflated the competitor code" is
+  not our judgment but the framework's own recommended idiom. Where the docs offer no
+  pattern (e.g. outbound masking), that absence is itself the finding and the hand-
+  rolled code is the honest cost — noted as DIY in the matrix.
+- "Minimal-but-complete" still applies as a floor: the least idiomatic code that
+  passes the identical §6 functional checks.
 - The shared scenario assets (customer message, policy, mock payment tool, the
   secret, the canonical human answer, the pass/fail checks) are byte-identical.
 - Same model, temperature, and proxy for all (`gemini-2.5-flash`, temp 0).
 - The capability matrix annotates which features were native vs hand-rolled, so LOC
   and "free vs you-wrote-it" are read together.
+- **Honest scenario framing:** the three features are universal production concerns
+  (human approval, validation, secret handling), not a Colmena feature checklist; the
+  doc states this explicitly.
 
 ---
 
@@ -143,14 +162,27 @@ which is the durable-HITL code that counts toward their LOC.
 
 ## 6. Verification (pass/fail, per framework)
 
-- **HITL:** phase 1 suspends; phase 2 with the canonical answer completes the run.
-- **Critic-retry:** a deliberately bad first draft (refund amount over the policy
-  limit) triggers ≥1 retry; the final decision satisfies policy.
-- **Masking (provider-authoritative):** the proxy captures the `messages` of every
-  request (gated by an env var, only for this demo) and we assert the secret string
-  `sk-live-REFUND-…` **never** appears in any LLM-bound body. This is the only
-  trustworthy masking test because the proxy is the single chokepoint that sees what
-  actually reaches the model (same philosophy as token counting).
+- **HITL — tested as two SEPARATE OS processes (decided 2026-06-17).** The driver
+  runs phase 1 in one process invocation, **tears it down**, then runs phase 2 in a
+  fresh process that must rehydrate state from disk and complete. This actually proves
+  durable cross-process suspend/resume rather than assuming it; the competitors'
+  on-disk persistence code is therefore real and legitimately counted.
+- **Critic-retry — deterministic trigger (decided 2026-06-17).** The policy check is
+  **rule-based** (not an LLM critic) so it always catches a violation, and the
+  scenario guarantees a first-draft violation (refund amount just over the policy
+  limit). We assert ≥1 retry fired and the final decision satisfies policy. This tests
+  that the framework can *express* a retry loop, evenly across all four — not model
+  luck.
+- **Masking — provider-authoritative, and the leak must be real (decided 2026-06-17).**
+  The mock payment tool **echoes the auth token it was called with** in its response
+  payload — exactly the kind of data a naive agent would forward to the LLM to reason
+  over. So a naive implementation genuinely leaks; masking is non-trivial. Colmena
+  masks it in the engine; each competitor must hand-scrub the tool result. Verification:
+  the proxy, in audit mode, scans the `messages` of every request **in memory** and
+  records only `{secret_leaked: bool}` per run — it **never writes the raw body to
+  disk** (the secret would otherwise land in logs, ironic for a masking demo). Pass =
+  the secret never appears in any LLM-bound message. The proxy is the single chokepoint
+  that sees what actually reaches the model (same philosophy as token counting).
 
 ---
 
@@ -185,15 +217,21 @@ which is the durable-HITL code that counts toward their LOC.
 
 ## 9. Risks / open items
 
-- **Masking end-to-end not yet smoke-tested live.** The engine code and fixtures
-  exist and the secret is injected via the same (now-verified) resume mechanism, but
-  a tool-node + secure-value + proxy-scan smoke is the **first verifiable step of the
-  implementation plan**. If non-interactive secure-value seeding is awkward, fall
-  back to providing the secret via a `secure_suspend` resume (reuses the verified
+- **Masking end-to-end not yet smoke-tested live (primary risk).** The engine code
+  and fixtures exist and the secret is injected via the same (now-verified) resume
+  mechanism, but a tool-node + secure-value + proxy-scan smoke is the **first
+  verifiable step of the implementation plan**. The mock tool must echo the auth token
+  (§6) for masking to be observable; confirm `mask_outbound` rewrites it in the tool
+  result before it reaches the LLM. If non-interactive secure-value seeding is awkward,
+  fall back to providing the secret via a `secure_suspend` resume (reuses the verified
   two-phase path).
-- **Competitor "minimal-but-complete" is a judgment call.** Mitigation: each
-  competitor implementation must pass the identical §6 checks; we count the least
-  code that passes, and disclose the approach in the matrix.
+- **Competitor code fairness — RESOLVED to "official-doc idiom + cited" (§3.4).** Each
+  competitor implementation also passes the identical §6 checks. Residual risk: a
+  framework's docs may genuinely lack a HITL/masking pattern — that absence is reported
+  as the finding, not papered over.
+- **HITL durability — RESOLVED to two-process test (§6).** Risk: the bench harness
+  must support a teardown-between-phases invocation model; the driver owns this.
+- **Critic determinism — RESOLVED to rule-based check + guaranteed violation (§6).**
 - **LangGraph/ADK deferred.** Round-2; the matrix and chart are built to extend to 6.
 
 ---
