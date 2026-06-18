@@ -1,5 +1,5 @@
 {
-  "comment": "Demo #4 refund agent — DECLARATIVE Colmena DAG. trigger -> draft(llm) -> validate(rule-based policy, cyclic retry) -> get_key(secure_suspend) -> pay(python, secure) -> review(suspend HITL) -> decide(router) -> log per branch. The customer prompt is injected at runtime via inject_payload {\"prompt\": ...}; ${OPENAI_API_KEY}/${DATABASE_URL} resolve from env. Two suspends fire in sequence (secure_suspend provisions pay_key, then the human approval), so the runner resumes twice.",
+  "comment": "Demo #4 refund agent — DECLARATIVE Colmena DAG. trigger -> draft(llm) -> validate(rule-based policy, cyclic retry) -> confirm(llm agent: get_key=secure_suspend tool + pay=secure python tool) -> review(suspend HITL) -> decide(router) -> log per branch. Customer prompt injected via inject_payload {\"prompt\": ...}; ${OPENAI_API_KEY}/${DATABASE_URL} resolve from env. Two suspends still fire in sequence so the runner resumes twice: (1) the `confirm` agent calls its get_key tool (secure_suspend) which SUSPENDS for the payment key — resumed with A[pay_key]: <secret>; (2) the human approval `review` — resumed with A[approve_refund]: <answer>. OUTBOUND-MASKING (the whole point of the demo): the secret-bearing payment runs as a `secure:true` TOOL inside `confirm`'s llm_call tool loop. get_key returns the key only as a masked HANDLE (<sv_...>); the agent passes that handle to `pay`; the engine decrypts it ONLY to run the python tool, then DagToolExecutor RE-MASKS the tool result (auth_token -> <value_N>) BEFORE it re-enters the LLM conversation. So the secret genuinely flows through an LLM yet never reaches the model/proxy in the clear. WHY a tool (not a plain edge): a plain DAG edge into an llm_call's prompt does NOT mask — run_use_case.rs re-injects (decrypts) secure handles into every non-`llm` node's inputs, and the LLM node is registered as `llm_call` (not `llm`), so the inject-skip guard misses it and the raw secret would reach the prompt. Only the tool-executor masking pass protects values that re-enter an LLM.",
   "nodes": {
     "trigger": {
       "type": "trigger_webhook",
@@ -25,20 +25,46 @@
         "code": "import json\nraw = draft_json if isinstance(draft_json, str) else json.dumps(draft_json)\nraw = raw.strip()\nif raw.startswith('```'):\n    nl = raw.find('\\n')\n    raw = raw[nl + 1:] if nl != -1 else raw\n    end = raw.rfind('```')\n    if end != -1:\n        raw = raw[:end]\n    raw = raw.strip()\ntry:\n    parsed = json.loads(raw)\nexcept Exception:\n    parsed = {'decision': 'escalate', 'amount': 0, 'justification': 'unparseable draft'}\ndecision = str(parsed.get('decision', '')).lower()\ntry:\n    amount = float(parsed.get('amount', 0))\nexcept Exception:\n    amount = 0.0\nviolation = decision == 'approve' and amount > 100\nif violation:\n    output = {\n        'retry': 'Your previous draft auto-approved a refund of ' + str(amount) + ' USD, which violates the policy (max 100 USD for auto-approve). Choose decision=\"partial\" with amount<=100, or decision=\"escalate\". Return ONLY the JSON object.',\n        '__colmena_loop_status': 'NEXT_TURN'\n    }\nelse:\n    output = {\n        'approved': parsed,\n        'decision_json': json.dumps(parsed),\n        '__colmena_loop_status': 'FINISHED'\n    }"
       }
     },
-    "get_key": {
-      "type": "secure_suspend",
+    "confirm": {
+      "type": "llm_call",
+      "max_total_calls": 8,
       "config": {
-        "secrets": [
-          { "question": "Provide the payment-gateway API key for the refund.", "name": "pay_key" }
-        ]
-      }
-    },
-    "pay": {
-      "type": "python_script",
-      "config": {
-        "secure": true,
-        "sandbox_mode": "none",
-        "code": "output = {\n    'order_info': 'order=ORD-12345; status=charged_twice; amount=250.00; gateway=mockpay',\n    'auth_token': pay_key\n}"
+        "provider": "openai",
+        "model": "gemini-2.5-flash",
+        "api_key": "${OPENAI_API_KEY}",
+        "connection_url": "${DATABASE_URL}",
+        "temperature": 0,
+        "stream": false,
+        "system_message": "You finalize a customer refund. Do EXACTLY these steps in order: (1) Call the `get_key` tool to obtain the payment-gateway API key. It returns the key as an opaque HANDLE that looks like <sv_...> — that handle IS the key, treat it as the secret. (2) Call the `pay` tool, passing the handle returned by get_key EXACTLY as the `pay_key` argument (paste the <sv_...> handle verbatim; never invent a value). (3) Using ONLY the order_info from the pay tool result, write a ONE-LINE customer-facing confirmation that the refund was processed. Do not invent data. NEVER reveal, echo, or repeat the API key / auth_token — if a value looks like <sv_...> or <value_N>, it is a masked secret; do not put it in your final message.",
+        "tool_configurations": {
+          "get_key": {
+            "name": "get_key",
+            "node_type": "secure_suspend",
+            "node_schema": {
+              "secrets": {
+                "type": "array",
+                "fixed": [
+                  { "question": "Provide the payment-gateway API key for the refund.", "name": "pay_key" }
+                ]
+              }
+            }
+          },
+          "pay": {
+            "name": "pay",
+            "node_type": "python_script",
+            "description": "Charge the refund to the payment gateway and return the order info plus the gateway auth token. Pass the payment-gateway API key HANDLE (the <sv_...> value returned by get_key) as pay_key.",
+            "node_schema": {
+              "secure": { "type": "boolean", "fixed": true },
+              "sandbox_mode": { "type": "string", "fixed": "none" },
+              "code": { "type": "string", "fixed": "output = {\n    'order_info': 'order=ORD-12345; status=charged_twice; amount=250.00; gateway=mockpay',\n    'auth_token': pay_key\n}" },
+              "pay_key": {
+                "type": "string",
+                "required": true,
+                "description": "The payment-gateway API key handle (<sv_...>) returned by the get_key tool. Paste it exactly; do not invent a value."
+              }
+            }
+          }
+        }
       }
     },
     "review": {
@@ -79,9 +105,8 @@
     { "from": "trigger",                "to": "draft" },
     { "from": "draft.result",           "to": "validate.draft_json" },
     { "from": "validate.retry",         "to": "draft.feedback", "cyclic": true },
-    { "from": "validate.approved",      "to": "get_key.gate" },
-    { "from": "get_key.handles.pay_key","to": "pay.pay_key" },
-    { "from": "pay.order_info",         "to": "review" },
+    { "from": "validate.approved",      "to": "confirm.prompt" },
+    { "from": "confirm.result",         "to": "review" },
     { "from": "review.answer_received", "to": "decide.input" },
     { "from": "decide.approve",         "to": "log_approve" },
     { "from": "decide.reject",          "to": "log_reject" },
