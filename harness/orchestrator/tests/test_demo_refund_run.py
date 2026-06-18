@@ -26,12 +26,15 @@ def test_read_mask_audit_corrupt_returns_none(tmp_path):
     assert d.read_mask_audit(tmp_path, "bad") is None
 
 
+FWS = {"colmena", "crewai", "langchain", "llamaindex", "langgraph", "google_adk"}
+
+
 def test_loc_target_shapes():
-    fws = {"colmena", "crewai", "langchain", "llamaindex"}
-    assert set(d.CODE_LOC_TARGETS) == fws
-    assert set(d.CONFIG_LOC_TARGETS) == fws
+    assert set(d.FRAMEWORKS) == FWS
+    assert set(d.CODE_LOC_TARGETS) == FWS
+    assert set(d.CONFIG_LOC_TARGETS) == FWS
     # Every framework has exactly one imperative code file.
-    for fw in fws:
+    for fw in FWS:
         assert len(d.CODE_LOC_TARGETS[fw]) == 1
         assert d.CODE_LOC_TARGETS[fw][0].endswith("task06_refund.py")
 
@@ -42,5 +45,12 @@ def test_colmena_has_config_competitors_have_none():
         "runners/colmena/runner/dags/refund_agent.json"
     ]
     # Competitors express the agent in imperative code -> no config file.
-    for fw in ("crewai", "langchain", "llamaindex"):
+    for fw in ("crewai", "langchain", "llamaindex", "langgraph", "google_adk"):
         assert d.CONFIG_LOC_TARGETS[fw] == []
+
+
+def test_new_frameworks_header_capable():
+    # langgraph + google_adk forward x-bench-run-id, so their masking audit is
+    # keyed by run_id (mask-<run_id>.json), not the session file.
+    for fw in ("langgraph", "google_adk"):
+        assert fw in d.HEADER_CAPABLE

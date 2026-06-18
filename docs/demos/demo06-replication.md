@@ -47,7 +47,7 @@ Everything routes through the local LiteLLM proxy, which is the
 
 ## 1. Run the experiment
 
-**One full pass (all 4 frameworks)** — the script owns the proxy lifecycle:
+**One full pass (all 6 frameworks)** — the script owns the proxy lifecycle:
 ```bash
 bash scripts/run_demo06.sh
 # → runs/demo06/summary.{json,csv}
@@ -56,8 +56,14 @@ bash scripts/run_demo06.sh
 `run_demo06.sh` sources `.env`, starts the LiteLLM proxy with the masking-audit
 secret **armed** (`BENCH_MASK_AUDIT_SECRET=sk-live-REFUND-SECRET-abc123`, matching
 `scenario_refund.SECRET`) under `BENCH_RUN_ID=demo06`, waits for readiness, runs the
-two-process driver (`harness/orchestrator/demo_refund_run.py`) across all four
-frameworks, then kills the proxy on exit.
+two-process driver (`harness/orchestrator/demo_refund_run.py`) across all six
+frameworks (colmena, crewai, langchain, llamaindex, **langgraph**, **google_adk**),
+then kills the proxy on exit.
+
+> **LangGraph dependency.** The langgraph runner's durable cross-process HITL uses a
+> file-backed `SqliteSaver` checkpointer, which needs `langgraph-checkpoint-sqlite`.
+> It is declared in `runners/langgraph/pyproject.toml` and installed by
+> `scripts/setup_all.sh` — no extra step if you ran setup.
 
 Subset a run with `--frameworks`:
 ```bash
@@ -166,6 +172,9 @@ for r in json.load(open("runs/demo06/summary.json")):
   only; a secure handle routed into a plain `llm_call` prompt edge is decrypted and
   would leak (see pitch doc §3). The DAG deliberately models the payment as a
   `secure: true` *tool* so masking applies.
-- **Scope:** round 1 is colmena + crewai + langchain + llamaindex; LangGraph + ADK
-  are deferred to round 2.
+- **Scope:** all 6 frameworks now run — colmena + crewai + langchain + llamaindex +
+  langgraph + google_adk. Round-2 finding: LangGraph is the honest near-peer (native
+  graph + durable cross-process HITL via `interrupt()` + file `SqliteSaver` + graph-loop
+  critic retry); the differentiation narrows to **masking**, the one primitive no
+  Python framework offers natively (see the pitch doc §3 and the round-2 subsection).
 </content>

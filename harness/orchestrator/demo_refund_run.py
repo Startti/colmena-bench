@@ -1,4 +1,4 @@
-"""Demo #4 driver — refund agent across all 4 frameworks (the integration capstone).
+"""Demo #4 driver — refund agent across all 6 frameworks (the integration capstone).
 
 For each framework the production refund agent (HITL + critic-retry + masking) is
 run in TWO separate processes:
@@ -51,7 +51,7 @@ from demo05_loc import count_loc  # noqa: E402
 from orchestrator.full_run import venv_python, _proxy_key  # noqa: E402
 from bench_common import scenario_refund  # noqa: E402
 
-FRAMEWORKS = ["colmena", "crewai", "langchain", "llamaindex"]
+FRAMEWORKS = ["colmena", "crewai", "langchain", "llamaindex", "langgraph", "google_adk"]
 MASK_SECRET = scenario_refund.SECRET
 
 # Frameworks whose LLM adapter can forward the ``x-bench-run-id`` header, so the
@@ -67,6 +67,8 @@ CODE_LOC_TARGETS: dict[str, list[str]] = {
     "crewai": ["runners/crewai/runner/tasks/task06_refund.py"],
     "langchain": ["runners/langchain/runner/tasks/task06_refund.py"],
     "llamaindex": ["runners/llamaindex/runner/tasks/task06_refund.py"],
+    "langgraph": ["runners/langgraph/runner/tasks/task06_refund.py"],
+    "google_adk": ["runners/google_adk/runner/tasks/task06_refund.py"],
 }
 
 # Declarative config (the "config" column). Only Colmena expresses the agent as a
@@ -76,6 +78,8 @@ CONFIG_LOC_TARGETS: dict[str, list[str]] = {
     "crewai": [],
     "langchain": [],
     "llamaindex": [],
+    "langgraph": [],
+    "google_adk": [],
 }
 
 

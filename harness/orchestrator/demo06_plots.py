@@ -38,10 +38,12 @@ C_HI = "#1f9d55"      # colmena green — native / declarative config (the hero)
 C_CODE = "#e1a948"    # amber — imperative code you maintain
 C_DIY = "#c0392b"     # red — DIY / hand-rolled / can-leak
 
-# Python frameworks for which the NAIVE (no-scrub) variant provably leaks the
-# secret: the tool result carrying the secret reaches the LLM unless the dev
-# hand-writes the outbound scrub.
-NAIVE_LEAK = {"crewai", "langchain", "llamaindex"}
+# Frameworks for which the NAIVE (no-scrub) variant provably leaks the secret: the
+# tool result carrying the secret reaches the LLM unless the dev hand-writes the
+# outbound scrub. This is exactly every framework whose `masking` cell is DIY —
+# i.e. all 5 non-Colmena frameworks (including langgraph: native graph/HITL/retry
+# but still DIY masking). Derived from the matrix so it generalizes to N frameworks.
+NAIVE_LEAK = {fw for fw, val in CAPABILITY_MATRIX["masking"].items() if val == "DIY"}
 
 
 def _by_fw(summary: list[dict]) -> dict[str, dict]:
@@ -60,7 +62,7 @@ def loc_code_vs_config(summary, outdir):
     code = [by[n]["code_loc"] for n in names]
     config = [by[n]["config_loc"] for n in names]
 
-    fig, ax = plt.subplots(figsize=(9, 5))
+    fig, ax = plt.subplots(figsize=(11, 5))
     x = range(len(names))
     w = 0.38
     b_code = ax.bar([i - w / 2 for i in x], code, w,
@@ -95,7 +97,7 @@ def capability_matrix(summary, outdir):
     cols = FRAMEWORKS
     nrows, ncols = len(feats), len(cols)
 
-    fig, ax = plt.subplots(figsize=(9, 5))
+    fig, ax = plt.subplots(figsize=(12, 5))
     ax.set_xlim(0, ncols); ax.set_ylim(0, nrows)
     ax.set_xticks([]); ax.set_yticks([])
     for spine in ax.spines.values():
@@ -145,7 +147,7 @@ def masking_guarantee(summary, outdir):
     by = _by_fw(summary)
     names = [f for f in FRAMEWORKS if f in by]
 
-    fig, ax = plt.subplots(figsize=(9, 5))
+    fig, ax = plt.subplots(figsize=(11, 5))
     x = range(len(names))
     bars = []
     for i, n in enumerate(names):

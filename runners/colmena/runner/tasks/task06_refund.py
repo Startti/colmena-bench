@@ -70,6 +70,25 @@ def _is_suspended(out: dict[str, Any]) -> bool:
     return out.get("__colmena_status") == "SUSPENDED"
 
 
+def _pending_question_ids(out: dict[str, Any]) -> list[str]:
+    """The ``id``s the engine is currently asking for at this suspend.
+
+    The suspended payload carries ``questions: [{"id": ..., "question": ...}]``.
+    Resuming must answer with ``A[<id>]: ...`` matching one of these ids, or the
+    engine rejects it (``A[<id>] is not in the expected id set``). The two
+    suspends in this DAG ask for ``pay_key`` (secure_suspend) then
+    ``approve_refund`` (HITL) — but the confirm agent may skip the get_key tool
+    call (LLM non-determinism), so we must read the live id rather than assume the
+    order."""
+    qs = out.get("questions")
+    ids: list[str] = []
+    if isinstance(qs, list):
+        for q in qs:
+            if isinstance(q, dict) and isinstance(q.get("id"), str):
+                ids.append(q["id"])
+    return ids
+
+
 def _state_path(args: RunnerArgs) -> Path:
     return Path(str(args.output) + ".state")
 
@@ -139,37 +158,49 @@ def run(
             "session": session_id,
             "resume_id": out.get("session_id"),
             "prompt": prompt,
+            # The id(s) THIS suspend is asking for, so phase 2 answers the right
+            # one first (the confirm agent may skip get_key, suspending straight
+            # at the human-approval gate).
+            "pending_ids": _pending_question_ids(out),
         }
         _state_path(args).write_text(json.dumps(state, indent=2))
         return ({"decision": None}, _zero_usage(), {"suspended": True})
 
-    # ---- Phase 2: resume the secure_suspend, then the approval suspend -------
+    # ---- Phase 2: resume each suspend in turn, keyed by the LIVE question id --
+    # The DAG suspends (up to) twice: secure_suspend(`pay_key`) then HITL
+    # (`approve_refund`). The confirm agent may skip the get_key tool call, so we
+    # don't assume the order — we read the pending question id from each suspend
+    # payload and answer the one the engine is actually asking for.
     state = json.loads(Path(args.resume_state).read_text())
     session_id = state["session"]
     resume_id = state["resume_id"]
 
-    # 2a. Resume secure_suspend (get_key) with the payment secret.
-    result_json = colmena.run_dag(
-        dag,
-        resume_id,
-        f"A[pay_key]: {scenario_refund.SECRET}",
-        None,
-        True,
-        session_id,
-    )
-    out = json.loads(result_json)
+    human_answer = args.resume_answer or scenario_refund.CANONICAL_HUMAN_ANSWER
+    if not human_answer.startswith("A[approve_refund]:"):
+        human_answer = f"A[approve_refund]: {human_answer}"
 
-    # 2b. If the run suspended again at the human-approval gate, resume it.
-    if _is_suspended(out):
-        human_answer = args.resume_answer or scenario_refund.CANONICAL_HUMAN_ANSWER
-        # Accept either a canonical-format answer or a plain string from the CLI.
-        if not human_answer.startswith("A[approve_refund]:"):
-            human_answer = f"A[approve_refund]: {human_answer}"
-        approval_resume_id = out.get("session_id", resume_id)
+    def _answer_for(qid: str) -> str:
+        if qid == "pay_key":
+            return f"A[pay_key]: {scenario_refund.SECRET}"
+        return human_answer
+
+    # First answer is driven by the id phase 1 recorded as pending (defaults to
+    # pay_key for back-compat with older state files that didn't persist it).
+    pending_ids = state.get("pending_ids") or ["pay_key"]
+    next_answer = _answer_for(pending_ids[0])
+
+    out: dict[str, Any] = {}
+    for _ in range(4):  # at most two suspends to clear; cap defensively
         result_json = colmena.run_dag(
-            dag, approval_resume_id, human_answer, None, True, session_id
+            dag, resume_id, next_answer, None, True, session_id
         )
         out = json.loads(result_json)
+        if not _is_suspended(out):
+            break
+        ids = _pending_question_ids(out)
+        resume_id = out.get("session_id", resume_id)
+        # Answer the pending id; default to the human answer for the HITL gate.
+        next_answer = _answer_for(ids[0]) if ids else human_answer
 
     decision = _extract_decision(out)
     answer = decision if decision is not None else {"decision": None}
