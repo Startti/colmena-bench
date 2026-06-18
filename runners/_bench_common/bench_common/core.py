@@ -36,6 +36,8 @@ class RunnerArgs:
     proxy_base_url: str
     output: Path
     timeout_seconds: int
+    resume_state: "Path | None" = None
+    resume_answer: "str | None" = None
 
 
 def parse_args(framework_name: str, argv: list[str] | None = None) -> RunnerArgs:
@@ -47,6 +49,8 @@ def parse_args(framework_name: str, argv: list[str] | None = None) -> RunnerArgs
     p.add_argument("--proxy-base-url", required=True)
     p.add_argument("--output", required=True, type=Path)
     p.add_argument("--timeout-seconds", type=int, default=300)
+    p.add_argument("--resume-state", type=Path, default=None)
+    p.add_argument("--resume-answer", default=None)
     ns = p.parse_args(argv)
     return RunnerArgs(
         task=ns.task,
@@ -56,6 +60,8 @@ def parse_args(framework_name: str, argv: list[str] | None = None) -> RunnerArgs
         proxy_base_url=ns.proxy_base_url,
         output=ns.output,
         timeout_seconds=ns.timeout_seconds,
+        resume_state=ns.resume_state,
+        resume_answer=ns.resume_answer,
     )
 
 
