@@ -217,14 +217,7 @@ which is the durable-HITL code that counts toward their LOC.
 
 ## 9. Risks / open items
 
-- **Masking end-to-end not yet smoke-tested live (primary risk).** The engine code
-  and fixtures exist and the secret is injected via the same (now-verified) resume
-  mechanism, but a tool-node + secure-value + proxy-scan smoke is the **first
-  verifiable step of the implementation plan**. The mock tool must echo the auth token
-  (§6) for masking to be observable; confirm `mask_outbound` rewrites it in the tool
-  result before it reaches the LLM. If non-interactive secure-value seeding is awkward,
-  fall back to providing the secret via a `secure_suspend` resume (reuses the verified
-  two-phase path).
+- **Masking confirmed 2026-06-17 via live `run_dag` smoke** — the working path is `secure_suspend` (collect `pay_key` via `A[pay_key]:` resume) → tool node with `secure: true` whose output echoes the key; `hash_output` replaced the echoed string with a `<value_N>` handle BEFORE the `llm_call` saw it (`pay.echo == "<value_1>"`, LLM summary contained no raw key, `RAW SECRET present: False`). NOTE: on the plain DAG-edge path `mask_outbound` does NOT run (only the LLM-tool-call dispatcher in `dag_tool_executor.rs` calls it); a `secure: true`-less tool node leaks the raw key into the LLM (verified). So the demo MUST set `secure: true` on the refund tool node and accept that `hash_output` masks the whole output field, not just the secret substring.
 - **Competitor code fairness — RESOLVED to "official-doc idiom + cited" (§3.4).** Each
   competitor implementation also passes the identical §6 checks. Residual risk: a
   framework's docs may genuinely lack a HITL/masking pattern — that absence is reported
