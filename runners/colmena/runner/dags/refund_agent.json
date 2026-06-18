@@ -1,0 +1,90 @@
+{
+  "comment": "Demo #4 refund agent — DECLARATIVE Colmena DAG. trigger -> draft(llm) -> validate(rule-based policy, cyclic retry) -> get_key(secure_suspend) -> pay(python, secure) -> review(suspend HITL) -> decide(router) -> log per branch. The customer prompt is injected at runtime via inject_payload {\"prompt\": ...}; ${OPENAI_API_KEY}/${DATABASE_URL} resolve from env. Two suspends fire in sequence (secure_suspend provisions pay_key, then the human approval), so the runner resumes twice.",
+  "nodes": {
+    "trigger": {
+      "type": "trigger_webhook",
+      "config": { "path": "/refund" }
+    },
+    "draft": {
+      "type": "llm_call",
+      "max_total_calls": 4,
+      "config": {
+        "provider": "openai",
+        "model": "gemini-2.5-flash",
+        "api_key": "${OPENAI_API_KEY}",
+        "connection_url": "${DATABASE_URL}",
+        "temperature": 0,
+        "stream": false,
+        "system_message": "You are a refund support agent. Decide the refund for the customer's order. POLICY (strict): a single agent may auto-approve refunds up to 100 USD; for amounts above 100 USD you MUST choose 'partial' (amount <= 100) or 'escalate'; NEVER auto-approve more than 100 USD. Return ONLY a single JSON object, no prose, no code fences, with exactly these keys: {\"decision\": \"approve|partial|reject|escalate\", \"amount\": <number>, \"justification\": \"<text>\"}. If a reviewer left feedback on your previous draft, you MUST correct it: {{feedback}}"
+      }
+    },
+    "validate": {
+      "type": "python_script",
+      "config": {
+        "sandbox_mode": "none",
+        "code": "import json\nraw = draft_json if isinstance(draft_json, str) else json.dumps(draft_json)\nraw = raw.strip()\nif raw.startswith('```'):\n    nl = raw.find('\\n')\n    raw = raw[nl + 1:] if nl != -1 else raw\n    end = raw.rfind('```')\n    if end != -1:\n        raw = raw[:end]\n    raw = raw.strip()\ntry:\n    parsed = json.loads(raw)\nexcept Exception:\n    parsed = {'decision': 'escalate', 'amount': 0, 'justification': 'unparseable draft'}\ndecision = str(parsed.get('decision', '')).lower()\ntry:\n    amount = float(parsed.get('amount', 0))\nexcept Exception:\n    amount = 0.0\nviolation = decision == 'approve' and amount > 100\nif violation:\n    output = {\n        'retry': 'Your previous draft auto-approved a refund of ' + str(amount) + ' USD, which violates the policy (max 100 USD for auto-approve). Choose decision=\"partial\" with amount<=100, or decision=\"escalate\". Return ONLY the JSON object.',\n        '__colmena_loop_status': 'NEXT_TURN'\n    }\nelse:\n    output = {\n        'approved': parsed,\n        'decision_json': json.dumps(parsed),\n        '__colmena_loop_status': 'FINISHED'\n    }"
+      }
+    },
+    "get_key": {
+      "type": "secure_suspend",
+      "config": {
+        "secrets": [
+          { "question": "Provide the payment-gateway API key for the refund.", "name": "pay_key" }
+        ]
+      }
+    },
+    "pay": {
+      "type": "python_script",
+      "config": {
+        "secure": true,
+        "sandbox_mode": "none",
+        "code": "output = {\n    'order_info': 'order=ORD-12345; status=charged_twice; amount=250.00; gateway=mockpay',\n    'auth_token': pay_key\n}"
+      }
+    },
+    "review": {
+      "type": "suspend",
+      "config": {
+        "id": "approve_refund",
+        "question": "Approve this refund?",
+        "question_type": "open"
+      }
+    },
+    "decide": {
+      "type": "router",
+      "config": {
+        "mode": "extract_and_route",
+        "provider": "openai",
+        "model": "gemini-2.5-flash",
+        "api_key": "${OPENAI_API_KEY}",
+        "connection_url": "${DATABASE_URL}",
+        "schema": {
+          "intent": {
+            "type": "string",
+            "required": true,
+            "description": "approve if the human approves / says yes / authorizes the refund; reject if they decline or cancel; escalate if they ask to escalate or are unsure."
+          }
+        },
+        "branches": [
+          { "name": "approve",  "when": { "field": "intent", "equals": "approve" } },
+          { "name": "reject",   "when": { "field": "intent", "equals": "reject" } },
+          { "name": "escalate", "when": { "field": "intent", "equals": "escalate" } }
+        ]
+      }
+    },
+    "log_approve":  { "type": "log", "config": { "prefix": "REFUND APPROVED:" } },
+    "log_reject":   { "type": "log", "config": { "prefix": "REFUND REJECTED:" } },
+    "log_escalate": { "type": "log", "config": { "prefix": "REFUND ESCALATED:" } }
+  },
+  "edges": [
+    { "from": "trigger",                "to": "draft" },
+    { "from": "draft.result",           "to": "validate.draft_json" },
+    { "from": "validate.retry",         "to": "draft.feedback", "cyclic": true },
+    { "from": "validate.approved",      "to": "get_key.gate" },
+    { "from": "get_key.handles.pay_key","to": "pay.pay_key" },
+    { "from": "pay.order_info",         "to": "review" },
+    { "from": "review.answer_received", "to": "decide.input" },
+    { "from": "decide.approve",         "to": "log_approve" },
+    { "from": "decide.reject",          "to": "log_reject" },
+    { "from": "decide.escalate",        "to": "log_escalate" }
+  ]
+}
