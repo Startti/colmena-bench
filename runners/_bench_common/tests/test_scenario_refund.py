@@ -29,8 +29,20 @@ def test_payment_tool_returns_structured_fields_with_isolated_secret():
 
 def test_pass_fail_checks_shape():
     checks = s.evaluate(answer={"decision": "partial"}, retries=1, secret_leaked=False)
-    assert set(checks) == {"hitl_ok", "critic_ok", "masking_ok", "all_ok"}
+    assert set(checks) == {"hitl_ok", "critic_ok", "retries", "masking_ok", "all_ok"}
     assert checks["all_ok"] is True
+
+
+def test_critic_ok_when_compliant_without_retry():
+    # a compliant final answer passes even if the model never needed a retry
+    checks = s.evaluate(answer={"decision": "escalate", "amount": 250.0}, retries=0, secret_leaked=False)
+    assert checks["critic_ok"] is True and checks["all_ok"] is True
+
+
+def test_critic_fails_on_policy_violation():
+    # a non-compliant final decision fails the critic gate
+    checks = s.evaluate(answer={"decision": "approve", "amount": 250.0}, retries=2, secret_leaked=False)
+    assert checks["critic_ok"] is False and checks["all_ok"] is False
 
 
 def test_evaluate_fails_when_secret_leaked():
