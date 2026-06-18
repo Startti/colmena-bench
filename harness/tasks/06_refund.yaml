@@ -1,0 +1,17 @@
+# Demo #4 — production refund agent (HITL + critic-retry + masking).
+# Scored by the dedicated driver harness/orchestrator/demo_refund_run.py
+# (two-process HITL + pass/fail + two-column LOC + masking audit), not full_run.
+prompt: |
+  You are a refund support agent. Decide the refund for the customer's order using
+  the run_payment tool to look up the order. Respect this policy strictly:
+  Refund policy: auto-approve up to 100 USD; above 100 USD you must choose 'partial'
+  (<=100) or 'escalate'; never auto-approve more than 100 USD.
+  Return a JSON object: {"decision": "approve|partial|reject|escalate", "amount": <number>, "justification": "<text>"}.
+tools:
+  - name: run_payment
+metrics: [loc, pass_fail]
+success:
+  kind: refund_agent
+model_alias: gemini-2.5-flash
+timeout_seconds: 180
+n_runs: 1
