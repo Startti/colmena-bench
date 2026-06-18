@@ -128,6 +128,7 @@ def main() -> int:
             "strategy": strat, "variant": var, "framework": fw, "n": d["n"],
             "tokens_in_mean": round(tin, 1),
             "tokens_in_std": round(statistics.stdev(d["tin"]), 1) if len(d["tin"]) > 1 else 0.0,
+            "tokens_out_mean": round(tout, 1),
             "accuracy_mean": round(statistics.mean(d["acc"]), 4) if d["acc"] else None,
             "usd_mean": round(_usd(tin, tout, model), 6),
             "ok_rate": round(d["ok"] / d["n"], 3) if d["n"] else 0,
@@ -141,7 +142,7 @@ def main() -> int:
     with (out / "task4_summary.csv").open("w", newline="") as fh:
         w = csv.writer(fh)
         cols = ["strategy", "variant", "framework", "n", "tokens_in_mean", "tokens_in_std",
-                "accuracy_mean", "usd_mean", "ok_rate"]
+                "tokens_out_mean", "accuracy_mean", "usd_mean", "ok_rate"]
         w.writerow(cols)
         for r in rows:
             w.writerow([r[c] for c in cols])
@@ -153,7 +154,8 @@ def main() -> int:
     for r in rows:
         acc = f"{r['accuracy_mean']*100:.0f}%" if r["accuracy_mean"] is not None else "—"
         print(f"  {r['strategy']:7s} {r['variant']} {r['framework']:11s} "
-              f"tok_in {r['tokens_in_mean']:>9,.0f}  acc {acc:>4}  ok {r['ok_rate']*100:.0f}%  ${r['usd_mean']:.5f}")
+              f"tok_in {r['tokens_in_mean']:>9,.0f}  tok_out {r['tokens_out_mean']:>8,.0f}  "
+              f"acc {acc:>4}  ok {r['ok_rate']*100:.0f}%  ${r['usd_mean']:.5f}")
     return 0
 
 

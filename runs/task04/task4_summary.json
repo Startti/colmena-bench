@@ -8,6 +8,7 @@
       "n": 4,
       "tokens_in_mean": 53058.5,
       "tokens_in_std": 2439.0,
+      "tokens_out_mean": 5124.8,
       "accuracy_mean": 0.875,
       "usd_mean": 0.028729,
       "ok_rate": 1.0
@@ -19,6 +20,7 @@
       "n": 3,
       "tokens_in_mean": 72559,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 3104,
       "accuracy_mean": 1.0,
       "usd_mean": 0.029528,
       "ok_rate": 1.0
@@ -30,6 +32,7 @@
       "n": 3,
       "tokens_in_mean": 37210,
       "tokens_in_std": 182.8,
+      "tokens_out_mean": 3994.3,
       "accuracy_mean": 0.9833,
       "usd_mean": 0.021149,
       "ok_rate": 1.0
@@ -41,6 +44,7 @@
       "n": 3,
       "tokens_in_mean": 36249,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 7577.3,
       "accuracy_mean": 1.0,
       "usd_mean": 0.029818,
       "ok_rate": 1.0
@@ -52,6 +56,7 @@
       "n": 3,
       "tokens_in_mean": 36249,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 6583.3,
       "accuracy_mean": 1.0,
       "usd_mean": 0.027333,
       "ok_rate": 1.0
@@ -63,6 +68,7 @@
       "n": 3,
       "tokens_in_mean": 70304,
       "tokens_in_std": 2120.0,
+      "tokens_out_mean": 4509.7,
       "accuracy_mean": 0.9667,
       "usd_mean": 0.032365,
       "ok_rate": 1.0
@@ -74,6 +80,7 @@
       "n": 2,
       "tokens_in_mean": 50882,
       "tokens_in_std": 379.0,
+      "tokens_out_mean": 3945,
       "accuracy_mean": 0.9,
       "usd_mean": 0.025127,
       "ok_rate": 1.0
@@ -85,6 +92,7 @@
       "n": 3,
       "tokens_in_mean": 73043,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 4463,
       "accuracy_mean": 1.0,
       "usd_mean": 0.03307,
       "ok_rate": 1.0
@@ -96,6 +104,7 @@
       "n": 3,
       "tokens_in_mean": 37651.3,
       "tokens_in_std": 235.0,
+      "tokens_out_mean": 4493.3,
       "accuracy_mean": 0.9833,
       "usd_mean": 0.022529,
       "ok_rate": 1.0
@@ -107,6 +116,7 @@
       "n": 2,
       "tokens_in_mean": 36549,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 5871,
       "accuracy_mean": 1.0,
       "usd_mean": 0.025642,
       "ok_rate": 1.0
@@ -118,6 +128,7 @@
       "n": 3,
       "tokens_in_mean": 36549,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 5849.3,
       "accuracy_mean": 1.0,
       "usd_mean": 0.025588,
       "ok_rate": 1.0
@@ -129,6 +140,7 @@
       "n": 3,
       "tokens_in_mean": 74332.7,
       "tokens_in_std": 4607.8,
+      "tokens_out_mean": 5940.7,
       "accuracy_mean": 0.9833,
       "usd_mean": 0.037151,
       "ok_rate": 1.0
@@ -140,6 +152,7 @@
       "n": 3,
       "tokens_in_mean": 52085.3,
       "tokens_in_std": 4756.9,
+      "tokens_out_mean": 3808,
       "accuracy_mean": 0.9167,
       "usd_mean": 0.025146,
       "ok_rate": 1.0
@@ -151,6 +164,7 @@
       "n": 2,
       "tokens_in_mean": 73348,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 3892,
       "accuracy_mean": 1.0,
       "usd_mean": 0.031734,
       "ok_rate": 1.0
@@ -162,6 +176,7 @@
       "n": 3,
       "tokens_in_mean": 38042,
       "tokens_in_std": 299.6,
+      "tokens_out_mean": 5150.7,
       "accuracy_mean": 1.0,
       "usd_mean": 0.024289,
       "ok_rate": 1.0
@@ -173,6 +188,7 @@
       "n": 3,
       "tokens_in_mean": 37379.3,
       "tokens_in_std": 151.0,
+      "tokens_out_mean": 3612.3,
       "accuracy_mean": 1.0,
       "usd_mean": 0.020245,
       "ok_rate": 1.0
@@ -184,6 +200,7 @@
       "n": 2,
       "tokens_in_mean": 37207,
       "tokens_in_std": 239.0,
+      "tokens_out_mean": 5873.5,
       "accuracy_mean": 1.0,
       "usd_mean": 0.025846,
       "ok_rate": 1.0
@@ -195,6 +212,7 @@
       "n": 3,
       "tokens_in_mean": 72678.7,
       "tokens_in_std": 5503.9,
+      "tokens_out_mean": 6198.7,
       "accuracy_mean": 1.0,
       "usd_mean": 0.0373,
       "ok_rate": 1.0
@@ -206,6 +224,7 @@
       "n": 2,
       "tokens_in_mean": 33611,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 64159,
       "accuracy_mean": 0.25,
       "usd_mean": 0.170481,
       "ok_rate": 1.0
@@ -217,6 +236,7 @@
       "n": 2,
       "tokens_in_mean": 33673,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 37382,
       "accuracy_mean": 0.225,
       "usd_mean": 0.103557,
       "ok_rate": 1.0
@@ -228,6 +248,7 @@
       "n": 1,
       "tokens_in_mean": 33641,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 64086,
       "accuracy_mean": 0.25,
       "usd_mean": 0.170307,
       "ok_rate": 1.0
@@ -239,6 +260,7 @@
       "n": 1,
       "tokens_in_mean": 33612,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 38476,
       "accuracy_mean": 0.25,
       "usd_mean": 0.106274,
       "ok_rate": 1.0
@@ -250,6 +272,7 @@
       "n": 2,
       "tokens_in_mean": 33612,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 51335.5,
       "accuracy_mean": 0.25,
       "usd_mean": 0.138422,
       "ok_rate": 1.0
@@ -261,6 +284,7 @@
       "n": 2,
       "tokens_in_mean": 33612,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 64195,
       "accuracy_mean": 0.25,
       "usd_mean": 0.170571,
       "ok_rate": 1.0
@@ -272,6 +296,7 @@
       "n": 1,
       "tokens_in_mean": 330607,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 64156,
       "accuracy_mean": 0.2,
       "usd_mean": 0.259572,
       "ok_rate": 1.0
@@ -283,6 +308,7 @@
       "n": 1,
       "tokens_in_mean": 330669,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 64155,
       "accuracy_mean": 0.2,
       "usd_mean": 0.259588,
       "ok_rate": 1.0
@@ -294,6 +320,7 @@
       "n": 1,
       "tokens_in_mean": 330637,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 65532,
       "accuracy_mean": 0.0,
       "usd_mean": 0.263021,
       "ok_rate": 0.0
@@ -305,6 +332,7 @@
       "n": 1,
       "tokens_in_mean": 330608,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 64174,
       "accuracy_mean": 0.15,
       "usd_mean": 0.259617,
       "ok_rate": 1.0
@@ -316,6 +344,7 @@
       "n": 1,
       "tokens_in_mean": 330608,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 64174,
       "accuracy_mean": 0.15,
       "usd_mean": 0.259617,
       "ok_rate": 1.0
@@ -327,6 +356,7 @@
       "n": 1,
       "tokens_in_mean": 330608,
       "tokens_in_std": 0.0,
+      "tokens_out_mean": 64174,
       "accuracy_mean": 0.15,
       "usd_mean": 0.259617,
       "ok_rate": 1.0
