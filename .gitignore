@@ -64,3 +64,6 @@ results/verify_baseline-*/
 runs/*/raw/
 
 runs/**/raw/
+
+# Task-run raw scratch (distilled into runs/task04 + committed reports)
+results/
