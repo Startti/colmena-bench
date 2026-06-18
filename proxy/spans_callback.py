@@ -55,6 +55,25 @@ def _run_id_for_call(kwargs: dict) -> str:
     return os.environ.get("BENCH_RUN_ID", "adhoc")
 
 
+def audit_messages_for_secret(messages, run_id: str) -> None:
+    """If BENCH_MASK_AUDIT_SECRET is set, scan request messages IN MEMORY for the
+    secret and record only a boolean to mask-<run_id>.json. NEVER writes the raw
+    body (the secret must not land on disk). Sticky: stays True once it ever leaks."""
+    secret = os.environ.get("BENCH_MASK_AUDIT_SECRET")
+    if not secret or not messages:
+        return
+    blob = json.dumps(messages, default=str)
+    leaked_now = secret in blob
+    path = _spans_dir() / f"mask-{run_id}.json"
+    prev = False
+    if path.exists():
+        try:
+            prev = json.loads(path.read_text()).get("secret_leaked", False)
+        except Exception:
+            prev = False
+    path.write_text(json.dumps({"secret_leaked": bool(prev or leaked_now)}))
+
+
 def _attr_or_key(obj: Any, key: str, default: Any = None) -> Any:
     """Read `key` from obj whether it's a dict or an attribute-bearing object."""
     if obj is None:
@@ -132,6 +151,7 @@ class SpansJsonl(CustomLogger):
 
         ti, to, cached = _extract_usage(kwargs, response_obj)
         run_id = _run_id_for_call(kwargs)
+        audit_messages_for_secret(kwargs.get("messages"), run_id)
         ts_start = _to_epoch(start_time)
         ts_end = _to_epoch(end_time)
         provider_model = (
