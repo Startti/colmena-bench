@@ -34,6 +34,13 @@ def test_needle_has_required_args_in_question():
         assert str(v) in spec["question"]   # the value is stated in the intent
 
 
+def test_all_cluster_needles_args_in_question():
+    for name, cl in st._LIBRARY.items():
+        q = cl["question"].lower()
+        for k, v in cl["expected_args"].items():
+            assert str(v).lower() in q, f"{name}: required arg {k}={v} not stated in question"
+
+
 def test_deterministic():
     assert st.generate_toolset(20, seed=4) == st.generate_toolset(20, seed=4)
 

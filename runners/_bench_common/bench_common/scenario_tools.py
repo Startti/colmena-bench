@@ -382,7 +382,7 @@ _LIBRARY: dict[str, dict[str, Any]] = {
     "accounts": {
         "needle": "reset_password",
         "question": (
-            "User u_88 forgot their password and is locked out — help them get back in."
+            "User u_88 forgot their password and is locked out — send them a reset link by email."
         ),
         "expected_args": {"user_id": "u_88", "channel": "email"},
         "expected_answer": "PWD-RESET-SENT",
