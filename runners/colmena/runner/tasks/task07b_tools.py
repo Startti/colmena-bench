@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -31,6 +32,27 @@ from bench_common import RunnerArgs
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _is_transient(e: Exception) -> bool:
+    """Mirror the competitor handlers' transient-5xx/503 predicate.
+
+    Covers gemini's "high demand"/"overloaded"/503 throttles and any
+    colmena.DagException whose message wraps such a provider error. Retrying
+    is what keeps a failed turn from leaving a dangling user message in
+    Colmena's persisted session memory (which otherwise cascades to the rest
+    of the session).
+    """
+    status = getattr(e, "status_code", None) or getattr(e, "code", None) or getattr(
+        getattr(e, "response", None), "status_code", None
+    )
+    if status is not None and str(status) in ("429", "500", "502", "503", "504"):
+        return True
+    msg = str(e).lower()
+    return any(
+        token in msg
+        for token in ("503", "overloaded", "high demand", "unavailable", "rate", "5xx")
+    )
 
 
 def _ensure_env(caller: Any) -> None:
@@ -157,11 +179,29 @@ def run(task_def: dict, caller: Any, args: RunnerArgs):
     turn_boundaries: list[str] = [_now_iso()]
     for i, turn in enumerate(session["turns"]):
         try:
-            out = json.loads(
-                colmena.run_dag(
-                    dag, None, None, {"prompt": turn["question"]}, True, session_id
-                )
-            )
+            last_exc: Exception | None = None
+            out = None
+            # Retry the SAME turn on transient provider errors (503/"high
+            # demand"/overloaded/etc.) up to 3x with backoff (2s,4s,8s) so the
+            # turn ultimately succeeds and leaves NO dangling user message in
+            # Colmena's persisted session memory. Only if every retry fails do
+            # we fall through to the catch-and-continue below.
+            for attempt in range(3):
+                try:
+                    out = json.loads(
+                        colmena.run_dag(
+                            dag, None, None, {"prompt": turn["question"]}, True, session_id
+                        )
+                    )
+                    break
+                except Exception as e:  # noqa: BLE001
+                    last_exc = e
+                    if _is_transient(e) and attempt < 2:
+                        time.sleep(2 * (2 ** attempt))  # 2s, 4s, 8s
+                        continue
+                    raise
+            if out is None:  # exhausted retries without raising (defensive)
+                raise last_exc  # type: ignore[misc]
             node = out.get("assistant", {})
             text = node.get("result", node) if isinstance(node, dict) else str(node)
             answers.append(str(text))
