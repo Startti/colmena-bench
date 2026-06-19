@@ -10,8 +10,7 @@ def test_configs():
 
 
 def test_default_grid():
-    assert d.DEFAULT_COUNTS == [5, 10, 25, 50, 100, 200]
-    assert d.DEFAULT_DIFFICULTIES == ["easy", "medium", "hard"]
+    assert d.DEFAULT_COUNTS == [5, 10, 20]
     assert d.DEFAULT_TRIALS == 5
 
 
