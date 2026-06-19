@@ -1,0 +1,15 @@
+# Demo #7 — many-tools needle-in-haystack (lazy tool loading).
+# Scored by harness/orchestrator/demo_tools_run.py (sweep driver), not full_run.
+# The toolset + question arrive via env BENCH_TOOLSET_PATH (the driver writes it);
+# tool calls are logged to BENCH_TOOLCALL_LOG; colmena reads BENCH_COLMENA_LAZY.
+id: "07_tools"
+prompt: |
+  You are an assistant with many tools. Call exactly the one tool that answers the
+  user's request, with the correct arguments, then report the result.
+tools: []
+metrics: [accuracy, tokens, hard_error]
+success:
+  kind: tool_needle
+model_alias: gemini-2.5-flash
+timeout_seconds: 120
+n_runs: 1
