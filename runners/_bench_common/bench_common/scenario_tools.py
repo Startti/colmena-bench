@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import os
 import random
+import time
 from pathlib import Path
 from typing import Any
 
@@ -913,7 +914,7 @@ def log_tool_call(tool_name: str, args: dict) -> None:
     if not path:
         return
     with open(path, "a", encoding="utf-8") as f:
-        f.write(json.dumps({"tool": tool_name, "args": args}) + "\n")
+        f.write(json.dumps({"tool": tool_name, "args": args, "ts": time.time()}) + "\n")
 
 
 def read_tool_calls(path: "str | Path") -> list[dict]:

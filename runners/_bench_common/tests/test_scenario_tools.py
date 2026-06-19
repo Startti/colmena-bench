@@ -128,7 +128,14 @@ def test_log_and_read_round_trip(tmp_path, monkeypatch):
     st.log_tool_call("create_refund", {"order_id": "A-1042"})
     st.log_tool_call("create_refund", {"order_id": "A-1043"})
     calls = st.read_tool_calls(p)
-    assert calls == [
+    assert [{"tool": c["tool"], "args": c["args"]} for c in calls] == [
         {"tool": "create_refund", "args": {"order_id": "A-1042"}},
         {"tool": "create_refund", "args": {"order_id": "A-1043"}},
     ]
+
+
+def test_log_tool_call_has_ts(tmp_path, monkeypatch):
+    monkeypatch.setenv("BENCH_TOOLCALL_LOG", str(tmp_path / "tc.jsonl"))
+    st.log_tool_call("x", {"a": 1})
+    rec = st.read_tool_calls(tmp_path / "tc.jsonl")[0]
+    assert rec["tool"] == "x" and "ts" in rec
