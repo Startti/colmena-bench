@@ -1,0 +1,18 @@
+# Demo #7 v2 — multi-turn many-tools session (lazy tool loading across a conversation).
+# Scored per-turn by the session driver, not full_run.
+# The session spec (fixed ~30 tools + per-turn requests) arrives via env
+# BENCH_SESSION_PATH (the driver writes it); tool calls are logged with timestamps
+# to BENCH_TOOLCALL_LOG; colmena reads BENCH_COLMENA_LAZY. Proxy spans are bucketed
+# into turns via extras.turn_boundaries.
+id: "07b_tools_session"
+prompt: |
+  You are an assistant with many tools. On each turn the user makes one request.
+  Call exactly the one tool that fulfills that request, with the correct arguments,
+  then report the result.
+tools: []
+metrics: [accuracy, tokens, hard_error]
+success:
+  kind: tool_session
+model_alias: gemini-2.5-flash
+timeout_seconds: 300
+n_runs: 1
