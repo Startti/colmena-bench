@@ -190,3 +190,42 @@ Colmena highlighted green; lazy-OFF as the internal control alongside the compet
 - Multi-tool / sequential-tool tasks (this is single-needle by design).
 - Non-gemini models as the primary axis (gemini is primary; other providers only an
   optional hard-error cross-check).
+
+---
+
+## 11. REDESIGN v2 — multi-turn realistic (DECIDED 2026-06-19)
+
+**Why:** the single-turn 5/10/20 realistic run showed lazy gives no token win below ~20
+tools (its `describe_tool` overhead outweighs the catalog savings) and selection accuracy
+stays high — so single-turn at small counts is not where lazy helps. Web research confirms
+the realistic regime: best practice is 5-10 tools/request, degradation by ~20, and
+**Anthropic itself recommends tool-search (≈ lazy) at ≥30 tools** (58 tools ≈ 55k tokens;
+Berkeley FCL: accuracy 43%→2% as tools went 4→51 across domains). Pushing to 200 tools is
+unrealistic. The realistic place lazy wins is a **multi-turn agent with ~30 tools**, where
+the per-turn schema cost COMPOUNDS over the conversation — the "context tax of Demo 05, but
+for tools."
+
+**Design (this supersedes §2's single-turn matrix; §3 generator library is REUSED):**
+- **Fixed toolset: ~30 realistic tools** (the 8 confusable clusters from §3 + filler to 30).
+- **Multi-turn session: ~10 turns.** Each turn = one natural-language user request whose
+  needle is a tool in the set (rotating across clusters); the agent must pick + fill it.
+- **Axis = turn number (1..10).** Metrics per turn: cumulative provider-authoritative input
+  tokens, and per-turn selection accuracy (right tool among confusers). Tokens compound:
+  competitors re-send all ~30 schemas every turn; lazy sends the catalog + only the tools
+  already discovered (the engine reconstructs `discovered_set` from session history), so its
+  growth is much slower.
+- **Configs (7):** colmena lazy-ON, colmena lazy-OFF (control), crewai, langchain, langgraph,
+  llamaindex, google_adk. **Trials:** N=5 sessions. ≈ 7 × 5 = 35 sessions × ~10 turns.
+- **Reuse:** Demo 05's multi-turn machinery — per-framework `task05.py` conversation pattern
+  (turn-boundary timestamps) + `demo05_buckets.bucket_spans_by_turn` for per-turn token
+  attribution. The toolset/needle/turn-requests come from a new
+  `scenario_tools.generate_session(n_tools, n_turns, seed)` built on the §3 library.
+- **Hero (honest):** in a realistic ~30-tool multi-turn agent, lazy keeps per-turn token cost
+  ~flat while competitors compound — matching Anthropic's own ≥30-tools guidance — at equal
+  selection accuracy. Plus colmena-eager as the control.
+
+**Files added/changed for v2:** `scenario_tools.generate_session(...)`; multi-turn
+`task07b_tools.py` handlers per framework (mirror `task05.py` + the §4 tool wiring);
+`demo_tools_session_run.py` driver (per-turn span bucketing); `demo07_plots.py` cumulative-
+tokens-per-turn + accuracy-per-turn charts. Single-turn artifacts (task07_tools, the 5/10/20
+driver) are kept as a secondary result, not the hero.
