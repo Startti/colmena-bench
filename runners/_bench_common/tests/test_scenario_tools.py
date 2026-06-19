@@ -95,6 +95,33 @@ def test_score_unrelated_tool_not_flagged_as_confuser():
     assert r["wrong_tool_called"] is False
 
 
+def test_session_shape():
+    s = st.generate_session(30, 10, seed=0)
+    assert s["n_turns"] == 10 and len(s["turns"]) == 10
+    assert abs(len(s["tools"]) - 30) <= 2
+    names = {t["name"] for t in s["tools"]}
+    for turn in s["turns"]:
+        assert turn["needle"] in names          # every turn's needle is in the fixed set
+        assert turn["needle"] not in turn["question"]   # intent does not name the tool
+
+
+def test_session_deterministic():
+    assert st.generate_session(30, 10, seed=1) == st.generate_session(30, 10, seed=1)
+
+
+def test_session_turns_vary():
+    s = st.generate_session(30, 10, seed=2)
+    clusters = {t["cluster"] for t in s["turns"]}
+    assert len(clusters) >= 3      # turns span several clusters
+
+
+def test_score_turn_right():
+    s = st.generate_session(30, 10, seed=0)
+    t0 = s["turns"][0]
+    r = st.score_turn(s, 0, [{"tool": t0["needle"], "args": t0["expected_args"]}], f"ok {t0['expected_answer']}")
+    assert r["selection_ok"] and r["arg_ok"] and r["answer_ok"]
+
+
 def test_log_and_read_round_trip(tmp_path, monkeypatch):
     p = tmp_path / "tc.jsonl"
     monkeypatch.setenv("BENCH_TOOLCALL_LOG", str(p))

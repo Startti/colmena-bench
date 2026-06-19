@@ -791,6 +791,123 @@ def generate_toolset(n: int, seed: int) -> dict:
     }
 
 
+def _clone_session_tool(cluster_name: str, tool: dict) -> dict:
+    """Deep-copy a library tool for a fixed session toolset.
+
+    Same shape as ``generate_toolset`` tools but WITHOUT ``is_needle``/``answer``,
+    since the needle varies per turn in a multi-turn session.
+    """
+    params = [
+        {
+            "name": p["name"],
+            "type": p["type"],
+            "required": p["required"],
+            "description": p["description"],
+            **({"enum": list(p["enum"])} if "enum" in p else {}),
+        }
+        for p in tool["params"]
+    ]
+    return {
+        "name": tool["name"],
+        "summary": tool["summary"],
+        "description": tool["description"],
+        "params": params,
+        "cluster": cluster_name,
+    }
+
+
+def generate_session(n_tools: int = 30, n_turns: int = 10, seed: int = 0) -> dict:
+    """Build a byte-stable multi-turn session: one FIXED toolset + per-turn requests.
+
+    Models a realistic agent holding ~30 tools across a conversation of ~10
+    user requests. Whole clusters are included so every turn's needle has its
+    confusers present in the fixed set. ``n_tools`` is a TARGET: the result is
+    trimmed/padded to land within a couple of tools of it (we pick whole
+    clusters of ~5 tools, then add/remove non-needle filler from other clusters
+    to hit it exactly when possible).
+
+    Each turn rotates through the included clusters (seeded) and reuses that
+    cluster's designated needle, natural-language question, expected_args and
+    expected_answer from ``_LIBRARY``. Same (n_tools, n_turns, seed) is
+    byte-stable across processes.
+    """
+    rng = random.Random(f"{n_tools}-{n_turns}-{seed}")
+
+    # How many whole clusters to include: ceil(n_tools / ~5), bounded by what we
+    # have, and at least enough that turns can span several clusters.
+    per_cluster = 5  # every cluster in _LIBRARY has 5 tools
+    n_clusters = (n_tools + per_cluster - 1) // per_cluster
+    n_clusters = max(1, min(n_clusters, len(_CLUSTER_NAMES)))
+
+    shuffled = list(_CLUSTER_NAMES)
+    rng.shuffle(shuffled)
+    included = shuffled[:n_clusters]
+
+    # Build the fixed toolset from whole clusters. Track which tool names are
+    # needles so trimming never removes one.
+    tools: list[dict] = []
+    needle_names: set[str] = set()
+    for cn in included:
+        cluster = _LIBRARY[cn]
+        needle_names.add(cluster["needle"])
+        for tool in cluster["tools"]:
+            tools.append(_clone_session_tool(cn, tool))
+
+    # Trim filler (non-needle) tools down to the target, or pad from other
+    # clusters up to the target. n_tools is a target, not a hard guarantee.
+    if len(tools) > n_tools:
+        removable = [
+            i for i, t in enumerate(tools) if t["name"] not in needle_names
+        ]
+        rng.shuffle(removable)
+        to_remove = set(removable[: len(tools) - n_tools])
+        tools = [t for i, t in enumerate(tools) if i not in to_remove]
+    elif len(tools) < n_tools:
+        used = {t["name"] for t in tools}
+        filler_pool: list[tuple[str, dict]] = []
+        for cn in _CLUSTER_NAMES:
+            if cn in included:
+                continue
+            for tool in _LIBRARY[cn]["tools"]:
+                filler_pool.append((cn, tool))
+        rng.shuffle(filler_pool)
+        i = 0
+        while len(tools) < n_tools and i < len(filler_pool):
+            cn, tool = filler_pool[i]
+            i += 1
+            if tool["name"] in used:
+                continue
+            used.add(tool["name"])
+            tools.append(_clone_session_tool(cn, tool))
+
+    rng.shuffle(tools)
+
+    # Build turns by rotating through the included clusters so turns vary and
+    # ideally cover different clusters; repeats are fine when n_turns > clusters.
+    turn_clusters = list(included)
+    rng.shuffle(turn_clusters)
+    turns: list[dict] = []
+    for i in range(n_turns):
+        cn = turn_clusters[i % len(turn_clusters)]
+        cluster = _LIBRARY[cn]
+        turns.append({
+            "turn": i + 1,
+            "question": cluster["question"],
+            "needle": cluster["needle"],
+            "cluster": cn,
+            "expected_args": dict(cluster["expected_args"]),
+            "expected_answer": cluster["expected_answer"],
+        })
+
+    return {
+        "n_tools": n_tools,
+        "n_turns": n_turns,
+        "seed": seed,
+        "tools": tools,
+        "turns": turns,
+    }
+
+
 def log_tool_call(tool_name: str, args: dict) -> None:
     path = os.environ.get("BENCH_TOOLCALL_LOG")
     if not path:
@@ -838,3 +955,27 @@ def score(spec: dict, tool_calls: list[dict], final_answer: str) -> dict:
         "answer_ok": answer_ok,
         "wrong_tool_called": wrong_tool_called,
     }
+
+
+def score_turn(
+    session: dict,
+    turn_idx: int,
+    tool_calls_for_turn: list[dict],
+    final_answer: str,
+) -> dict:
+    """Score a single turn of a multi-turn session.
+
+    Builds a per-turn spec (the turn's needle/cluster/expected_args/answer plus
+    the session's fixed toolset) and delegates to ``score`` so the failure-mode
+    semantics — selection_ok / wrong_tool_called / arg_ok / answer_ok — match
+    exactly.
+    """
+    turn = session["turns"][turn_idx]
+    spec = {
+        "needle": turn["needle"],
+        "cluster": turn["cluster"],
+        "expected_args": turn["expected_args"],
+        "expected_answer": turn["expected_answer"],
+        "tools": session["tools"],
+    }
+    return score(spec, tool_calls_for_turn, final_answer)
