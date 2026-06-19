@@ -163,6 +163,14 @@ Colmena highlighted green; lazy-OFF as the internal control alongside the compet
 
 ## 9. Risks / open items
 
+> **DERISK FINDINGS (2026-06-18, gemini-2.5-flash, needle=hard, seed=1).** Colmena lazy ON
+> vs OFF, summed `tokens_input`: n=100 → 11,821 (on) vs 27,102 (off) = 2.29x; n=200 → 22,180
+> (on) vs 55,709 (off) = 2.51x. Lazy hit the needle with correct args AND correct final
+> answer in all four cells (`describe_tool` fired; `tools_discovered` populated). The off/on
+> ratio grows with N as hypothesized. **Competitor probe: 200 full tool schemas do NOT 4xx
+> on gemini-2.5-flash via langchain** — the request succeeds, so the demo's lever is the
+> token cost (and selection quality), not a provider hard-error at 200. GO on the premise.
+
 - **Hard-error may not fire on gemini.** Whether a provider rejects N tools depends on its
   limits; gemini-2.5-flash may accept 200 tools. If the hard-error curve is empty, report
   it honestly and let accuracy+tokens carry the result. Optional: cross-check one high-count
