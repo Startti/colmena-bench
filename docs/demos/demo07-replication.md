@@ -64,6 +64,70 @@ bash scripts/run_demo07.sh --counts 5,50,200 --difficulties hard --trials 2
 Outputs land in `runs/demo07/summary.{json,csv}` — one row per
 `(config, count, difficulty)`, means over trials.
 
+### Multi-turn SESSION sweep (v2 — the primary result)
+
+The session driver replays a fixed ~30-tool toolset over a **10-turn conversation**
+for each `(config, seed)`, sweeping **5 seeds (0–4)**, and reports **cumulative
+input tokens per turn** + per-turn selection accuracy. It does NOT own the proxy —
+start the proxy first (the same way `run_demo07.sh` does), source `.env` so the
+Colmena engine gets `COLMENA_DATABASE_URL` + `SECURE_VALUES_KEY`, then:
+
+```bash
+# 1. proxy (BENCH_RUN_ID=demo07 so its session span file is run-demo07.jsonl)
+pkill -f "litellm --config"; sleep 1
+PATH="$PWD/.venv-bench/bin:$PATH" BENCH_RUN_ID=demo07 \
+  nohup bash proxy/start_proxy.sh >/tmp/d7_proxy.log 2>&1 &
+# wait for http://127.0.0.1:4000/health/liveliness == 200
+
+# 2. env + driver (full 7-config × 5-seed sweep)
+set -a; source .env; set +a
+PROXY_BENCH_RUN_ID=demo07 \
+  .venv-bench/bin/python harness/orchestrator/demo_tools_session_run.py
+
+# small validation slice instead of the full sweep:
+#   ... demo_tools_session_run.py --configs colmena-lazy,langchain --seeds 0
+```
+
+Outputs land in `runs/demo07/session_summary.{json,csv}` — one row per
+`(config, turn)`, means over seeds: `cum_tokens_mean`, `per_turn_tokens_mean`,
+`selection_acc`. Per-run detail is in `runs/demo07/session_records.json`.
+
+Render the session charts:
+```bash
+.venv-bench/bin/python harness/orchestrator/demo07_session_plots.py
+```
+Writes to `runs/demo07/plots/`:
+- `session_cum_tokens_vs_turn.png` — HERO: cumulative input tokens vs turn, one line
+  per config (colmena-lazy lowest/flattest).
+- `session_selection_vs_turn.png` — selection accuracy vs turn.
+- `session_cum_tokens_at_turn10_bar.png` — cumulative tokens at the last turn per
+  config, with the colmena-lazy ratio annotated.
+
+**Per-turn token accounting.** Each session handler emits
+`extras.turn_boundaries` (11 ISO timestamps for 10 turns — one before turn 0 + one
+after each turn). The driver buckets proxy spans into turns by wall-clock with
+`harness/orchestrator/demo05_buckets.bucket_spans_by_turn`, then takes the
+cumulative input-token sum per turn. Tool calls are bucketed the same way by their
+logged `ts` and scored with `scenario_tools.score_turn`.
+
+**Colmena token delta (same trick, applied per run).** Colmena's engine does not
+forward `x-bench-run-id`, so all its spans land in the single session file
+`proxy/spans/run-demo07.jsonl`. The driver records that file's line count *before*
+each Colmena subprocess and loads only the lines appended *after* as that run's
+spans (`line_count` + `load_spans_from_offset`). Competitors forward the header, so
+their spans are read whole from `proxy/spans/run-<run_id>.jsonl`. This requires a
+**serial sweep + a single proxy** — a parallel run or a second proxy corrupts the
+delta. In the seed-0 validation this delta produced **nonzero** Colmena tokens
+(≈41.7k cumulative at turn 9), confirming the accounting works.
+
+**503 / overloaded retry.** `gemini-2.5-flash` occasionally returns a transient
+5xx / "overloaded" / "unavailable". Each competitor session handler wraps its
+bound-LLM invoke in a 3× retry with backoff (`_invoke_with_retry`); a turn that
+still fails is recorded as an error string and does not sink the run (each turn is
+isolated in a `try/finally` that always appends a turn boundary). If a whole run
+hard-errors (e.g. Colmena missing `COLMENA_DATABASE_URL`), the driver skips it in
+aggregation and writes its stderr to `runs/demo07/session_raw/<run_id>.stderr`.
+
 ### Render the charts
 ```bash
 .venv-bench/bin/python harness/orchestrator/demo07_plots.py
