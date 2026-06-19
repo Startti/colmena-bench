@@ -32,6 +32,7 @@ from .scenario05 import (  # noqa: F401
     CHART_TOOL_NAME, CHART_TOOL_DESCRIPTION, SYSTEM_MESSAGE, QUALITY_CHECKS,
 )
 from . import scenario_refund  # noqa: F401
+from . import scenario_tools  # noqa: F401
 
 __all__ = [
     "RunnerArgs",
