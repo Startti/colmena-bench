@@ -1,7 +1,2 @@
 framework,code_loc,config_loc,retries,secret_leaked,hitl_ok,critic_ok,masking_ok,all_ok,router_branch,final_intent,error
 colmena,120,115,0,False,True,True,True,True,approve,,
-crewai,93,0,0,False,True,True,True,True,,approve,
-langchain,99,0,0,False,True,True,True,True,,approve,
-llamaindex,99,0,0,False,True,True,True,True,,approve,
-langgraph,171,0,0,False,True,True,True,True,,approve,
-google_adk,117,0,0,False,True,True,True,True,,approve,
