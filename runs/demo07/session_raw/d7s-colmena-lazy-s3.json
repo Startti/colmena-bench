@@ -1,0 +1,65 @@
+{
+  "run_id": "d7s-colmena-lazy-s3",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "colmena",
+  "framework_version": "0.4.0",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-20T21:44:47.440347Z",
+  "ended_at": "2026-06-20T21:48:23.957301Z",
+  "latency_ms": 216516,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 48.31,
+  "cpu_user_s": 0.683,
+  "cpu_sys_s": 0.287,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-20T21:44:47.440698Z",
+      "2026-06-20T21:45:05.941820Z",
+      "2026-06-20T21:45:24.795744Z",
+      "2026-06-20T21:45:42.220175Z",
+      "2026-06-20T21:45:58.867689Z",
+      "2026-06-20T21:47:02.554925Z",
+      "2026-06-20T21:47:19.589151Z",
+      "2026-06-20T21:47:34.377682Z",
+      "2026-06-20T21:47:50.732189Z",
+      "2026-06-20T21:48:07.362432Z",
+      "2026-06-20T21:48:23.956986Z"
+    ],
+    "lazy": true,
+    "n_turns": 10,
+    "answers": [
+      "The Q3 report has been emailed to finance@acme.com.",
+      "A new bug report has been logged for customer c_31 regarding the checkout page crashing. The ticket ID is TKT-C31-OPENED.",
+      "The customer's card has been charged 49.99 USD for the subscription renewal. The charge ID is CHG-C77-CAPTURED.",
+      "50 units of SKU-991 have been added to stock.",
+      "I can refund the customer, but I need the `payment_id` for order A-1042. Could you please provide it?",
+      "Order A-1042 has been shipped with 2-day delivery.",
+      "The Q3 report has been emailed to finance@acme.com.",
+      "A new bug report has been logged for customer c_31 regarding the checkout page crashing. The ticket ID is TKT-C31-OPENED.",
+      "The customer's card has been charged 49.99 USD for the subscription renewal. The charge ID is CHG-C77-CAPTURED.",
+      "50 units of SKU-991 have been added to stock."
+    ]
+  }
+}

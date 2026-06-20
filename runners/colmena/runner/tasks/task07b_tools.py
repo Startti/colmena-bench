@@ -173,7 +173,13 @@ def run(task_def: dict, caller: Any, args: RunnerArgs):
     session = json.loads(Path(os.environ["BENCH_SESSION_PATH"]).read_text())
     lazy = os.environ.get("BENCH_COLMENA_LAZY", "1") == "1"
     dag = _build_dag(caller.model_alias, session, lazy)
-    session_id = f"tools7b_{args.run_id}"
+    # Unique per process invocation (stable across THIS run's 10 turns, distinct
+    # across re-runs). Colmena persists conversation memory in Postgres keyed by
+    # session_id; a stable f"tools7b_{run_id}" would make a re-run of the same
+    # seed LOAD the prior run's accumulated (possibly malformed) history, which
+    # contaminates the measurement and can trip provider role-alternation checks.
+    # The nonce guarantees every run starts from a truly fresh conversation.
+    session_id = f"tools7b_{args.run_id}_{os.getpid()}_{time.time_ns()}"
 
     answers: list[str] = []
     turn_boundaries: list[str] = [_now_iso()]

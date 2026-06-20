@@ -3,13 +3,25 @@
 **The honest thesis (v2, multi-turn — the PRIMARY result).** A realistic agent
 holds ~30 tools and is used over a *conversation*, not a single shot. Every turn,
 the frameworks that put all tool schemas in the prompt **re-send all ~30 schemas
-again** — so their input-token cost climbs turn after turn. Colmena's lazy tool
-loading sends a compact *catalog* (name + one-line summary) and pulls the one
-schema it needs on demand, so its cumulative input-token cost stays much lower and
-**the gap widens with every turn**. At ~equal selection accuracy, **lazy keeps
-cumulative input tokens lower across the conversation** — the win is *modest at 30
-tools (~2–3× cumulative by turn 10 in early data) and grows with both tool count
-and turns.* **Lazy is a SCALE/cost feature, not an accuracy claim.**
+again** AND re-send the full growing conversation — so their input-token cost
+climbs turn after turn. Colmena keeps cumulative input tokens much lower through
+**two** mechanisms, and at **equal selection accuracy (1.00 everywhere)**:
+
+1. **Conversation-memory compaction** (Colmena `develop`, the new at-load semantic
+   summary). Colmena compacts older turns into a short summary instead of
+   re-sending the full transcript every turn. This helps **both** Colmena modes.
+2. **Lazy tool loading** (`lazy_tool_loading: true`). The agent sees a compact
+   *catalog* (name + one-line summary) and pulls the one schema it needs on demand,
+   instead of all ~30 full schemas every turn.
+
+**Final result (5 seeds, provider-authoritative), cumulative input tokens after a
+10-turn / 30-tool conversation:** colmena-lazy **66.8k**, colmena-eager **74.3k**,
+competitors **111k–125k** → **Colmena uses ~1.7–1.9× fewer cumulative input tokens
+than every competitor**, at identical accuracy. The lazy-vs-eager increment is now
+**only ~1.11×** because the new compaction also benefits eager — so most of the
+framework-level win now comes from conversation-memory compaction, with lazy adding
+a further, scale-dependent saving on top. **This is a SCALE/cost story, not an
+accuracy claim.**
 
 This framing matches current best practice: **Anthropic recommends a tool-search /
 on-demand pattern once an agent carries ≳30 tools**, and keeping only ~5–10 tool
@@ -53,35 +65,50 @@ their logged `ts` and scored with `scenario_tools.score_turn`.
 
 ### The result — cumulative input tokens grow with the conversation
 
-The hero chart: colmena-lazy (green, bold) stays the lowest, flattest line; the
-competitors and colmena-eager climb faster because they re-send every schema each
-turn. The gap *widens* with turns — by the last turn it is the punchline bar.
+The hero chart: both Colmena lines (lazy lowest, eager just above) stay well below
+the competitors, which climb faster because they re-send every schema *and* the
+full transcript each turn. The gap *widens* with turns — by the last turn it is the
+punchline bar.
 
 ![cumulative input tokens vs turn](../../runs/demo07/plots/session_cum_tokens_vs_turn.png)
 
 ![cumulative input tokens at the last turn](../../runs/demo07/plots/session_cum_tokens_at_turn10_bar.png)
 
-> **Early data (validation slice, seed 0, colmena-lazy vs langchain).** Cumulative
-> input tokens at turn 9: **colmena-lazy ≈ 41,740** vs **langchain ≈ 114,724** —
-> about **2.75× fewer** cumulative input tokens after a 10-turn conversation at 30
-> tools. This is from the 1-seed validation; refresh from
-> `runs/demo07/session_summary.json` after the human runs the full 7-config × 5-seed
-> sweep.
+> **Final data (5 seeds 0–4, full 7-config sweep, Colmena `develop` @ `14beaba9`).**
+> Cumulative input tokens at turn 9 (mean over seeds):
+>
+> | Config | cum tokens @ turn 9 | vs colmena-lazy | selection_acc |
+> |---|--:|--:|--:|
+> | **colmena-lazy** | **66,808** | 1.00× | 1.00 |
+> | colmena-eager | 74,337 | 1.11× | 1.00 |
+> | google_adk | 111,135 | 1.66× | 1.00 |
+> | langgraph | 111,922 | 1.68× | 1.00 |
+> | llamaindex | 114,515 | 1.71× | 1.00 |
+> | crewai | 116,264 | 1.74× | 1.00 |
+> | langchain | 125,305 | 1.88× | 1.00 |
+>
+> Colmena's totals **include** the cost of its own `describe_tool` round-trips and
+> the cheap-model summarizer calls (pinned to the same `gemini-2.5-flash`, routed
+> through the proxy and counted). The win is net of that overhead.
 
 ### Selection accuracy — reported straight
 
-Selection accuracy is plotted per turn; the win is **cost, not accuracy**.
+Selection accuracy is plotted per turn; the win is **cost, not accuracy** — and on
+the full 5-seed sweep **every config (lazy included) lands at `selection_acc` =
+1.00**.
 
 ![selection accuracy vs turn](../../runs/demo07/plots/session_selection_vs_turn.png)
 
-> **Honest caveat from early data.** On the seed-0 validation slice, colmena-lazy's
-> per-turn `selection_acc` came in *lower* than langchain's: the lazy
-> `describe_tool` → call-the-revealed-tool round-trip did not always complete in the
-> multi-turn flow, so several turns logged no terminal tool call. Whether this is a
-> seed-0 artifact or a real lazy-flow tradeoff at 30 tools will be settled by the
-> full 5-seed sweep — report the accuracy story from the *full* data, not this
-> slice. If lazy trails eager/competitors on accuracy, that tradeoff is stated
-> plainly here, not hidden.
+> **Resolved engine bug (was a real lazy regression).** In an earlier run, colmena-lazy
+> multi-turn cascaded to failures: the lazy `describe_tool` ReAct loop grows the
+> conversation enough to trigger the new at-load compaction, which reassembled the
+> message list with **two consecutive `user` messages**, tripping Colmena's own
+> role-alternation validator (`DagException: Consecutive messages with the same
+> role`) — every lazy turn hard-errored while eager (short history, no compaction)
+> was unaffected. This was a genuine bug in Colmena `develop`, **fixed in
+> [PR #114 — consecutive-role coalescing](https://github.com/Startti/colmena)**. With
+> the fix, lazy runs **10/10 clean across all 5 seeds** at `selection_acc` = 1.00.
+> The bench surfaced the bug; the fix is in the measured build.
 
 ---
 
@@ -188,21 +215,23 @@ does not 4xx even when handed all 200 full schemas.
 
 ## 3. Honest limitations
 
-- **The win is cumulative tokens at scale, not reliability or a single-call
-  saving.** At ~30 tools the per-turn saving is **modest** (~2–3× cumulative by the
-  end of a 10-turn conversation in early data); it is larger at higher tool counts
-  (single-turn 200-tool probe, Appendix A.2). Lazy is a **scale feature**.
-- **No benefit at small tool counts.** At ~5 tools the catalog is about the size of
-  the schemas, so lazy ≈ eager. The advantage only appears as N (and turns) grow.
-- **Lazy pays for its `describe_tool` round-trips.** Those extra calls are real and
-  are included in every token total — the win is net of that overhead.
-- **Selection accuracy is the thing to watch, not assume.** In the seed-0
-  validation, lazy's multi-turn `describe_tool` → call flow did not always complete,
-  so its `selection_acc` trailed. This must be confirmed (or ruled out) across all 5
-  seeds before claiming "~equal accuracy"; if lazy genuinely trades some selection
-  reliability for tokens at 30 tools, that tradeoff is reported plainly.
-- **`colmena-eager` is the control**, not a strawman: it proves the saving comes
-  from the lazy feature, not from Colmena generally.
+- **The framework-level win is cumulative tokens, at equal accuracy.** Across the
+  full 5-seed sweep all configs hit `selection_acc` = 1.00, and Colmena (either
+  mode) lands at ~1.7–1.9× fewer cumulative input tokens than every competitor by
+  turn 10. Most of that gap comes from **conversation-memory compaction**, which the
+  competitors do not do (they re-send the full transcript each turn).
+- **The lazy-specific increment is now small (~1.11× over eager).** Because the new
+  compaction also benefits eager, lazy's *additional* saving at ~30 tools is modest;
+  it grows with tool count (single-turn 200-tool probe, Appendix A.2 — there lazy is
+  ~2.5× under eager). Lazy remains a **scale feature**; at small tool counts the
+  catalog ≈ the schemas, so lazy ≈ eager.
+- **Lazy pays for its `describe_tool` round-trips, and compaction pays for its
+  summarizer calls.** Both are real and are included in every Colmena token total —
+  the win is net of that overhead.
+- **`colmena-eager` is no longer a competitor-tracking control.** With the new
+  compaction it is *also* much cheaper than the competitors, so the lazy-vs-eager
+  delta isolates only the lazy feature, while the colmena-vs-competitor delta
+  reflects compaction + lazy together. Both deltas are reported separately above.
 - **Single model, temp 0.** Provider-authoritative tokens; a different model could
   behave differently at the schema-volume extremes.
 - **Token accounting requires a serial sweep + one proxy.** Colmena's spans are

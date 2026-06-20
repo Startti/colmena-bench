@@ -1,0 +1,902 @@
+[
+  {
+    "config": "colmena-lazy",
+    "framework": "colmena",
+    "seed": 0,
+    "run_id": "d7s-colmena-lazy-s0",
+    "hard_error": false,
+    "error": null,
+    "turns": [
+      {
+        "turn": 0,
+        "per_turn_tokens": 5072,
+        "cum_tokens": 5072,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 1,
+        "per_turn_tokens": 5910,
+        "cum_tokens": 10982,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 2,
+        "per_turn_tokens": 6548,
+        "cum_tokens": 17530,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 3,
+        "per_turn_tokens": 7420,
+        "cum_tokens": 24950,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 4,
+        "per_turn_tokens": 8266,
+        "cum_tokens": 33216,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 5,
+        "per_turn_tokens": 9023,
+        "cum_tokens": 42239,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 6,
+        "per_turn_tokens": 6187,
+        "cum_tokens": 48426,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 7,
+        "per_turn_tokens": 6101,
+        "cum_tokens": 54527,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 8,
+        "per_turn_tokens": 6216,
+        "cum_tokens": 60743,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 9,
+        "per_turn_tokens": 6480,
+        "cum_tokens": 67223,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      }
+    ]
+  },
+  {
+    "config": "colmena-lazy",
+    "framework": "colmena",
+    "seed": 1,
+    "run_id": "d7s-colmena-lazy-s1",
+    "hard_error": false,
+    "error": null,
+    "turns": [
+      {
+        "turn": 0,
+        "per_turn_tokens": 5034,
+        "cum_tokens": 5034,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 1,
+        "per_turn_tokens": 6269,
+        "cum_tokens": 11303,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 2,
+        "per_turn_tokens": 7066,
+        "cum_tokens": 18369,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 3,
+        "per_turn_tokens": 7762,
+        "cum_tokens": 26131,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 4,
+        "per_turn_tokens": 8539,
+        "cum_tokens": 34670,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 5,
+        "per_turn_tokens": 9291,
+        "cum_tokens": 43961,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 6,
+        "per_turn_tokens": 6404,
+        "cum_tokens": 50365,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 7,
+        "per_turn_tokens": 6382,
+        "cum_tokens": 56747,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 8,
+        "per_turn_tokens": 6574,
+        "cum_tokens": 63321,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 9,
+        "per_turn_tokens": 6798,
+        "cum_tokens": 70119,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      }
+    ]
+  },
+  {
+    "config": "colmena-lazy",
+    "framework": "colmena",
+    "seed": 2,
+    "run_id": "d7s-colmena-lazy-s2",
+    "hard_error": false,
+    "error": null,
+    "turns": [
+      {
+        "turn": 0,
+        "per_turn_tokens": 4989,
+        "cum_tokens": 4989,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 1,
+        "per_turn_tokens": 5990,
+        "cum_tokens": 10979,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 2,
+        "per_turn_tokens": 6746,
+        "cum_tokens": 17725,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 3,
+        "per_turn_tokens": 7359,
+        "cum_tokens": 25084,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 4,
+        "per_turn_tokens": 8154,
+        "cum_tokens": 33238,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 5,
+        "per_turn_tokens": 9057,
+        "cum_tokens": 42295,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 6,
+        "per_turn_tokens": 6302,
+        "cum_tokens": 48597,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 7,
+        "per_turn_tokens": 6183,
+        "cum_tokens": 54780,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 8,
+        "per_turn_tokens": 6294,
+        "cum_tokens": 61074,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 9,
+        "per_turn_tokens": 6494,
+        "cum_tokens": 67568,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      }
+    ]
+  },
+  {
+    "config": "colmena-lazy",
+    "framework": "colmena",
+    "seed": 3,
+    "run_id": "d7s-colmena-lazy-s3",
+    "hard_error": false,
+    "error": null,
+    "turns": [
+      {
+        "turn": 0,
+        "per_turn_tokens": 5019,
+        "cum_tokens": 5019,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 1,
+        "per_turn_tokens": 5920,
+        "cum_tokens": 10939,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 2,
+        "per_turn_tokens": 6624,
+        "cum_tokens": 17563,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 3,
+        "per_turn_tokens": 7456,
+        "cum_tokens": 25019,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 4,
+        "per_turn_tokens": 5320,
+        "cum_tokens": 30339,
+        "selection_ok": false,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 5,
+        "per_turn_tokens": 8655,
+        "cum_tokens": 38994,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 6,
+        "per_turn_tokens": 5942,
+        "cum_tokens": 44936,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 7,
+        "per_turn_tokens": 5912,
+        "cum_tokens": 50848,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 8,
+        "per_turn_tokens": 6121,
+        "cum_tokens": 56969,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 9,
+        "per_turn_tokens": 6352,
+        "cum_tokens": 63321,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      }
+    ]
+  },
+  {
+    "config": "colmena-lazy",
+    "framework": "colmena",
+    "seed": 4,
+    "run_id": "d7s-colmena-lazy-s4",
+    "hard_error": false,
+    "error": null,
+    "turns": [
+      {
+        "turn": 0,
+        "per_turn_tokens": 4969,
+        "cum_tokens": 4969,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 1,
+        "per_turn_tokens": 5847,
+        "cum_tokens": 10816,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 2,
+        "per_turn_tokens": 6555,
+        "cum_tokens": 17371,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 3,
+        "per_turn_tokens": 7310,
+        "cum_tokens": 24681,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 4,
+        "per_turn_tokens": 7979,
+        "cum_tokens": 32660,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 5,
+        "per_turn_tokens": 8721,
+        "cum_tokens": 41381,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 6,
+        "per_turn_tokens": 6038,
+        "cum_tokens": 47419,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 7,
+        "per_turn_tokens": 5998,
+        "cum_tokens": 53417,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 8,
+        "per_turn_tokens": 6100,
+        "cum_tokens": 59517,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 9,
+        "per_turn_tokens": 6292,
+        "cum_tokens": 65809,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      }
+    ]
+  },
+  {
+    "config": "colmena-eager",
+    "framework": "colmena",
+    "seed": 0,
+    "run_id": "d7s-colmena-eager-s0",
+    "hard_error": false,
+    "error": null,
+    "turns": [
+      {
+        "turn": 0,
+        "per_turn_tokens": 6615,
+        "cum_tokens": 6615,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 1,
+        "per_turn_tokens": 6811,
+        "cum_tokens": 13426,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 2,
+        "per_turn_tokens": 6985,
+        "cum_tokens": 20411,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 3,
+        "per_turn_tokens": 7204,
+        "cum_tokens": 27615,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 4,
+        "per_turn_tokens": 7420,
+        "cum_tokens": 35035,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 5,
+        "per_turn_tokens": 7583,
+        "cum_tokens": 42618,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 6,
+        "per_turn_tokens": 7770,
+        "cum_tokens": 50388,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 7,
+        "per_turn_tokens": 7922,
+        "cum_tokens": 58310,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 8,
+        "per_turn_tokens": 8088,
+        "cum_tokens": 66398,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 9,
+        "per_turn_tokens": 8344,
+        "cum_tokens": 74742,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      }
+    ]
+  },
+  {
+    "config": "colmena-eager",
+    "framework": "colmena",
+    "seed": 1,
+    "run_id": "d7s-colmena-eager-s1",
+    "hard_error": false,
+    "error": null,
+    "turns": [
+      {
+        "turn": 0,
+        "per_turn_tokens": 6683,
+        "cum_tokens": 6683,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 1,
+        "per_turn_tokens": 7005,
+        "cum_tokens": 13688,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 2,
+        "per_turn_tokens": 7222,
+        "cum_tokens": 20910,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 3,
+        "per_turn_tokens": 7429,
+        "cum_tokens": 28339,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 4,
+        "per_turn_tokens": 7640,
+        "cum_tokens": 35979,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 5,
+        "per_turn_tokens": 7877,
+        "cum_tokens": 43856,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 6,
+        "per_turn_tokens": 8048,
+        "cum_tokens": 51904,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 7,
+        "per_turn_tokens": 8245,
+        "cum_tokens": 60149,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 8,
+        "per_turn_tokens": 8634,
+        "cum_tokens": 68783,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 9,
+        "per_turn_tokens": 8720,
+        "cum_tokens": 77503,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      }
+    ]
+  },
+  {
+    "config": "colmena-eager",
+    "framework": "colmena",
+    "seed": 2,
+    "run_id": "d7s-colmena-eager-s2",
+    "hard_error": false,
+    "error": null,
+    "turns": [
+      {
+        "turn": 0,
+        "per_turn_tokens": 6657,
+        "cum_tokens": 6657,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 1,
+        "per_turn_tokens": 6860,
+        "cum_tokens": 13517,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 2,
+        "per_turn_tokens": 7072,
+        "cum_tokens": 20589,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 3,
+        "per_turn_tokens": 7172,
+        "cum_tokens": 27761,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 4,
+        "per_turn_tokens": 7445,
+        "cum_tokens": 35206,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 5,
+        "per_turn_tokens": 7667,
+        "cum_tokens": 42873,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 6,
+        "per_turn_tokens": 7870,
+        "cum_tokens": 50743,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 7,
+        "per_turn_tokens": 8046,
+        "cum_tokens": 58789,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 8,
+        "per_turn_tokens": 8174,
+        "cum_tokens": 66963,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 9,
+        "per_turn_tokens": 8376,
+        "cum_tokens": 75339,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      }
+    ]
+  },
+  {
+    "config": "colmena-eager",
+    "framework": "colmena",
+    "seed": 3,
+    "run_id": "d7s-colmena-eager-s3",
+    "hard_error": false,
+    "error": null,
+    "turns": [
+      {
+        "turn": 0,
+        "per_turn_tokens": 3260,
+        "cum_tokens": 3260,
+        "selection_ok": false,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 1,
+        "per_turn_tokens": 6742,
+        "cum_tokens": 10002,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 2,
+        "per_turn_tokens": 6860,
+        "cum_tokens": 16862,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 3,
+        "per_turn_tokens": 7178,
+        "cum_tokens": 24040,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 4,
+        "per_turn_tokens": 7415,
+        "cum_tokens": 31455,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 5,
+        "per_turn_tokens": 7599,
+        "cum_tokens": 39054,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 6,
+        "per_turn_tokens": 7791,
+        "cum_tokens": 46845,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 7,
+        "per_turn_tokens": 7970,
+        "cum_tokens": 54815,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 8,
+        "per_turn_tokens": 8236,
+        "cum_tokens": 63051,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 9,
+        "per_turn_tokens": 8353,
+        "cum_tokens": 71404,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      }
+    ]
+  },
+  {
+    "config": "colmena-eager",
+    "framework": "colmena",
+    "seed": 4,
+    "run_id": "d7s-colmena-eager-s4",
+    "hard_error": false,
+    "error": null,
+    "turns": [
+      {
+        "turn": 0,
+        "per_turn_tokens": 6402,
+        "cum_tokens": 6402,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 1,
+        "per_turn_tokens": 6604,
+        "cum_tokens": 13006,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 2,
+        "per_turn_tokens": 6813,
+        "cum_tokens": 19819,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 3,
+        "per_turn_tokens": 6994,
+        "cum_tokens": 26813,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 4,
+        "per_turn_tokens": 7205,
+        "cum_tokens": 34018,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 5,
+        "per_turn_tokens": 7411,
+        "cum_tokens": 41429,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 6,
+        "per_turn_tokens": 7557,
+        "cum_tokens": 48986,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 7,
+        "per_turn_tokens": 7712,
+        "cum_tokens": 56698,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 8,
+        "per_turn_tokens": 7900,
+        "cum_tokens": 64598,
+        "selection_ok": true,
+        "arg_ok": true,
+        "wrong_tool_called": false
+      },
+      {
+        "turn": 9,
+        "per_turn_tokens": 8100,
+        "cum_tokens": 72698,
+        "selection_ok": true,
+        "arg_ok": false,
+        "wrong_tool_called": false
+      }
+    ]
+  }
+]

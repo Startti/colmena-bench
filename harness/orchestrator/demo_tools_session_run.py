@@ -112,7 +112,8 @@ def calls_by_turn(calls: list[dict], boundaries: list[str]) -> list[list[dict]]:
 
 
 def _env_for(cfg: dict, run_id: str, proxy_base_url: str,
-             session_path: Path, toolcall_log: Path) -> dict[str, str]:
+             session_path: Path, toolcall_log: Path,
+             model_alias: str) -> dict[str, str]:
     fw = cfg["framework"]
     env = os.environ.copy()
     env.update({
@@ -125,6 +126,11 @@ def _env_for(cfg: dict, run_id: str, proxy_base_url: str,
     })
     if fw == "colmena":
         env["BENCH_COLMENA_LAZY"] = cfg.get("lazy", "1")
+        # New develop memory path (PR #112) runs a cheap-model semantic summarizer
+        # at history-compaction time. Pin it to the SAME model the task uses so the
+        # summary routes through the proxy (tokens measured) and compares
+        # like-for-like with competitors (single-model, no separate summarizer).
+        env["COLMENA_CHEAP_MODEL_OPENAI"] = model_alias
     return env
 
 
@@ -155,7 +161,7 @@ def _run_cell(cfg: dict, seed: int, model_alias: str, proxy_base_url: str,
         "--model-alias", model_alias, "--proxy-base-url", proxy_base_url,
         "--output", str(out_path), "--timeout-seconds", str(timeout),
     ]
-    env = _env_for(cfg, run_id, proxy_base_url, session_path, toolcall_log)
+    env = _env_for(cfg, run_id, proxy_base_url, session_path, toolcall_log, model_alias)
 
     # Colmena spans land in the proxy SESSION file (header-less); measure by delta.
     pre = line_count(session_file) if fw == "colmena" else 0
@@ -284,6 +290,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--raw-dir", type=Path, default=REPO_ROOT / "runs" / "demo07" / "session_raw")
     p.add_argument("--runs-dir", type=Path, default=REPO_ROOT / "runs" / "demo07")
     p.add_argument("--spans-dir", type=Path, default=REPO_ROOT / "proxy" / "spans")
+    p.add_argument("--merge-baseline", type=Path, default=None,
+                   help="path to an existing session_summary.json with ALL configs. "
+                        "After aggregating the configs run now, keep that file's rows "
+                        "for every OTHER config and combine. Use to recompute a single "
+                        "framework in isolation without re-running competitors.")
     args = p.parse_args(argv)
 
     seeds = _parse_list(args.seeds, int, list(SEEDS))
@@ -321,9 +332,18 @@ def main(argv: list[str] | None = None) -> int:
                   + (f" :: {rec['error']}" if rec.get('error') else ""))
 
     rows = _aggregate(records)
+    if args.merge_baseline and args.merge_baseline.exists():
+        ran_configs = {c["name"] for c in configs}
+        baseline = json.loads(args.merge_baseline.read_text())
+        kept = [r for r in baseline if r.get("config") not in ran_configs]
+        print(f"[merge] kept {len(kept)} baseline rows for "
+              f"{sorted({r.get('config') for r in kept})}; "
+              f"replaced {sorted(ran_configs)} with fresh rows")
+        rows = sorted(kept + rows, key=lambda r: (r["config"], r["turn"]))
+
     json_path, csv_path = _write_outputs(rows, args.runs_dir)
-    (args.runs_dir / "session_records.json").write_text(
-        json.dumps(records, indent=2, default=str))
+    records_path = args.runs_dir / "session_records.json"
+    records_path.write_text(json.dumps(records, indent=2, default=str))
     _print_cum_at_last(rows)
     print(f"\nwrote {json_path}")
     print(f"wrote {csv_path}")
