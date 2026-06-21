@@ -8,6 +8,7 @@ requires-python = ">=3.11,<3.13"
 dependencies = [
     "llama-index==0.14.22",
     "llama-index-core==0.14.22",
+    "llama-index-experimental==0.6.6",
     "llama-index-llms-gemini",
     "llama-index-llms-anthropic",
     "llama-index-llms-openai",
@@ -16,6 +17,8 @@ dependencies = [
     "pyyaml",
     "typer",
     "psutil",
+    "pandas",
+    "polars",
 ]
 
 [project.optional-dependencies]

@@ -37,7 +37,7 @@ fw_deps() {
     crewai)     echo "crewai==1.14.6 litellm==1.88.1" ;;
     langchain)  echo "langchain==1.3.6 langchain-openai" ;;
     langgraph)  echo "langgraph==1.2.4 langchain-openai" ;;
-    llamaindex) echo "llama-index-core==0.14.22 llama-index-llms-openai-like" ;;
+    llamaindex) echo "llama-index-core==0.14.22 llama-index-llms-openai-like llama-index-experimental==0.6.6 pandas polars" ;;
     google_adk) echo "google-adk==2.2.0 litellm==1.88.1" ;;
     *) echo "" ;;
   esac
