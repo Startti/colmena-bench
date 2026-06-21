@@ -84,6 +84,12 @@ if make_venv "$dir"; then
     echo "  ⚠ COLMENA_REPO not found at $COLMENA_REPO — skipped colmena module build"
   fi
 fi
+# attachment_run_python runs pandas/numpy/scipy inside the colmena venv's embedded
+# CPython (pyo3); without these the tool fails with 'No module named pandas'.
+# Install unconditionally (idempotent) so a --force rebuild and a fresh venv both work.
+VIRTUAL_ENV="$dir" uv pip install -q --python "$dir/bin/python" pandas numpy scipy \
+  && echo "  installed pandas numpy scipy into colmena venv (required by attachment_run_python)" \
+  || echo "  ⚠ pandas/numpy/scipy install failed — attachment_run_python will not work"
 
 echo
 echo "✓ setup complete. Venvs:"
