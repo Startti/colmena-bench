@@ -9,6 +9,10 @@ requires-python = ">=3.11,<3.13"
 dependencies = [
     "crewai==1.14.6",
     "crewai-tools",
+    # Docker SDK — required by task08_codeexec (CodeInterpreterTool Docker port).
+    # crewai-tools 1.x removed CodeInterpreterTool; we re-implement it using the
+    # docker Python SDK directly so the same Docker-container isolation design holds.
+    "docker>=6,<8",
     # LLM SDKs reached via LiteLLM proxy (base_url override).
     # We still install the official SDKs because CrewAI uses them internally.
     "litellm==1.88.1",
