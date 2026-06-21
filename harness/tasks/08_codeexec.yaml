@@ -1,0 +1,28 @@
+# Demo #8 — sandboxed code execution over a CSV. Driven by
+# harness/orchestrator/demo_codeexec_run.py (not full_run). The handler reads
+# BENCH_CODEEXEC_MODE (analytics|mutation|probe) and BENCH_CSV_PATH from env.
+id: "08_codeexec"
+title: "Sandboxed code execution over CSV"
+version: "0.1.0"
+description: >
+  The agent receives a CSV attachment and answers analytical questions / performs a
+  transform by writing pandas that runs against a preview of the data. The security
+  axis feeds a fixed forbidden snippet to each framework's code executor.
+variants:
+  - name: S
+    dataset_path: data/orders_synthetic/seeds/S.csv
+  - name: M
+    dataset_path: data/orders_synthetic/seeds/M.csv
+  - name: L
+    dataset_path: data/orders_synthetic/seeds/L.csv
+prompt: |
+  You are a data analyst. A CSV is attached. Use your code/pandas tool to compute
+  answers over the full data; you only see a preview. Return ONLY the answer.
+tools: []
+metrics: [accuracy, tokens, success]
+success:
+  kind: dataset_qa
+  ground_truth_path: data/orders_synthetic/ground_truth.json
+model_alias: gemini-2.5-flash
+timeout_seconds: 300
+n_runs: 1
