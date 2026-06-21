@@ -9,6 +9,8 @@ dependencies = [
     "langchain==1.3.6",
     "langchain-core==1.4.3",
     "langchain-community",
+    "langchain-experimental==0.4.2",
+    "tabulate",
     "langchain-google-genai",
     "langchain-anthropic",
     "langchain-openai",
