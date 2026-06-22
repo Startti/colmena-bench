@@ -101,13 +101,13 @@ def policy_value(pack: str, peril: str, sub: str, field: str) -> int:
     (pack,peril,sub,field) so a wrong leaf yields a wrong answer."""
     seed = f"{pack}|{peril}|{sub}|{field}"
     if field == "deductible_usd":
-        return _det_int(seed, 110, 990)          # e.g. 437 — non-round
+        return _det_int(seed, 250, 99_750)       # very wide range -> corpus-unique answers (seeds 0-2)
     if field == "coverage_limit_usd":
-        return _det_int(seed, 5000, 95000)
+        return _det_int(seed, 50_000, 2_995_000) # large, very wide range -> corpus-unique answers
     if field == "waiting_period_days":
-        return _det_int(seed, 3, 89)
+        return _det_int(seed, 3, 89)             # unchanged (rendered, not asked)
     if field == "copay_pct":
-        return _det_int(seed, 5, 39)
+        return _det_int(seed, 5, 39)             # unchanged (rendered, not asked)
     raise ValueError(field)
 
 
@@ -309,8 +309,11 @@ def expected_for(question: "Question"):
 
 # 18 customer questions — 3 per core policy. Each names the product, the peril,
 # the sub-condition, and which value is asked; the VALUE itself lives only in the
-# pack (non-guessable). Fields/branches varied within each pack; all 4 field
-# types appear across the bank.
+# pack (non-guessable). Questions target ONLY deductible_usd + coverage_limit_usd
+# (both large, wide-range fields) so answers are non-incidental and collision-rare
+# across the corpus — a wrong retrieved leaf can never share the expected value.
+# copay_pct / waiting_period_days stay RENDERED in every leaf for corpus richness
+# but are never ASKED. Both targeted fields are mixed within and across packs.
 QUESTION_BANK: list["Question"] = [
     # --- colmena-hogar-premium ---------------------------------------------
     Question(
@@ -328,19 +331,19 @@ QUESTION_BANK: list["Question"] = [
         text="Para la póliza Colmena Hogar Premium, ¿cuál es el límite de cobertura en USD por incendio del contenido?",
     ),
     Question(
-        id="hogar_prem_robo_fuera_copago",
+        id="hogar_prem_robo_fuera_lim",
         pack="colmena-hogar-premium",
         leaf_path="robo/robo-fuera",
-        field="copay_pct",
-        text="Para la póliza Colmena Hogar Premium, ¿cuál es el copago en % por robo fuera del domicilio?",
+        field="coverage_limit_usd",
+        text="Para la póliza Colmena Hogar Premium, ¿cuál es el límite de cobertura en USD por robo fuera del domicilio?",
     ),
     # --- colmena-hogar-basico ----------------------------------------------
     Question(
-        id="hogar_bas_agua_gradual_espera",
+        id="hogar_bas_agua_gradual_lim",
         pack="colmena-hogar-basico",
         leaf_path="danio-agua/agua-basica-gradual",
-        field="waiting_period_days",
-        text="Para la póliza Colmena Hogar Basico, ¿cuántos días de período de espera aplican al daño de agua gradual?",
+        field="coverage_limit_usd",
+        text="Para la póliza Colmena Hogar Basico, ¿cuál es el límite de cobertura en USD por daño de agua gradual?",
     ),
     Question(
         id="hogar_bas_incendio_estructura_ded",
@@ -372,11 +375,11 @@ QUESTION_BANK: list["Question"] = [
         text="Para la póliza Colmena Auto Full, ¿cuál es el límite de cobertura en USD por robo total del vehículo?",
     ),
     Question(
-        id="auto_cristal_parabrisas_copago",
+        id="auto_cristal_parabrisas_ded",
         pack="colmena-auto-full",
         leaf_path="cristales/cristal-parabrisas",
-        field="copay_pct",
-        text="Para la póliza Colmena Auto Full, ¿cuál es el copago en % por rotura del cristal del parabrisas?",
+        field="deductible_usd",
+        text="Para la póliza Colmena Auto Full, ¿cuál es el deducible en USD por rotura del cristal del parabrisas?",
     ),
     # --- colmena-viaje-internacional ---------------------------------------
     Question(
@@ -394,11 +397,11 @@ QUESTION_BANK: list["Question"] = [
         text="Para la póliza Colmena Viaje Internacional, ¿cuál es el deducible en USD por cancelación anticipada del viaje?",
     ),
     Question(
-        id="viaje_equipaje_demora_espera",
+        id="viaje_equipaje_demora_ded",
         pack="colmena-viaje-internacional",
         leaf_path="equipaje/equipaje-demora",
-        field="waiting_period_days",
-        text="Para la póliza Colmena Viaje Internacional, ¿cuántos días de período de espera aplican a la demora de equipaje?",
+        field="deductible_usd",
+        text="Para la póliza Colmena Viaje Internacional, ¿cuál es el deducible en USD por demora de equipaje?",
     ),
     # --- colmena-salud-familiar --------------------------------------------
     Question(
@@ -409,18 +412,18 @@ QUESTION_BANK: list["Question"] = [
         text="Para la póliza Colmena Salud Familiar, ¿cuál es el límite de cobertura en USD por cirugía durante la hospitalización?",
     ),
     Question(
-        id="salud_amb_consulta_copago",
+        id="salud_amb_consulta_ded",
         pack="colmena-salud-familiar",
         leaf_path="ambulatorio/amb-consulta",
-        field="copay_pct",
-        text="Para la póliza Colmena Salud Familiar, ¿cuál es el copago en % por consulta ambulatoria?",
+        field="deductible_usd",
+        text="Para la póliza Colmena Salud Familiar, ¿cuál es el deducible en USD por consulta ambulatoria?",
     ),
     Question(
-        id="salud_mat_parto_espera",
+        id="salud_mat_parto_lim",
         pack="colmena-salud-familiar",
         leaf_path="maternidad/mat-parto",
-        field="waiting_period_days",
-        text="Para la póliza Colmena Salud Familiar, ¿cuántos días de período de espera aplican a la cobertura de parto en maternidad?",
+        field="coverage_limit_usd",
+        text="Para la póliza Colmena Salud Familiar, ¿cuál es el límite de cobertura en USD por parto en maternidad?",
     ),
     # --- colmena-mascotas --------------------------------------------------
     Question(
@@ -438,11 +441,11 @@ QUESTION_BANK: list["Question"] = [
         text="Para la póliza Colmena Mascotas, ¿cuál es el deducible en USD por fractura a causa de un accidente?",
     ),
     Question(
-        id="mascotas_acc_intoxicacion_espera",
+        id="mascotas_acc_intoxicacion_lim",
         pack="colmena-mascotas",
         leaf_path="accidente/acc-intoxicacion",
-        field="waiting_period_days",
-        text="Para la póliza Colmena Mascotas, ¿cuántos días de período de espera aplican a la intoxicación por accidente?",
+        field="coverage_limit_usd",
+        text="Para la póliza Colmena Mascotas, ¿cuál es el límite de cobertura en USD por intoxicación a causa de un accidente?",
     ),
 ]
 
@@ -619,17 +622,6 @@ def corpus_token_estimate(corpus_dir: str) -> int:
 # ---------------------------------------------------------------------------
 # Scorer — exact-match grading against policy_value (single source of truth).
 # ---------------------------------------------------------------------------
-
-def _parse_number(text):
-    """First numeric value in a string, tolerant of commas, currency symbols,
-    surrounding prose, signs, and scientific notation. Returns None if no number
-    is present (the honesty rule: unparseable -> not measured, never 0.0)."""
-    if text is None:
-        return None
-    cleaned = re.sub(r"[,$€£]", "", str(text))
-    m = re.search(r"[-+]?\d*\.?\d+(?:[eE][+-]?\d+)?", cleaned)
-    return float(m.group()) if m else None
-
 
 def _candidate_ints(text: str) -> set[int]:
     """All integers a produced answer could mean, robust to thousands/decimal

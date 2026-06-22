@@ -1,4 +1,5 @@
 # runners/_bench_common/tests/test_scenario_skills.py
+import re
 import sys
 from pathlib import Path
 
@@ -26,7 +27,10 @@ def test_policy_value_deterministic_and_distinct():
     b = sk.policy_value("colmena-hogar-premium", "danio-agua", "agua-subita", "deductible_usd")
     c = sk.policy_value("colmena-hogar-basico", "danio-agua", "agua-basica-subita", "deductible_usd")
     assert a == b and a != c          # deterministic + distinct across packs
-    assert a % 10 != 0 or True        # non-round-ish (informational)
+    # values vary across fields/subs within a pack (not a constant)
+    d = sk.policy_value("colmena-hogar-premium", "danio-agua", "agua-gradual", "deductible_usd")
+    e = sk.policy_value("colmena-hogar-premium", "danio-agua", "agua-subita", "coverage_limit_usd")
+    assert len({a, d, e}) == 3
 
 
 def test_value_appears_verbatim_in_rendered_leaf():
@@ -170,8 +174,53 @@ def test_expected_answer_is_verbatim_in_the_authoritative_leaf():
         assert str(want) in leaf, (q.id, want)
 
 
-def test_all_four_field_types_exercised():
-    assert {q.field for q in sk.QUESTION_BANK} == set(sk.POLICY_FIELDS)
+def test_questions_target_only_large_nonguessable_fields():
+    assert {q.field for q in sk.QUESTION_BANK} <= {"deductible_usd", "coverage_limit_usd"}
+    assert {q.field for q in sk.QUESTION_BANK} == {"deductible_usd", "coverage_limit_usd"}  # both used
+
+
+def _corpus_field_values(corpus_dir, field):
+    """All integer values rendered for `field` across every leaf in the corpus.
+    Returns list (with duplicates) of ints parsed from the leaf value tables.
+
+    The single-source-of-truth render writes one markdown table row per field in
+    every sub-condition leaf, of the form `| <field> | <int> |` (see
+    `_render_values_table`). We anchor on that exact row so each leaf contributes
+    exactly one value for the field — making this a true cross-leaf collision check.
+    """
+    vals = []
+    pat = re.compile(rf"\|\s*{re.escape(field)}\s*\|\s*([0-9][0-9.,]*)\s*\|")
+    for md in Path(corpus_dir).rglob("*.md"):
+        txt = md.read_text()
+        for m in pat.finditer(txt):
+            digits = m.group(1).replace(",", "").replace(".", "")
+            if digits.isdigit():
+                vals.append(int(digits))
+    return vals
+
+
+def test_corpus_field_values_parser_actually_finds_rendered_values(tmp_path):
+    # sanity: the parser must really read the rendered tables (not silently empty)
+    sk.materialize_corpus(str(tmp_path), 50, 0)
+    ded = _corpus_field_values(str(tmp_path), "deductible_usd")
+    lim = _corpus_field_values(str(tmp_path), "coverage_limit_usd")
+    assert len(ded) > 100 and len(lim) > 100      # ~one per sub-leaf across 50 packs
+    # every targeted expected value must be present in its field's parsed pool
+    for q in sk.QUESTION_BANK:
+        assert sk.expected_for(q) in _corpus_field_values(str(tmp_path), q.field), q.id
+
+
+def test_question_expected_values_unique_in_corpus_for_reported_seeds(tmp_path):
+    for seed in (0, 1, 2):
+        d = tmp_path / f"s{seed}"
+        sk.materialize_corpus(str(d), 50, seed)
+        cache = {}
+        for q in sk.QUESTION_BANK:
+            if q.field not in cache:
+                cache[q.field] = _corpus_field_values(str(d), q.field)
+            want = sk.expected_for(q)
+            assert cache[q.field].count(want) == 1, (seed, q.id, q.field, want,
+                "expected value collides with another leaf -> wrong-leaf could score correct")
 
 
 # --- scorer -----------------------------------------------------------------
