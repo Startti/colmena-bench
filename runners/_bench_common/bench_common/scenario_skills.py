@@ -1,9 +1,15 @@
-"""Demo #9 — knowledge-pack corpus generator + reference functions + scorer.
+"""Demo #9 — Colmena Seguros knowledge-pack corpus generator.
 
-SINGLE SOURCE OF TRUTH: each core pack holds a Python `facts` table that BOTH
-(a) renders the markdown reference tree on disk AND (b) drives the reference
-function that computes the ground-truth answer. Markdown and answer key cannot
-drift. Distractor packs are templated bulk to inflate the library to M packs.
+PIVOT: from "finance rules computed over a CSV" to EXTRACTIVE POLICY QA over a
+fictional insurer, Colmena Seguros. Each pack is an insurance policy with
+perils -> sub-conditions -> a leaf holding company-specific NON-GUESSABLE values.
+
+SINGLE SOURCE OF TRUTH: `policy_value(pack, peril, sub, field)` deterministically
+derives every company-specific number from the pack/peril/sub/field names. BOTH
+the rendered leaf tables AND the (later) expected answers read from it, so the
+markdown and the answer key can never drift. Distractor packs are GENERATED
+insurance policies (same structure, different names/values) — a realistic book of
+N policies among which RAG must find the right one.
 """
 from __future__ import annotations
 
@@ -12,9 +18,6 @@ import re
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
-
-import pandas as pd
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -35,450 +38,257 @@ class CorePack:
     description: str                     # SKILL.md catalog description (when to / not to use)
     overview: str                        # SKILL.md body
     references: dict[str, Leaf]          # top-level reference files
-    reference_fn: Callable[[pd.DataFrame, dict], float]
 
 
 # ---------------------------------------------------------------------------
-# Pack 1: tax-by-region  (rule: net revenue is reported EX-VAT; rate is regional)
+# The policy model (single source of truth)
 # ---------------------------------------------------------------------------
-# Non-default rule: without the pack a model reports GROSS revenue (includes VAT)
-# or guesses a flat rate -> wrong number. With the pack it divides by (1+rate)
-# using the country's specific rate from references/<region>.md.
 
-TAX_RATES = {  # SINGLE SOURCE OF TRUTH for both render + reference_fn
-    # EU
-    "DE": 0.19, "FR": 0.20, "ES": 0.21, "IT": 0.22, "NL": 0.21,
-    # LATAM
-    "BR": 0.17, "MX": 0.16, "AR": 0.21, "CO": 0.19, "CL": 0.19,
-    # APAC
-    "JP": 0.10, "AU": 0.10, "IN": 0.18, "SG": 0.09, "KR": 0.10,
-}
-_TAX_REGIONS = {
-    "eu": ["DE", "FR", "ES", "IT", "NL"],
-    "latam": ["BR", "MX", "AR", "CO", "CL"],
-    "apac": ["JP", "AU", "IN", "SG", "KR"],
-}
+# 6 core policies questions will target. Two homeowners variants on purpose
+# (same perils, DIFFERENT values) to force precise navigation.
+CORE_POLICY_NAMES = [
+    "colmena-hogar-premium", "colmena-hogar-basico", "colmena-auto-full",
+    "colmena-viaje-internacional", "colmena-salud-familiar", "colmena-mascotas",
+]
 
-
-def _render_rate_table(codes: list[str]) -> str:
-    rows = "\n".join(f"| {c} | {int(TAX_RATES[c]*100)}% |" for c in codes)
-    return f"| country | vat_rate |\n|---|---|\n{rows}\n"
-
-
-def _tax_reference_fn(df: pd.DataFrame, params: dict) -> float:
-    country = params["country"]
-    sub = df[(df["country"] == country) & (df["status"] == params.get("status", "shipped"))]
-    gross = float((sub["quantity"].astype(float) * sub["unit_price_usd"].astype(float)).sum())
-    rate = TAX_RATES[country]
-    return round(gross / (1.0 + rate), 2)
-
-
-_TAX_PACK = CorePack(
-    name="tax-by-region",
-    description=(
-        "Use when a question asks for net revenue EX-VAT / ex-tax, or applies a "
-        "country VAT/GST rate. NOT for gross revenue or for non-tax questions."
-    ),
-    overview=(
-        "# Tax by region\n\n"
-        "Reported **net revenue is always EX-VAT**: divide gross (quantity x "
-        "unit_price_usd) by (1 + vat_rate). Rates are country-specific. For rate "
-        "tables load reference `rates` then navigate to `rates/eu`, `rates/latam`, "
-        "or `rates/apac`. For special cases load `edge-cases` (children: `b2b`, "
-        "`digital-goods`).\n"
-    ),
-    references={
-        "rates": Leaf(
-            name="rates",
-            description="Regional VAT/GST rate tables. Children: eu, latam, apac.",
-            body="# Regional rates\n\nSee `rates/eu`, `rates/latam`, and `rates/apac`.\n",
-            children={
-                "eu": Leaf(
-                    name="eu",
-                    description="VAT rates for EU countries (DE, FR, ES, IT, NL).",
-                    body="# EU VAT rates\n\n" + _render_rate_table(_TAX_REGIONS["eu"]),
-                ),
-                "latam": Leaf(
-                    name="latam",
-                    description="VAT/IVA rates for LATAM (BR, MX, AR, CO, CL).",
-                    body="# LATAM rates\n\n" + _render_rate_table(_TAX_REGIONS["latam"]),
-                ),
-                "apac": Leaf(
-                    name="apac",
-                    description="GST/consumption-tax rates for APAC (JP, AU, IN, SG, KR).",
-                    body="# APAC rates\n\n" + _render_rate_table(_TAX_REGIONS["apac"]),
-                ),
-            },
-        ),
-        "edge-cases": Leaf(
-            name="edge-cases",
-            description="B2B reverse-charge and digital-goods exceptions. Children: b2b, digital-goods.",
-            body="# Tax edge cases\n\nSee `edge-cases/b2b` and `edge-cases/digital-goods`.\n",
-            children={
-                "b2b": Leaf("b2b", "Reverse-charge rule for B2B intra-EU sales.",
-                            "# B2B reverse charge\n\nIntra-EU B2B sales are zero-rated; the buyer self-accounts.\n"),
-                "digital-goods": Leaf("digital-goods", "Digital-goods VAT is charged at the buyer's country rate.",
-                                      "# Digital goods\n\nDigital goods use the destination-country rate.\n"),
-            },
-        ),
+# Domain-appropriate perils per policy; each peril has 2 UNIQUE-NAMED sub-conditions
+# (unique within the pack so the FLAT references/<sub>.md layout never collides).
+POLICY_PERILS: dict[str, dict[str, list[str]]] = {
+    "colmena-hogar-premium": {
+        "danio-agua": ["agua-subita", "agua-gradual"],
+        "incendio": ["incendio-estructura", "incendio-contenido"],
+        "robo": ["robo-domicilio", "robo-fuera"],
+        "responsabilidad-civil": ["rc-personal", "rc-huesped"],
     },
-    reference_fn=_tax_reference_fn,
-)
-
-# ---------------------------------------------------------------------------
-# Pack 2: returns-and-refunds
-# ---------------------------------------------------------------------------
-# Non-default rule: orders with status=='refunded' are NOT revenue. Net revenue
-# counts SHIPPED orders only, per channel. Without the pack a model sums all
-# rows (or includes refunded/delivered) -> a different, plausible number.
-# Each channel has a refund-window-days policy (drives the rendered leaf table).
-
-REFUND_WINDOW_DAYS = {  # SINGLE SOURCE OF TRUTH: per-channel refund window
-    "web": 30, "store": 14, "mobile": 30, "phone": 21,
-}
-_REFUND_CHANNEL_GROUPS = {
-    "online": ["web", "mobile"],
-    "offline": ["store", "phone"],
-}
-
-
-def _render_window_table(channels: list[str]) -> str:
-    rows = "\n".join(f"| {c} | {REFUND_WINDOW_DAYS[c]} |" for c in channels)
-    return f"| channel | refund_window_days |\n|---|---|\n{rows}\n"
-
-
-def _returns_reference_fn(df, params):
-    sub = df[(df["status"] == "shipped") & (df["channel"] == params["channel"])]
-    return round(float((sub["quantity"].astype(float) * sub["unit_price_usd"].astype(float)).sum()), 2)
-
-
-_RETURNS_PACK = CorePack(
-    name="returns-and-refunds",
-    description=(
-        "Use when a question asks for net revenue that EXCLUDES refunds/returns, "
-        "or references a refund window, per channel. NOT for gross revenue that "
-        "includes refunded orders, and NOT for tax/fee questions."
-    ),
-    overview=(
-        "# Returns and refunds\n\n"
-        "Orders with **status == 'refunded' are NOT revenue** and must be "
-        "excluded. Net revenue counts **shipped orders only** (quantity x "
-        "unit_price_usd), summed per channel. Refund-window policy is "
-        "channel-specific. For window tables load reference `windows` then "
-        "navigate to `windows/online` or `windows/offline`.\n"
-    ),
-    references={
-        "windows": Leaf(
-            name="windows",
-            description="Per-channel refund-window-days tables. Children: online, offline.",
-            body="# Refund windows\n\nSee `windows/online` and `windows/offline`.\n",
-            children={
-                "online": Leaf(
-                    name="online",
-                    description="Refund windows for online channels (web, mobile).",
-                    body="# Online refund windows\n\n" + _render_window_table(_REFUND_CHANNEL_GROUPS["online"]),
-                ),
-                "offline": Leaf(
-                    name="offline",
-                    description="Refund windows for offline channels (store, phone).",
-                    body="# Offline refund windows\n\n" + _render_window_table(_REFUND_CHANNEL_GROUPS["offline"]),
-                ),
-            },
-        ),
+    "colmena-hogar-basico": {
+        "danio-agua": ["agua-basica-subita", "agua-basica-gradual"],
+        "incendio": ["incendio-basico-estructura", "incendio-basico-contenido"],
+        "robo": ["robo-basico-domicilio", "robo-basico-fuera"],
     },
-    reference_fn=_returns_reference_fn,
-)
-
-
-# ---------------------------------------------------------------------------
-# Pack 3: revenue-recognition
-# ---------------------------------------------------------------------------
-# Non-default rule: recognized revenue is NET of a category-specific platform
-# fee. Without the pack a model reports gross -> plausibly wrong by the fee.
-
-PLATFORM_FEES = {  # SINGLE SOURCE OF TRUTH: per-category platform fee
-    "electronics": 0.08, "apparel": 0.12, "home": 0.10, "grocery": 0.04,
-    "beauty": 0.11, "books": 0.06, "toys": 0.09,
-}
-_FEE_CATEGORY_GROUPS = {
-    "hardgoods": ["electronics", "home", "toys", "books"],
-    "consumables": ["apparel", "grocery", "beauty"],
-}
-
-
-def _render_fee_table(categories: list[str]) -> str:
-    rows = "\n".join(f"| {c} | {int(PLATFORM_FEES[c]*100)}% |" for c in categories)
-    return f"| product_category | platform_fee |\n|---|---|\n{rows}\n"
-
-
-def _revrec_reference_fn(df, params):
-    fee = PLATFORM_FEES[params["category"]]
-    sub = df[(df["status"] == "shipped") & (df["product_category"] == params["category"])]
-    gross = float((sub["quantity"].astype(float) * sub["unit_price_usd"].astype(float)).sum())
-    return round(gross * (1 - fee), 2)
-
-
-_REVREC_PACK = CorePack(
-    name="revenue-recognition",
-    description=(
-        "Use when a question asks for recognized/net revenue after the platform "
-        "fee for a product category. NOT for gross revenue and NOT for VAT, "
-        "processor, or shipping questions."
-    ),
-    overview=(
-        "# Revenue recognition\n\n"
-        "Recognized revenue is **net of a category-specific platform fee**: "
-        "recognized = gross (quantity x unit_price_usd) x (1 - platform_fee), "
-        "over **shipped orders only**. Fees vary by product_category. For fee "
-        "tables load reference `fees` then navigate to `fees/hardgoods` or "
-        "`fees/consumables`.\n"
-    ),
-    references={
-        "fees": Leaf(
-            name="fees",
-            description="Per-category platform-fee tables. Children: hardgoods, consumables.",
-            body="# Platform fees\n\nSee `fees/hardgoods` and `fees/consumables`.\n",
-            children={
-                "hardgoods": Leaf(
-                    name="hardgoods",
-                    description="Platform fees for hard goods (electronics, home, toys, books).",
-                    body="# Hard-goods fees\n\n" + _render_fee_table(_FEE_CATEGORY_GROUPS["hardgoods"]),
-                ),
-                "consumables": Leaf(
-                    name="consumables",
-                    description="Platform fees for consumables (apparel, grocery, beauty).",
-                    body="# Consumables fees\n\n" + _render_fee_table(_FEE_CATEGORY_GROUPS["consumables"]),
-                ),
-            },
-        ),
+    "colmena-auto-full": {
+        "colision": ["colision-propio", "colision-tercero"],
+        "robo-vehiculo": ["robo-total", "robo-parcial"],
+        "cristales": ["cristal-parabrisas", "cristal-lateral"],
+        "asistencia": ["grua", "auto-sustituto"],
     },
-    reference_fn=_revrec_reference_fn,
-)
-
-
-# ---------------------------------------------------------------------------
-# Pack 4: discount-and-promo
-# ---------------------------------------------------------------------------
-# Non-default rule: stored discount_pct is a DISPLAY discount; the BILLABLE
-# discount is capped per channel. Without the pack a model applies the raw
-# discount_pct -> a plausibly different (lower) net.
-
-DISCOUNT_CAPS = {  # SINGLE SOURCE OF TRUTH: per-channel billable discount cap
-    "web": 0.30, "store": 0.20, "wholesale": 0.50, "mobile": 0.35, "phone": 0.25,
-}
-_DISCOUNT_CHANNEL_GROUPS = {
-    "direct": ["web", "mobile"],
-    "assisted": ["store", "phone"],
-}
-
-
-def _render_cap_table(channels: list[str]) -> str:
-    rows = "\n".join(f"| {c} | {int(DISCOUNT_CAPS[c]*100)}% |" for c in channels)
-    return f"| channel | discount_cap |\n|---|---|\n{rows}\n"
-
-
-def _discount_reference_fn(df, params):
-    cap = DISCOUNT_CAPS[params["channel"]]
-    sub = df[(df["status"] == "shipped") & (df["channel"] == params["channel"])].copy()
-    eff = sub["discount_pct"].astype(float).clip(upper=cap)
-    net = sub["quantity"].astype(float) * sub["unit_price_usd"].astype(float) * (1 - eff)
-    return round(float(net.sum()), 2)
-
-
-_DISCOUNT_PACK = CorePack(
-    name="discount-and-promo",
-    description=(
-        "Use when a question asks for net revenue after discounts where the "
-        "stored discount_pct must be CAPPED per channel. NOT for applying the "
-        "raw discount_pct, and NOT for tax/fee/shipping questions."
-    ),
-    overview=(
-        "# Discounts and promotions\n\n"
-        "The stored `discount_pct` is a **display discount**; the **billable "
-        "discount is capped per channel**. Clip discount_pct to the channel cap, "
-        "then net = quantity x unit_price_usd x (1 - capped_discount), over "
-        "**shipped orders only**. For cap tables load reference `caps` then "
-        "navigate to `caps/direct` or `caps/assisted`.\n"
-    ),
-    references={
-        "caps": Leaf(
-            name="caps",
-            description="Per-channel billable-discount-cap tables. Children: direct, assisted.",
-            body="# Discount caps\n\nSee `caps/direct` and `caps/assisted`.\n",
-            children={
-                "direct": Leaf(
-                    name="direct",
-                    description="Discount caps for direct channels (web, mobile).",
-                    body="# Direct-channel caps\n\n" + _render_cap_table(_DISCOUNT_CHANNEL_GROUPS["direct"]),
-                ),
-                "assisted": Leaf(
-                    name="assisted",
-                    description="Discount caps for assisted channels (store, phone).",
-                    body="# Assisted-channel caps\n\n" + _render_cap_table(_DISCOUNT_CHANNEL_GROUPS["assisted"]),
-                ),
-            },
-        ),
+    "colmena-viaje-internacional": {
+        "gastos-medicos": ["medico-ambulatorio", "medico-hospital"],
+        "cancelacion": ["cancela-anticipada", "cancela-interrupcion"],
+        "equipaje": ["equipaje-demora", "equipaje-perdida"],
     },
-    reference_fn=_discount_reference_fn,
-)
-
-
-# ---------------------------------------------------------------------------
-# Pack 5: payment-method-fees
-# ---------------------------------------------------------------------------
-# Non-default rule: subtract a processor fee per payment_method. Without the
-# pack a model reports gross -> plausibly wrong by the processor fee.
-
-PROCESSOR_FEES = {  # SINGLE SOURCE OF TRUTH: per-method processor fee
-    "card": 0.029, "paypal": 0.034, "bank_transfer": 0.008, "crypto": 0.015,
-    "cash": 0.000, "transfer": 0.008, "wallet": 0.020,
-}
-_PROCESSOR_METHOD_GROUPS = {
-    "electronic": ["card", "wallet", "paypal", "crypto"],
-    "manual": ["cash", "transfer", "bank_transfer"],
-}
-
-
-def _render_processor_table(methods: list[str]) -> str:
-    rows = "\n".join(f"| {m} | {PROCESSOR_FEES[m]*100:g}% |" for m in methods)
-    return f"| payment_method | processor_fee |\n|---|---|\n{rows}\n"
-
-
-def _payment_reference_fn(df, params):
-    fee = PROCESSOR_FEES[params["payment_method"]]
-    sub = df[(df["status"] == "shipped") & (df["payment_method"] == params["payment_method"])]
-    gross = float((sub["quantity"].astype(float) * sub["unit_price_usd"].astype(float)).sum())
-    return round(gross * (1 - fee), 2)
-
-
-_PAYMENT_PACK = CorePack(
-    name="payment-method-fees",
-    description=(
-        "Use when a question asks for net revenue after the payment-processor "
-        "fee for a payment_method. NOT for gross revenue and NOT for VAT, "
-        "platform-fee, or shipping questions."
-    ),
-    overview=(
-        "# Payment-method fees\n\n"
-        "Net settlement is **gross minus a processor fee that depends on "
-        "payment_method**: net = gross (quantity x unit_price_usd) x "
-        "(1 - processor_fee), over **shipped orders only**. For fee tables load "
-        "reference `processors` then navigate to `processors/electronic` or "
-        "`processors/manual`.\n"
-    ),
-    references={
-        "processors": Leaf(
-            name="processors",
-            description="Per-method processor-fee tables. Children: electronic, manual.",
-            body="# Processor fees\n\nSee `processors/electronic` and `processors/manual`.\n",
-            children={
-                "electronic": Leaf(
-                    name="electronic",
-                    description="Processor fees for electronic methods (card, wallet, paypal, crypto).",
-                    body="# Electronic-method fees\n\n" + _render_processor_table(_PROCESSOR_METHOD_GROUPS["electronic"]),
-                ),
-                "manual": Leaf(
-                    name="manual",
-                    description="Processor fees for manual methods (cash, transfer, bank_transfer).",
-                    body="# Manual-method fees\n\n" + _render_processor_table(_PROCESSOR_METHOD_GROUPS["manual"]),
-                ),
-            },
-        ),
+    "colmena-salud-familiar": {
+        "hospitalizacion": ["hosp-habitacion", "hosp-cirugia"],
+        "ambulatorio": ["amb-consulta", "amb-laboratorio"],
+        "maternidad": ["mat-parto", "mat-prenatal"],
     },
-    reference_fn=_payment_reference_fn,
-)
-
-
-# ---------------------------------------------------------------------------
-# Pack 6: shipping-cost-allocation
-# ---------------------------------------------------------------------------
-# Non-default rule: net contribution = revenue MINUS shipping_usd, shipped only,
-# per country. Without the pack a model reports revenue ignoring shipping cost.
-# Each region has a free-shipping threshold (drives the rendered leaf table).
-
-FREE_SHIP_THRESHOLD = {  # SINGLE SOURCE OF TRUTH: per-country free-shipping threshold (USD)
-    # na
-    "US": 50,
-    # emea
-    "ES": 40,
-    # latam
-    "BR": 60, "MX": 55, "AR": 65, "CO": 60, "CL": 60, "PE": 70,
-}
-_SHIP_REGIONS = {
-    "na": ["US"],
-    "emea": ["ES"],
-    "latam": ["BR", "MX", "AR", "CO", "CL", "PE"],
-}
-
-
-def _render_threshold_table(codes: list[str]) -> str:
-    rows = "\n".join(f"| {c} | ${FREE_SHIP_THRESHOLD[c]} |" for c in codes)
-    return f"| country | free_ship_threshold_usd |\n|---|---|\n{rows}\n"
-
-
-def _shipping_reference_fn(df, params):
-    sub = df[(df["status"] == "shipped") & (df["country"] == params["country"])]
-    rev = sub["quantity"].astype(float) * sub["unit_price_usd"].astype(float)
-    return round(float((rev - sub["shipping_usd"].astype(float)).sum()), 2)
-
-
-_SHIPPING_PACK = CorePack(
-    name="shipping-cost-allocation",
-    description=(
-        "Use when a question asks for net contribution = revenue minus shipping "
-        "cost, per country, or references a free-shipping threshold. NOT for "
-        "gross revenue that ignores shipping, and NOT for tax/fee questions."
-    ),
-    overview=(
-        "# Shipping-cost allocation\n\n"
-        "Net contribution **subtracts shipping_usd from revenue**: contribution "
-        "= (quantity x unit_price_usd) - shipping_usd, summed over **shipped "
-        "orders only**, per country. Free-shipping thresholds are regional. For "
-        "threshold tables load reference `thresholds` then navigate to "
-        "`thresholds/na`, `thresholds/emea`, or `thresholds/latam`.\n"
-    ),
-    references={
-        "thresholds": Leaf(
-            name="thresholds",
-            description="Per-region free-shipping-threshold tables. Children: na, emea, latam.",
-            body="# Free-shipping thresholds\n\nSee `thresholds/na`, `thresholds/emea`, and `thresholds/latam`.\n",
-            children={
-                "na": Leaf(
-                    name="na",
-                    description="Free-shipping thresholds for North America (US).",
-                    body="# NA thresholds\n\n" + _render_threshold_table(_SHIP_REGIONS["na"]),
-                ),
-                "emea": Leaf(
-                    name="emea",
-                    description="Free-shipping thresholds for EMEA (ES).",
-                    body="# EMEA thresholds\n\n" + _render_threshold_table(_SHIP_REGIONS["emea"]),
-                ),
-                "latam": Leaf(
-                    name="latam",
-                    description="Free-shipping thresholds for LATAM (BR, MX, AR, CO, CL, PE).",
-                    body="# LATAM thresholds\n\n" + _render_threshold_table(_SHIP_REGIONS["latam"]),
-                ),
-            },
-        ),
+    "colmena-mascotas": {
+        "veterinario": ["vet-consulta", "vet-cirugia"],
+        "accidente": ["acc-fractura", "acc-intoxicacion"],
     },
-    reference_fn=_shipping_reference_fn,
-)
+}
+
+# The numeric fields every sub-condition leaf carries.
+POLICY_FIELDS = ["deductible_usd", "coverage_limit_usd", "waiting_period_days", "copay_pct"]
+
+
+def _det_int(seed: str, lo: int, hi: int) -> int:
+    h = int(hashlib.sha256(seed.encode()).hexdigest()[:8], 16)
+    return lo + (h % (hi - lo + 1))
+
+
+def policy_value(pack: str, peril: str, sub: str, field: str) -> int:
+    """Deterministic, non-round, company-specific value. Distinct per
+    (pack,peril,sub,field) so a wrong leaf yields a wrong answer."""
+    seed = f"{pack}|{peril}|{sub}|{field}"
+    if field == "deductible_usd":
+        return _det_int(seed, 110, 990)          # e.g. 437 — non-round
+    if field == "coverage_limit_usd":
+        return _det_int(seed, 5000, 95000)
+    if field == "waiting_period_days":
+        return _det_int(seed, 3, 89)
+    if field == "copay_pct":
+        return _det_int(seed, 5, 39)
+    raise ValueError(field)
+
+
+def policy_facts(pack: str, perils: dict[str, list[str]]) -> dict[str, dict[str, dict[str, int]]]:
+    """Single source of truth as a nested dict for a given pack/perils. BOTH the
+    rendered tables and the (later) expected answers read from policy_value, so
+    they cannot drift."""
+    return {
+        peril: {
+            sub: {f: policy_value(pack, peril, sub, f) for f in POLICY_FIELDS}
+            for sub in subs
+        }
+        for peril, subs in perils.items()
+    }
+
+
+# Human-readable Spanish labels for perils (for prose; falls back to the key).
+_PERIL_LABELS = {
+    "danio-agua": "daño por agua",
+    "incendio": "incendio",
+    "robo": "robo",
+    "responsabilidad-civil": "responsabilidad civil",
+    "colision": "colisión",
+    "robo-vehiculo": "robo del vehículo",
+    "cristales": "rotura de cristales",
+    "asistencia": "asistencia en viaje",
+    "gastos-medicos": "gastos médicos",
+    "cancelacion": "cancelación de viaje",
+    "equipaje": "equipaje",
+    "hospitalizacion": "hospitalización",
+    "ambulatorio": "atención ambulatoria",
+    "maternidad": "maternidad",
+    "veterinario": "atención veterinaria",
+    "accidente": "accidente",
+    # generic distractor perils
+    "perdida": "pérdida",
+    "fraude": "fraude",
+    "interrupcion": "interrupción",
+}
+
+
+def _peril_label(peril: str) -> str:
+    return _PERIL_LABELS.get(peril, peril.replace("-", " "))
+
+
+def _product_label(name: str) -> str:
+    """colmena-hogar-premium -> Colmena Hogar Premium."""
+    return " ".join(w.capitalize() for w in name.split("-"))
+
+
+# ---------------------------------------------------------------------------
+# Build a policy pack into the existing CorePack/Leaf tree
+# ---------------------------------------------------------------------------
+
+def _render_values_table(pack: str, peril: str, sub: str) -> str:
+    """Markdown table of the company-specific values for one sub-condition leaf.
+    Reads from policy_value so it is the single source of truth."""
+    rows = []
+    for f in POLICY_FIELDS:
+        v = policy_value(pack, peril, sub, f)
+        rows.append(f"| {f} | {v} |")
+    body = "\n".join(rows)
+    return f"| campo | valor |\n|---|---|\n{body}\n"
+
+
+def _sub_leaf_body(pack: str, peril: str, sub: str) -> str:
+    """A values table plus realistic Spanish clause prose. The prose density keeps
+    the corpus above the token floor; the table carries the answerable facts."""
+    label = _peril_label(peril)
+    ded = policy_value(pack, peril, sub, "deductible_usd")
+    lim = policy_value(pack, peril, sub, "coverage_limit_usd")
+    esp = policy_value(pack, peril, sub, "waiting_period_days")
+    cop = policy_value(pack, peril, sub, "copay_pct")
+    return (
+        f"# Sub-condición: {sub}\n\n"
+        f"Esta sub-condición aplica a la cobertura de {label} bajo la póliza "
+        f"{_product_label(pack)}, sub-condición específica '{sub}'. Las "
+        f"condiciones particulares que se detallan a continuación prevalecen "
+        f"sobre las condiciones generales del producto.\n\n"
+        f"## Valores aplicables\n\n"
+        + _render_values_table(pack, peril, sub) +
+        f"\nEl asegurado deberá asumir un **deducible de USD {ded}** por cada "
+        f"siniestro amparado por esta sub-condición antes de que la compañía "
+        f"reconozca indemnización alguna. El **límite de cobertura** por evento "
+        f"asciende a **USD {lim}**, que constituye el monto máximo que Colmena "
+        f"Seguros pagará por la suma de daños directos e indirectos derivados de "
+        f"un mismo hecho generador.\n\n"
+        f"Aplica un **período de espera (carencia) de {esp} días** contados desde "
+        f"la fecha de inicio de vigencia; los siniestros ocurridos dentro de ese "
+        f"plazo no generan derecho a indemnización. Sobre el monto indemnizable, "
+        f"el asegurado participa con un **copago del {cop}%**, que se descuenta de "
+        f"la liquidación final. Para hacer efectiva la cobertura, el asegurado "
+        f"debe notificar el siniestro dentro de los plazos establecidos y aportar "
+        f"la documentación de respaldo que la compañía requiera para la valoración "
+        f"del reclamo.\n\n"
+        f"## Exclusiones y condiciones particulares\n\n"
+        f"Quedan excluidos de esta sub-condición los siniestros derivados de dolo "
+        f"o culpa grave del asegurado, los hechos preexistentes a la contratación "
+        f"de la póliza {_product_label(pack)} y aquellos que no hayan sido "
+        f"notificados dentro del plazo contractual. La indemnización por "
+        f"'{sub}' nunca podrá superar el límite de USD {lim} indicado en la tabla "
+        f"de valores, ni aplicarse antes de cumplido el período de espera de "
+        f"{esp} días. En caso de concurrencia con otra cobertura de la misma "
+        f"póliza, se aplicará el deducible más alto entre los aplicables y un "
+        f"único copago del {cop}% sobre el monto neto indemnizable. La compañía "
+        f"podrá solicitar peritajes independientes antes de aprobar cualquier "
+        f"pago bajo la sub-condición '{sub}'.\n"
+    )
+
+
+def _peril_leaf(pack: str, peril: str, subs: list[str]) -> Leaf:
+    label = _peril_label(peril)
+    sub_list = ", ".join(subs)
+    body = (
+        f"# Cobertura: {label}\n\n"
+        f"La cobertura de {label} de la póliza {_product_label(pack)} se "
+        f"desglosa en las siguientes sub-condiciones, cada una con sus propios "
+        f"deducibles, límites, períodos de espera y copagos: {sub_list}. "
+        f"Consultá la sub-condición que corresponda al caso concreto del "
+        f"asegurado para obtener los valores aplicables; los importes pueden "
+        f"variar de forma significativa entre una sub-condición y otra.\n"
+    )
+    children = {
+        sub: Leaf(
+            name=sub,
+            description=(
+                f"Valores (deducible, límite, espera, copago) de la "
+                f"sub-condición '{sub}' de la cobertura de {label}."
+            ),
+            body=_sub_leaf_body(pack, peril, sub),
+        )
+        for sub in subs
+    }
+    return Leaf(
+        name=peril,
+        description=(
+            f"Cobertura de {label}. Sub-condiciones: {sub_list}."
+        ),
+        body=body,
+        children=children,
+    )
+
+
+def _build_policy_pack(name: str, perils: dict[str, list[str]]) -> CorePack:
+    """Build a CorePack for an insurance policy from its peril->sub structure.
+    Values come from policy_value (single source of truth)."""
+    peril_labels = ", ".join(_peril_label(p) for p in perils)
+    overview = (
+        f"# Póliza {_product_label(name)}\n\n"
+        f"Póliza {_product_label(name)}. Cubre: {peril_labels}. Para cada "
+        f"cobertura, consultá la referencia correspondiente y su sub-condición "
+        f"para obtener los valores particulares (deducible, límite de cobertura, "
+        f"período de espera y copago).\n\n"
+        f"Cada cobertura de esta póliza se subdivide en sub-condiciones con "
+        f"importes propios; los valores no son comunes a todos los productos de "
+        f"Colmena Seguros, de modo que es indispensable navegar hasta la "
+        f"sub-condición exacta antes de informar cualquier cifra al cliente.\n"
+    )
+    references = {
+        peril: _peril_leaf(name, peril, subs) for peril, subs in perils.items()
+    }
+    description = (
+        f"Use when the customer asks about the {_product_label(name)} policy: "
+        f"{peril_labels}. NOT for other Colmena Seguros products."
+    )
+    return CorePack(
+        name=name,
+        description=description,
+        overview=overview,
+        references=references,
+    )
 
 
 CORE_PACKS: dict[str, CorePack] = {
-    "tax-by-region": _TAX_PACK,
-    "returns-and-refunds": _RETURNS_PACK,
-    "revenue-recognition": _REVREC_PACK,
-    "discount-and-promo": _DISCOUNT_PACK,
-    "payment-method-fees": _PAYMENT_PACK,
-    "shipping-cost-allocation": _SHIPPING_PACK,
+    name: _build_policy_pack(name, POLICY_PERILS[name]) for name in CORE_POLICY_NAMES
 }
 
 
 # ---------------------------------------------------------------------------
-# Question bank: natural-language questions bound to the specific reference LEAF
-# holding the fact each one needs. Different questions hit different tree
-# branches so Colmena's nested navigation is exercised.
+# Question bank — RW-B will restore the customer-facing question set + scorer.
+# Kept as empty stubs so this module stays importable during the pivot.
 # ---------------------------------------------------------------------------
 
 @dataclass
@@ -486,8 +296,11 @@ class Question:
     id: str
     pack: str
     text: str                 # natural language; never names the pack mechanic explicitly
-    params: dict
-    leaf_path: str            # e.g. "rates/eu" — where the needed fact lives
+    leaf_path: str            # e.g. "danio-agua/agua-subita" — where the fact lives
+    field: str = ""           # which POLICY_FIELDS value the question targets
+
+
+QUESTION_BANK: list = []  # RW-B will restore
 
 
 def leaf_path_exists(pack_name: str, leaf_path: str) -> bool:
@@ -499,75 +312,6 @@ def leaf_path_exists(pack_name: str, leaf_path: str) -> bool:
             return False
         cur = cur.children.get(p)
     return cur is not None
-
-
-QUESTION_BANK: list[Question] = [
-    # --- tax-by-region (param: country, status; leaves rates/eu, rates/latam) ---
-    Question("tax_es", "tax-by-region",
-             "What is the net revenue reported ex-VAT for shipped orders to ES?",
-             {"country": "ES", "status": "shipped"}, "rates/eu"),
-    Question("tax_br", "tax-by-region",
-             "What is the net revenue (ex-tax) recognized on shipped orders to BR?",
-             {"country": "BR", "status": "shipped"}, "rates/latam"),
-    Question("tax_mx", "tax-by-region",
-             "For shipped orders to MX, what is the revenue net of value-added tax?",
-             {"country": "MX", "status": "shipped"}, "rates/latam"),
-
-    # --- returns-and-refunds (param: channel; leaves windows/online, windows/offline) ---
-    Question("returns_web", "returns-and-refunds",
-             "What is the net revenue from web orders, excluding anything that was returned?",
-             {"channel": "web"}, "windows/online"),
-    Question("returns_mobile", "returns-and-refunds",
-             "How much net revenue did the mobile channel keep after backing out returned orders?",
-             {"channel": "mobile"}, "windows/online"),
-    Question("returns_store", "returns-and-refunds",
-             "What net revenue did the store channel retain once returned orders are removed?",
-             {"channel": "store"}, "windows/offline"),
-
-    # --- revenue-recognition (param: category; leaves fees/hardgoods, fees/consumables) ---
-    Question("revrec_electronics", "revenue-recognition",
-             "What is the recognized revenue for shipped electronics orders after the marketplace commission is deducted?",
-             {"category": "electronics"}, "fees/hardgoods"),
-    Question("revrec_books", "revenue-recognition",
-             "How much revenue is recognized on books once the platform's share is deducted?",
-             {"category": "books"}, "fees/hardgoods"),
-    Question("revrec_beauty", "revenue-recognition",
-             "What is the net recognized revenue for beauty products after platform charges?",
-             {"category": "beauty"}, "fees/consumables"),
-
-    # --- discount-and-promo (param: channel; leaves caps/direct, caps/assisted) ---
-    Question("discount_web", "discount-and-promo",
-             "What is the net revenue for web orders after the allowable promotional reduction is applied?",
-             {"channel": "web"}, "caps/direct"),
-    Question("discount_mobile", "discount-and-promo",
-             "For the mobile channel, what is the net revenue once permitted promo reductions are applied?",
-             {"channel": "mobile"}, "caps/direct"),
-    Question("discount_phone", "discount-and-promo",
-             "What is the revenue for shipped phone-channel orders after applying the allowed promotional reduction?",
-             {"channel": "phone"}, "caps/assisted"),
-
-    # --- payment-method-fees (param: payment_method; leaves processors/electronic, processors/manual) ---
-    Question("payment_card", "payment-method-fees",
-             "What is the net settlement on card orders after the processor's cut?",
-             {"payment_method": "card"}, "processors/electronic"),
-    Question("payment_wallet", "payment-method-fees",
-             "How much do wallet orders settle to net of the processing charge?",
-             {"payment_method": "wallet"}, "processors/electronic"),
-    Question("payment_transfer", "payment-method-fees",
-             "What is the net amount settled on shipped orders paid by bank transfer, after the processor's deduction?",
-             {"payment_method": "transfer"}, "processors/manual"),
-
-    # --- shipping-cost-allocation (param: country; leaves thresholds/na, emea, latam) ---
-    Question("shipping_us", "shipping-cost-allocation",
-             "What is the net contribution from US orders after shipping cost is subtracted?",
-             {"country": "US"}, "thresholds/na"),
-    Question("shipping_es", "shipping-cost-allocation",
-             "For ES orders, what is the contribution once shipping expense is netted out?",
-             {"country": "ES"}, "thresholds/emea"),
-    Question("shipping_br", "shipping-cost-allocation",
-             "What is the net contribution on BR orders after deducting the cost to ship them?",
-             {"country": "BR"}, "thresholds/latam"),
-]
 
 
 # ---------------------------------------------------------------------------
@@ -613,50 +357,71 @@ def render_pack(pack: CorePack) -> dict[str, str]:
 
 
 # ---------------------------------------------------------------------------
-# Distractor packs + corpus materialization (Task 4)
+# Distractor packs + corpus materialization
 # ---------------------------------------------------------------------------
-# Distractor packs are templated bulk: realistic NESTED reference trees for
-# non-core domains that no question targets. They exist purely to inflate the
-# library to M packs and add retrieval confusion — the whole point of the demo
-# is that naive prompt-stuffing the corpus is expensive (>=150k tokens at M=50).
+# Distractor packs are ALSO generated insurance policies: same structure,
+# different names/values. They form a realistic "book of N policies" among which
+# RAG must find the right one. The whole point of the demo is that naive
+# prompt-stuffing the corpus is expensive (>=150k tokens at M=50).
 
-_DISTRACTOR_DOMAINS = [
-    "cohort-definitions", "channel-attribution", "fx-and-currency", "cogs-and-margin",
-    "fiscal-calendar", "chargebacks-and-fraud", "inventory-valuation", "loyalty-points",
-    "subscription-billing", "gift-cards", "marketplace-commissions", "warranty-claims",
-    "price-matching", "bundle-pricing", "tax-exemptions", "credit-memos", "dunning",
-    "deferred-revenue", "regional-rounding", "settlement-timing",
+_DISTRACTOR_PRODUCTS = [
+    "hogar", "auto", "viaje", "salud", "mascotas", "vida", "pyme", "moto",
+    "bicicleta", "celular", "dental", "vision", "agro", "comercio",
+]
+_DISTRACTOR_REGIONS = [
+    "norte", "sur", "centro", "este", "oeste", "metropolitana", "costa",
+    "andina", "pacifico", "caribe", "litoral", "valle",
 ]
 
-_DISTRACTOR_ROWS = 26  # tuned so the 50-pack corpus clears the 150k-token floor (~190k)
+# A generic 3-peril x 2-sub template for distractor policies. Sub keys are made
+# unique within each distractor pack by suffixing with the pack name (see
+# _distractor_perils), so the FLAT references/<sub>.md layout never collides.
+_DISTRACTOR_PERIL_TEMPLATE = {
+    "danio-agua": ["agua-subita", "agua-gradual"],
+    "robo": ["robo-domicilio", "robo-fuera"],
+    "responsabilidad-civil": ["rc-personal", "rc-huesped"],
+}
 
 
-def _distractor_pack_files(name: str, rng_seed: str) -> dict[str, str]:
-    """A realistic, bulky NESTED tree for a non-core domain. No reference_fn.
-    Deterministic per (name, seed). Tune row counts so the 50-pack corpus clears
-    the 150k-token density floor."""
-    h = hashlib.sha256(rng_seed.encode()).hexdigest()
-    regions = ["na", "emea", "apac", "latam"]
-    # SKILL.md declares the 4 regional references as children
-    files = {
-        "SKILL.md": _frontmatter(
-            name, f"Reference knowledge for {name.replace('-', ' ')}.",
-            [Leaf(r, f"{name} parameters for region {r}.", "") for r in regions],
-        ) + f"# {name}\n\nDomain rules and parameter tables for {name}. "
-            f"Load the regional reference for specifics.\n",
+def _distractor_perils(name: str) -> dict[str, list[str]]:
+    """Generic peril structure for a distractor policy, with sub keys made unique
+    within this pack by suffixing the (already-unique) pack name."""
+    tag = name.replace("colmena-", "")
+    return {
+        peril: [f"{sub}-{tag}" for sub in subs]
+        for peril, subs in _DISTRACTOR_PERIL_TEMPLATE.items()
     }
-    for i, r in enumerate(regions):
-        rows = "\n".join(
-            f"| param_{j} | {int(h[(i + j) % len(h)], 16) * 7 % 100}% | "
-            f"applies to {name} {r} param {j}; review at period close and reconcile "
-            f"against the {r} schedule of record before posting any adjustment |"
-            for j in range(_DISTRACTOR_ROWS)
-        )
-        files[f"references/{r}.md"] = _frontmatter(
-            r, f"{name} parameter table for {r}.", []
-        ) + (f"# {name} — {r}\n\nParameter schedule for {r}. Apply the value that "
-             f"matches the row key.\n\n| parameter | value | notes |\n|---|---|---|\n{rows}\n")
-    return files
+
+
+def _distractor_names(n: int, seed: int) -> list[str]:
+    """`n` deterministic, plausible Colmena Seguros product names, DISTINCT from
+    the 6 core names and from each other. Seeded-shuffled product x region pool,
+    suffixed if the pool exhausts."""
+    import random
+    rng = random.Random(f"distract-{n}-{seed}")
+    pool = [
+        f"colmena-{prod}-{region}"
+        for prod in _DISTRACTOR_PRODUCTS
+        for region in _DISTRACTOR_REGIONS
+    ]
+    pool = [p for p in pool if p not in CORE_PACKS]
+    rng.shuffle(pool)
+    chosen: list[str] = []
+    seen: set[str] = set(CORE_PACKS)
+    i = 0
+    suffix = 0
+    while len(chosen) < n:
+        if i < len(pool):
+            cand = pool[i]
+            i += 1
+        else:
+            suffix += 1
+            cand = pool[(suffix - 1) % len(pool)] + f"-{suffix}"
+        if cand in seen:
+            continue
+        seen.add(cand)
+        chosen.append(cand)
+    return chosen
 
 
 def _write_files(pack_dir: Path, files: dict[str, str]) -> None:
@@ -667,10 +432,10 @@ def _write_files(pack_dir: Path, files: dict[str, str]) -> None:
 
 
 def materialize_corpus(out_dir: str, pack_count: int, seed: int) -> str:
-    """Write `pack_count` packs to out_dir: core packs first (always present when
-    pack_count >= number of core packs), the remainder filled with deterministic
-    distractor packs. Returns out_dir. Idempotent (clears out_dir first)."""
-    import random
+    """Write `pack_count` policy packs to out_dir: core packs first (always
+    present when pack_count >= number of core packs), the remainder filled with
+    deterministic GENERATED insurance-policy distractors. Returns out_dir.
+    Idempotent (clears out_dir first); refuses to clear a non-corpus dir."""
     root = Path(out_dir)
     sentinel = root / ".colmena_corpus"
     if root.exists():
@@ -695,15 +460,9 @@ def materialize_corpus(out_dir: str, pack_count: int, seed: int) -> str:
     for name, pack in core_items:
         _write_files(root / name, render_pack(pack))
     n_distract = pack_count - len(core_items)
-    rng = random.Random(f"{pack_count}-{seed}")
-    pool = list(_DISTRACTOR_DOMAINS)
-    rng.shuffle(pool)
-    chosen = list(pool[:n_distract])
-    while len(chosen) < n_distract:  # deterministic suffixing if pool too small
-        base = pool[len(chosen) % len(pool)]
-        chosen.append(f"{base}-{len(chosen)}")
-    for name in chosen:
-        _write_files(root / name, _distractor_pack_files(name, f"{name}-{seed}"))
+    for name in _distractor_names(n_distract, seed):
+        pack = _build_policy_pack(name, _distractor_perils(name))
+        _write_files(root / name, render_pack(pack))
     return out_dir
 
 
@@ -714,7 +473,8 @@ def corpus_token_estimate(corpus_dir: str) -> int:
 
 
 # ---------------------------------------------------------------------------
-# Scorer (Task 5)
+# Scorer — RW-C will restore exact-match grading against policy_value.
+# Minimal stub kept so this module stays importable during the pivot.
 # ---------------------------------------------------------------------------
 
 def _parse_number(text):
@@ -728,25 +488,14 @@ def _parse_number(text):
     return float(m.group()) if m else None
 
 
-def score_skill_answer(question: "Question", produced: str, df: "pd.DataFrame") -> dict:
-    """Grade a produced answer against the reference function.
-
-    Returns a dict with keys:
-      correct: True / False, or None when the answer is empty/unparseable
-               (NOT measured — never silently 0, per the Demo #8 honesty fix).
-      want:    the ground-truth float.
-      got:     the parsed float, or None.
-    """
-    want = CORE_PACKS[question.pack].reference_fn(df, question.params)
-    got = _parse_number(produced)
-    if got is None:
-        return {"correct": None, "want": want, "got": None}
-    ok = abs(got - want) <= 0.02 * max(1.0, abs(want))
-    return {"correct": bool(ok), "want": want, "got": got}
+def score_skill_answer(question, produced: str, df=None) -> dict:  # RW-C will restore
+    """STUB — RW-C will restore exact-match grading against policy_value.
+    For now returns 'not measured' so the module stays importable."""
+    return {"correct": None, "want": None, "got": _parse_number(produced)}
 
 
 # ---------------------------------------------------------------------------
-# Naive prompt builder (Task 5)
+# Naive prompt builder
 # ---------------------------------------------------------------------------
 
 def build_naive_system_prompt(corpus_dir: str) -> str:
@@ -757,8 +506,9 @@ def build_naive_system_prompt(corpus_dir: str) -> str:
     which Colmena's progressive-load arm is compared.
     """
     parts = [
-        "You are a finance analyst. The full policy manual follows. "
-        "Apply the correct policy to answer. Manual:\n"
+        "Sos un asesor de Colmena Seguros. A continuación está el manual "
+        "completo de pólizas. Respondé usando la póliza y sub-condición "
+        "correctas. Manual:\n"
     ]
     for md in sorted(Path(corpus_dir).rglob("*.md")):
         parts.append(f"\n\n===== {md.relative_to(corpus_dir)} =====\n{md.read_text()}")
