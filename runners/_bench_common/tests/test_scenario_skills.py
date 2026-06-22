@@ -117,3 +117,31 @@ def test_core_pack_reference_fns_run_on_real_dataset():
     for pack_name, params in checks.items():
         val = sk.CORE_PACKS[pack_name].reference_fn(df, params)
         assert isinstance(val, float)
+
+
+# --- Task 3: question bank --------------------------------------------------
+
+def test_question_bank_size_and_packs():
+    assert len(sk.QUESTION_BANK) >= 18
+    assert {q.pack for q in sk.QUESTION_BANK} == set(sk.CORE_PACKS)
+
+
+def test_question_ids_unique():
+    ids = [q.id for q in sk.QUESTION_BANK]
+    assert len(ids) == len(set(ids))
+
+
+def test_every_question_binds_to_an_existing_leaf_and_runs():
+    df = pd.read_csv(PKG.parents[1] / "data" / "orders_synthetic" / "seeds" / "M.csv")
+    for q in sk.QUESTION_BANK:
+        assert sk.leaf_path_exists(q.pack, q.leaf_path), (q.id, q.pack, q.leaf_path)
+        val = sk.CORE_PACKS[q.pack].reference_fn(df, q.params)
+        assert isinstance(val, float)
+
+
+def test_every_question_has_a_nonzero_or_defined_answer():
+    df = pd.read_csv(PKG.parents[1] / "data" / "orders_synthetic" / "seeds" / "M.csv")
+    assert len(df[df["status"] == "shipped"]) > 0
+    for q in sk.QUESTION_BANK:
+        val = sk.CORE_PACKS[q.pack].reference_fn(df, q.params)
+        assert val != 0.0, (q.id, "selects empty/zero frame — pick params present in M.csv shipped rows")

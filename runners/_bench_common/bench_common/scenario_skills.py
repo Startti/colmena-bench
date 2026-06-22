@@ -473,6 +473,101 @@ CORE_PACKS: dict[str, CorePack] = {
 
 
 # ---------------------------------------------------------------------------
+# Question bank: natural-language questions bound to the specific reference LEAF
+# holding the fact each one needs. Different questions hit different tree
+# branches so Colmena's nested navigation is exercised.
+# ---------------------------------------------------------------------------
+
+@dataclass
+class Question:
+    id: str
+    pack: str
+    text: str                 # natural language; never names the pack mechanic explicitly
+    params: dict
+    leaf_path: str            # e.g. "rates/eu" — where the needed fact lives
+
+
+def leaf_path_exists(pack_name: str, leaf_path: str) -> bool:
+    node = CORE_PACKS[pack_name].references
+    parts = leaf_path.split("/")
+    cur = node.get(parts[0])
+    for p in parts[1:]:
+        if cur is None:
+            return False
+        cur = cur.children.get(p)
+    return cur is not None
+
+
+QUESTION_BANK: list[Question] = [
+    # --- tax-by-region (param: country, status; leaves rates/eu, rates/latam) ---
+    Question("tax_es", "tax-by-region",
+             "What is the net revenue reported ex-VAT for shipped orders to ES?",
+             {"country": "ES", "status": "shipped"}, "rates/eu"),
+    Question("tax_br", "tax-by-region",
+             "What is the net revenue (ex-tax) recognized on shipped orders to BR?",
+             {"country": "BR", "status": "shipped"}, "rates/latam"),
+    Question("tax_mx", "tax-by-region",
+             "For shipped orders to MX, what is the revenue net of value-added tax?",
+             {"country": "MX", "status": "shipped"}, "rates/latam"),
+
+    # --- returns-and-refunds (param: channel; leaves windows/online, windows/offline) ---
+    Question("returns_web", "returns-and-refunds",
+             "What is the net revenue from web orders, excluding anything that was returned?",
+             {"channel": "web"}, "windows/online"),
+    Question("returns_mobile", "returns-and-refunds",
+             "How much net revenue did the mobile channel keep after backing out returned orders?",
+             {"channel": "mobile"}, "windows/online"),
+    Question("returns_store", "returns-and-refunds",
+             "What net revenue did the store channel retain once returned orders are removed?",
+             {"channel": "store"}, "windows/offline"),
+
+    # --- revenue-recognition (param: category; leaves fees/hardgoods, fees/consumables) ---
+    Question("revrec_electronics", "revenue-recognition",
+             "What is the recognized revenue for shipped electronics orders after the marketplace commission is deducted?",
+             {"category": "electronics"}, "fees/hardgoods"),
+    Question("revrec_books", "revenue-recognition",
+             "How much revenue is recognized on books once the platform's share is deducted?",
+             {"category": "books"}, "fees/hardgoods"),
+    Question("revrec_beauty", "revenue-recognition",
+             "What is the net recognized revenue for beauty products after platform charges?",
+             {"category": "beauty"}, "fees/consumables"),
+
+    # --- discount-and-promo (param: channel; leaves caps/direct, caps/assisted) ---
+    Question("discount_web", "discount-and-promo",
+             "What is the net revenue for web orders after the allowable promotional reduction is applied?",
+             {"channel": "web"}, "caps/direct"),
+    Question("discount_mobile", "discount-and-promo",
+             "For the mobile channel, what is the net revenue once permitted promo reductions are applied?",
+             {"channel": "mobile"}, "caps/direct"),
+    Question("discount_phone", "discount-and-promo",
+             "What is the revenue for shipped phone-channel orders after applying the allowed promotional reduction?",
+             {"channel": "phone"}, "caps/assisted"),
+
+    # --- payment-method-fees (param: payment_method; leaves processors/electronic, processors/manual) ---
+    Question("payment_card", "payment-method-fees",
+             "What is the net settlement on card orders after the processor's cut?",
+             {"payment_method": "card"}, "processors/electronic"),
+    Question("payment_wallet", "payment-method-fees",
+             "How much do wallet orders settle to net of the processing charge?",
+             {"payment_method": "wallet"}, "processors/electronic"),
+    Question("payment_transfer", "payment-method-fees",
+             "What is the net amount settled on shipped orders paid by bank transfer, after the processor's deduction?",
+             {"payment_method": "transfer"}, "processors/manual"),
+
+    # --- shipping-cost-allocation (param: country; leaves thresholds/na, emea, latam) ---
+    Question("shipping_us", "shipping-cost-allocation",
+             "What is the net contribution from US orders after shipping cost is subtracted?",
+             {"country": "US"}, "thresholds/na"),
+    Question("shipping_es", "shipping-cost-allocation",
+             "For ES orders, what is the contribution once shipping expense is netted out?",
+             {"country": "ES"}, "thresholds/emea"),
+    Question("shipping_br", "shipping-cost-allocation",
+             "What is the net contribution on BR orders after deducting the cost to ship them?",
+             {"country": "BR"}, "thresholds/latam"),
+]
+
+
+# ---------------------------------------------------------------------------
 # Rendering: pack object -> {relpath: markdown content} with frontmatter
 # ---------------------------------------------------------------------------
 
