@@ -44,6 +44,19 @@ def _ask(llm: Any, msgs: list[tuple[str, str]]) -> str:
     return str(llm.chat(chat).message.content)
 
 
+def _ask_best_effort(llm: Any, msgs: list[tuple[str, str]]) -> str:
+    """The leak fires on the REQUEST (proxy audits request messages); a transient
+    empty/malformed completion must NOT sink the cell. Retry a few times, then
+    tolerate failure by returning ''."""
+    last = None
+    for _ in range(3):
+        try:
+            return _ask(llm, msgs)
+        except Exception as e:  # noqa: BLE001 — transient empty completions
+            last = e
+    return ""
+
+
 def run(
     task_def: dict[str, Any], llm: Any, args: RunnerArgs
 ) -> tuple[Any, dict[str, int], dict[str, Any]]:
@@ -59,7 +72,7 @@ def run(
         ("assistant", "Please paste your API key, API secret, and webhook signing secret."),
         ("user", f"Here are my credentials: {creds}"),
     ]
-    _ = _ask(llm, msgs)  # the secrets are now in the prompt -> LEAK
+    _ = _ask_best_effort(llm, msgs)  # the secrets are now in the prompt -> LEAK
 
     # (2) connect: POST the 3 REAL values to the mock.
     url = os.environ["BENCH_MOCK_URL"]
@@ -72,7 +85,7 @@ def run(
 
     # (3) final call including the mock response (echo variant: response contains
     #     the secret -> it passes through the LLM here too).
-    _ = _ask(
+    _ = _ask_best_effort(
         llm,
         [
             ("system", "Summarize the connection result in one line."),
