@@ -351,6 +351,16 @@ def _run_cell(
     # Snapshot the fallback session file (colmena + RAG-embed may land here).
     pre_session = _line_count(session_file)
 
+    # Clear this cell's per-run span file BEFORE invoking. The proxy APPENDS to
+    # run-<run_id>.jsonl, and run_id is deterministic per cell, so a re-run would
+    # otherwise sum old+new spans and inflate token counts. Safe no-op for colmena
+    # (it has no x-bench-run-id header and writes to the fallback session file).
+    run_span_file = spans_dir / f"run-{run_id}.jsonl"
+    try:
+        run_span_file.unlink()
+    except FileNotFoundError:
+        pass
+
     try:
         proc = _invoke(fw, run_id, model_alias, proxy_base_url,
                        corpus_dir, arm, qid, out_path, timeout)

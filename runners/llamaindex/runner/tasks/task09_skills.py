@@ -43,6 +43,7 @@ def _run_rag(llm: Any, args: RunnerArgs, skills_dir: str, question) -> tuple[str
     embed = OpenAIEmbedding(
         model=os.environ.get("BENCH_EMBED_MODEL", "text-embedding-3-small"),
         api_key=os.environ["OPENAI_API_KEY"],
+        api_base="https://api.openai.com/v1",   # explicit: override .env OPENAI_BASE_URL (=proxy)
     )
     docs = [
         Document(
