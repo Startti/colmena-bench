@@ -28,11 +28,16 @@ import json
 import re
 from pathlib import Path
 
+import sys
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.patches import Patch  # noqa: E402
 
+# Make the sibling demo10_matrix importable whether run as a script
+# (python harness/orchestrator/demo10_plots.py) or as a module
+# (python -m orchestrator.demo10_plots, as run_demo10.sh does).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from demo10_matrix import CAPABILITY_MATRIX, FEATURE_LABELS, FRAMEWORKS  # noqa: E402
 
 HARNESS_DIR = Path(__file__).resolve().parents[1]
