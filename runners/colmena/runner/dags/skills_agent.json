@@ -1,0 +1,27 @@
+{
+  "comment": "Demo #9 skills agent. trigger -> llm_call(skills_path) -> log. The corpus dir is injected by replacing skills_path with the materialized corpus dir at run_dag time (handler sets config.skills_path). The model sees only the catalog (name+description per pack) and calls load_skill(name[, reference]) to pull a pack overview or a nested reference leaf (reference='rates/eu' descends one level). Navigation is progressive: overview -> reference -> nested leaf. model/api_key/db resolve from env. connection_url is popped at runtime (single-call, avoids pool contention) mirroring codeexec_agent.json.",
+  "nodes": {
+    "trigger": { "type": "trigger_webhook", "config": { "path": "/skills" } },
+    "assistant": {
+      "type": "llm_call",
+      "max_total_calls": 16,
+      "config": {
+        "provider": "openai",
+        "model": "${MODEL_ALIAS}",
+        "api_key": "${OPENAI_API_KEY}",
+        "connection_url": "${DATABASE_URL}",
+        "temperature": 0,
+        "stream": false,
+        "summary_enabled": false,
+        "skills_path": "${SKILLS_DIR}",
+        "system_message": "You are a finance analyst answering one question about an orders dataset. You have a catalog of knowledge packs; each pack may have nested references. Call load_skill(name) to read a pack overview, then load_skill(name, reference) (e.g. reference='rates/eu') to pull the specific table you need. Find the policy that applies, apply its exact rule and numbers, and return ONLY the final number.",
+        "tool_configurations": {}
+      }
+    },
+    "log": { "type": "log" }
+  },
+  "edges": [
+    { "from": "trigger", "to": "assistant" },
+    { "from": "assistant", "to": "log" }
+  ]
+}

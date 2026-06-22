@@ -36,6 +36,13 @@ model_list:
       api_key: os.environ/OPENAI_API_KEY
       temperature: 0.0
 
+  # --- Embeddings for the Demo #9 RAG arm (routed through the proxy so embed
+  #     tokens land in spans; see demo09 spec Decision B) ---
+  - model_name: text-embedding-3-small
+    litellm_params:
+      model: openai/text-embedding-3-small
+      api_key: os.environ/OPENAI_API_KEY
+
 litellm_settings:
   # Surfaces input/output/cached tokens in the response under `usage`.
   # Required for METHODOLOGY §4 ("Tokens cached" row).

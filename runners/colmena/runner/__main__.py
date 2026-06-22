@@ -16,6 +16,7 @@ from .tasks import (
     task07_tools,
     task07b_tools,
     task08_codeexec,
+    task09_skills,
 )
 
 
@@ -38,6 +39,7 @@ HANDLERS = {
     "07_tools": task07_tools.run,
     "07b_tools_session": task07b_tools.run,
     "08_codeexec": task08_codeexec.run,
+    "09_skills": task09_skills.run,
 }
 
 if __name__ == "__main__":
