@@ -50,7 +50,12 @@ def _run_rag(llm: Any, args: RunnerArgs, skills_dir: str, question) -> tuple[str
         api_base=pk["api_base"],
     )
     docs = [
-        Document(text=c["text"], metadata={"pack": c["pack"], "relpath": c["relpath"]})
+        Document(
+            text=c["text"],
+            metadata={"pack": c["pack"], "relpath": c["relpath"]},
+            excluded_embed_metadata_keys=["pack", "relpath"],
+            excluded_llm_metadata_keys=["pack", "relpath"],
+        )
         for c in chunks
     ]
     index = VectorStoreIndex.from_documents(docs, embed_model=embed)
