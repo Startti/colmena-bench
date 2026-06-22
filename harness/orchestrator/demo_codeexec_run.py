@@ -178,27 +178,19 @@ def _score_analytics(answer: Any, variant: str) -> float:
 
 
 def _score_mutation(answer: Any, csv_path: str) -> tuple[bool, str]:
-    """Parse the answer into a DataFrame and score with score_mutation.
+    """Normalize the answer to JSON ({country: total} dict or a record list) and
+    score with scenario_codeexec.score_mutation (which coerces both shapes).
 
     Returns (mutation_ok, reason).
     """
-    import pandas as pd  # noqa: PLC0415
-
-    text = answer if isinstance(answer, str) else json.dumps(answer, default=str)
-    # Strip fences.
-    text = text.strip()
-    if text.startswith("```"):
-        lines = text.split("\n")
-        start = 1
-        end = len(lines) - 1 if lines[-1].strip() == "```" else len(lines)
-        text = "\n".join(lines[start:end]).strip()
+    parsed = _normalize_answer(answer)   # strips ```fences + repr, json.loads
+    if isinstance(parsed, str):
+        return False, f"could not parse JSON from answer: {parsed[:120]!r}"
     try:
-        records = json.loads(text)
-        df = pd.DataFrame(records)
-        result = sc.score_mutation(csv_path, df)
+        result = sc.score_mutation(csv_path, parsed)
         return bool(result["mutation_ok"]), str(result)
     except Exception as exc:  # noqa: BLE001
-        return False, f"parse/score error: {exc}"
+        return False, f"score error: {exc}"
 
 
 # ---------------------------------------------------------------------------
