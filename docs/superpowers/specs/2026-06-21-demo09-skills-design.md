@@ -7,6 +7,51 @@
 
 ---
 
+## 0. DESIGN PIVOT (2026-06-22) — extractive policy QA, not computation-over-data
+
+The original design (below, §2–§6) made each answer a **number computed from the
+`orders_synthetic` dataset**. During implementation (after T9) we found a fatal gap:
+the hypothesis is about **knowledge navigation**, but computing over data requires the
+agent to *have* the data — which no arm provides — and it confounds the accuracy signal
+with code/arithmetic ability (already Demo #8's job). We pivoted to the canonical Skills
+use case:
+
+- **Domain:** a fictional insurer, **"Colmena Seguros"**. Each pack is a **policy
+  document** (product line, e.g. `colmena-hogar-premium`); nested references are perils
+  (`water-damage` → `residential`/`commercial`) whose leaves hold **company-specific,
+  non-guessable values** (deductibles, limits, waiting periods, copays).
+- **Question = a customer question** answerable by ONE specific value buried in ONE leaf
+  of the correct pack. The answer is that value — **extractive QA** (SQuAD-style: the
+  answer is a span/value in the corpus), graded by **exact value match**.
+- **Why it's defensible (answers the "you wrote the answer key" critique):** (1) values
+  are arbitrary/non-round and company-specific (e.g. deductible **$437**, **23**-day
+  wait) → no model has them memorized → without the right pack the model guesses a round
+  number and is **confidently wrong**; (2) grading is objective extraction (the value is
+  verbatim in exactly one corpus file) — we measure *did the agent navigate to the right
+  needle*, which **is** the hypothesis, not our opinion; (3) **single source of truth**:
+  one `POLICY_FACTS` object per pack renders the leaf tables AND defines the expected
+  answer, so they cannot drift.
+- **Why RAG still loses honestly:** the 49 distractor policies have structurally similar
+  perils/clauses with *different* values → RAG retrieves a near-duplicate clause from the
+  **wrong policy** → returns the wrong deductible. Colmena navigates SKILL.md (which
+  policy?) → peril → sub-condition → exact value (3-level navigation RAG can't do).
+
+**What this changes in the build:** the data model drops `CorePack.reference_fn`; packs
+are built from `POLICY_FACTS`; `Question` becomes `(id, pack, leaf_path, field, text)`
+with the expected answer derived from `POLICY_FACTS`; `score_skill_answer(question,
+produced)` does exact value-match (no `df`, no tolerance) returning None for unparseable.
+**Unchanged:** `Leaf`/`render_pack`/`_frontmatter`/`materialize_corpus`/
+`corpus_token_estimate`/distractor packs/`rag_index`, the Colmena DAG + handler (T6), the
+5 naive handlers (T7), the RAG arm (T8), and the driver (T9, minus the `df` arg to the
+scorer). The metrics, arms, scale axis (5/20/50), and honesty stance below all stand —
+only the *task content* and *grading* change from "compute a number" to "retrieve a value".
+
+Sections §2–§6 below describe the superseded computation design; read them for the
+metrics/arms/scale machinery (still valid), but the **domain, questions, and grading are
+replaced by this §0**.
+
+---
+
 ## 1. Hypothesis
 
 > **Colmena loads only the relevant knowledge pack on-demand (`load_skill`), holding
