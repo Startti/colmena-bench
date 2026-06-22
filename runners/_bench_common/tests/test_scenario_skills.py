@@ -59,3 +59,61 @@ def test_rendered_frontmatter_is_valid_yaml():
         fm = content.split("---\n", 2)[1]
         meta = yaml.safe_load(fm)             # raises if invalid YAML
         assert "name" in meta and "description" in meta
+
+
+def test_all_core_packs_present():
+    assert set(sk.CORE_PACKS) == {
+        "tax-by-region", "returns-and-refunds", "revenue-recognition",
+        "discount-and-promo", "payment-method-fees", "shipping-cost-allocation",
+    }
+
+
+def test_revenue_recognition_applies_category_fee():
+    df = pd.DataFrame({
+        "product_category": ["electronics", "electronics", "apparel"],
+        "quantity": [1, 2, 1], "unit_price_usd": [100.0, 100.0, 50.0],
+        "status": ["shipped", "shipped", "shipped"],
+    })
+    got = sk.CORE_PACKS["revenue-recognition"].reference_fn(df, {"category": "electronics"})
+    want = round((100 + 200) * (1 - 0.08), 2)
+    assert got == want
+
+
+def test_discount_cap_applied():
+    df = pd.DataFrame({
+        "channel": ["web", "web"], "quantity": [1, 1],
+        "unit_price_usd": [100.0, 100.0], "discount_pct": [0.5, 0.1],
+        "status": ["shipped", "shipped"],
+    })
+    got = sk.CORE_PACKS["discount-and-promo"].reference_fn(df, {"channel": "web"})
+    assert got == round(70 + 90, 2)   # web cap 0.30: 0.5->0.3 -> 70; 0.1 -> 90
+
+
+def test_every_core_pack_renders_skill_md_with_matching_name():
+    for name, pack in sk.CORE_PACKS.items():
+        files = sk.render_pack(pack)
+        assert files["SKILL.md"].splitlines()[1] == f"name: {name}"
+
+
+def test_all_core_packs_nested_and_valid_yaml():
+    import yaml
+    for name, pack in sk.CORE_PACKS.items():
+        files = sk.render_pack(pack)
+        # at least one 3-level nested leaf: references/<parent>/<child>.md
+        assert any("/" in rel.split("references/",1)[1] for rel in files if rel.startswith("references/")), name
+        for content in files.values():
+            yaml.safe_load(content.split("---\n",2)[1])   # raises if invalid
+
+
+def test_core_pack_reference_fns_run_on_real_dataset():
+    df = pd.read_csv(PKG.parents[1] / "data" / "orders_synthetic" / "seeds" / "M.csv")
+    checks = {
+        "returns-and-refunds": {"channel": df["channel"].iloc[0]},
+        "revenue-recognition": {"category": df["product_category"].iloc[0]},
+        "discount-and-promo": {"channel": df["channel"].iloc[0]},
+        "payment-method-fees": {"payment_method": df["payment_method"].iloc[0]},
+        "shipping-cost-allocation": {"country": df["country"].iloc[0]},
+    }
+    for pack_name, params in checks.items():
+        val = sk.CORE_PACKS[pack_name].reference_fn(df, params)
+        assert isinstance(val, float)

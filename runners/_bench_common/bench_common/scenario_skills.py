@@ -122,8 +122,353 @@ _TAX_PACK = CorePack(
     reference_fn=_tax_reference_fn,
 )
 
+# ---------------------------------------------------------------------------
+# Pack 2: returns-and-refunds
+# ---------------------------------------------------------------------------
+# Non-default rule: orders with status=='refunded' are NOT revenue. Net revenue
+# counts SHIPPED orders only, per channel. Without the pack a model sums all
+# rows (or includes refunded/delivered) -> a different, plausible number.
+# Each channel has a refund-window-days policy (drives the rendered leaf table).
+
+REFUND_WINDOW_DAYS = {  # SINGLE SOURCE OF TRUTH: per-channel refund window
+    "web": 30, "store": 14, "mobile": 30, "phone": 21,
+}
+_REFUND_CHANNEL_GROUPS = {
+    "online": ["web", "mobile"],
+    "offline": ["store", "phone"],
+}
+
+
+def _render_window_table(channels: list[str]) -> str:
+    rows = "\n".join(f"| {c} | {REFUND_WINDOW_DAYS[c]} |" for c in channels)
+    return f"| channel | refund_window_days |\n|---|---|\n{rows}\n"
+
+
+def _returns_reference_fn(df, params):
+    sub = df[(df["status"] == "shipped") & (df["channel"] == params["channel"])]
+    return round(float((sub["quantity"].astype(float) * sub["unit_price_usd"].astype(float)).sum()), 2)
+
+
+_RETURNS_PACK = CorePack(
+    name="returns-and-refunds",
+    description=(
+        "Use when a question asks for net revenue that EXCLUDES refunds/returns, "
+        "or references a refund window, per channel. NOT for gross revenue that "
+        "includes refunded orders, and NOT for tax/fee questions."
+    ),
+    overview=(
+        "# Returns and refunds\n\n"
+        "Orders with **status == 'refunded' are NOT revenue** and must be "
+        "excluded. Net revenue counts **shipped orders only** (quantity x "
+        "unit_price_usd), summed per channel. Refund-window policy is "
+        "channel-specific. For window tables load reference `windows` then "
+        "navigate to `windows/online` or `windows/offline`.\n"
+    ),
+    references={
+        "windows": Leaf(
+            name="windows",
+            description="Per-channel refund-window-days tables. Children: online, offline.",
+            body="# Refund windows\n\nSee `windows/online` and `windows/offline`.\n",
+            children={
+                "online": Leaf(
+                    name="online",
+                    description="Refund windows for online channels (web, mobile).",
+                    body="# Online refund windows\n\n" + _render_window_table(_REFUND_CHANNEL_GROUPS["online"]),
+                ),
+                "offline": Leaf(
+                    name="offline",
+                    description="Refund windows for offline channels (store, phone).",
+                    body="# Offline refund windows\n\n" + _render_window_table(_REFUND_CHANNEL_GROUPS["offline"]),
+                ),
+            },
+        ),
+    },
+    reference_fn=_returns_reference_fn,
+)
+
+
+# ---------------------------------------------------------------------------
+# Pack 3: revenue-recognition
+# ---------------------------------------------------------------------------
+# Non-default rule: recognized revenue is NET of a category-specific platform
+# fee. Without the pack a model reports gross -> plausibly wrong by the fee.
+
+PLATFORM_FEES = {  # SINGLE SOURCE OF TRUTH: per-category platform fee
+    "electronics": 0.08, "apparel": 0.12, "home": 0.10, "grocery": 0.04,
+    "beauty": 0.11, "books": 0.06, "toys": 0.09,
+}
+_FEE_CATEGORY_GROUPS = {
+    "hardgoods": ["electronics", "home", "toys", "books"],
+    "consumables": ["apparel", "grocery", "beauty"],
+}
+
+
+def _render_fee_table(categories: list[str]) -> str:
+    rows = "\n".join(f"| {c} | {int(PLATFORM_FEES[c]*100)}% |" for c in categories)
+    return f"| product_category | platform_fee |\n|---|---|\n{rows}\n"
+
+
+def _revrec_reference_fn(df, params):
+    fee = PLATFORM_FEES[params["category"]]
+    sub = df[(df["status"] == "shipped") & (df["product_category"] == params["category"])]
+    gross = float((sub["quantity"].astype(float) * sub["unit_price_usd"].astype(float)).sum())
+    return round(gross * (1 - fee), 2)
+
+
+_REVREC_PACK = CorePack(
+    name="revenue-recognition",
+    description=(
+        "Use when a question asks for recognized/net revenue after the platform "
+        "fee for a product category. NOT for gross revenue and NOT for VAT, "
+        "processor, or shipping questions."
+    ),
+    overview=(
+        "# Revenue recognition\n\n"
+        "Recognized revenue is **net of a category-specific platform fee**: "
+        "recognized = gross (quantity x unit_price_usd) x (1 - platform_fee), "
+        "over **shipped orders only**. Fees vary by product_category. For fee "
+        "tables load reference `fees` then navigate to `fees/hardgoods` or "
+        "`fees/consumables`.\n"
+    ),
+    references={
+        "fees": Leaf(
+            name="fees",
+            description="Per-category platform-fee tables. Children: hardgoods, consumables.",
+            body="# Platform fees\n\nSee `fees/hardgoods` and `fees/consumables`.\n",
+            children={
+                "hardgoods": Leaf(
+                    name="hardgoods",
+                    description="Platform fees for hard goods (electronics, home, toys, books).",
+                    body="# Hard-goods fees\n\n" + _render_fee_table(_FEE_CATEGORY_GROUPS["hardgoods"]),
+                ),
+                "consumables": Leaf(
+                    name="consumables",
+                    description="Platform fees for consumables (apparel, grocery, beauty).",
+                    body="# Consumables fees\n\n" + _render_fee_table(_FEE_CATEGORY_GROUPS["consumables"]),
+                ),
+            },
+        ),
+    },
+    reference_fn=_revrec_reference_fn,
+)
+
+
+# ---------------------------------------------------------------------------
+# Pack 4: discount-and-promo
+# ---------------------------------------------------------------------------
+# Non-default rule: stored discount_pct is a DISPLAY discount; the BILLABLE
+# discount is capped per channel. Without the pack a model applies the raw
+# discount_pct -> a plausibly different (lower) net.
+
+DISCOUNT_CAPS = {  # SINGLE SOURCE OF TRUTH: per-channel billable discount cap
+    "web": 0.30, "store": 0.20, "wholesale": 0.50, "mobile": 0.35, "phone": 0.25,
+}
+_DISCOUNT_CHANNEL_GROUPS = {
+    "direct": ["web", "mobile"],
+    "assisted": ["store", "phone"],
+}
+
+
+def _render_cap_table(channels: list[str]) -> str:
+    rows = "\n".join(f"| {c} | {int(DISCOUNT_CAPS[c]*100)}% |" for c in channels)
+    return f"| channel | discount_cap |\n|---|---|\n{rows}\n"
+
+
+def _discount_reference_fn(df, params):
+    cap = DISCOUNT_CAPS[params["channel"]]
+    sub = df[(df["status"] == "shipped") & (df["channel"] == params["channel"])].copy()
+    eff = sub["discount_pct"].astype(float).clip(upper=cap)
+    net = sub["quantity"].astype(float) * sub["unit_price_usd"].astype(float) * (1 - eff)
+    return round(float(net.sum()), 2)
+
+
+_DISCOUNT_PACK = CorePack(
+    name="discount-and-promo",
+    description=(
+        "Use when a question asks for net revenue after discounts where the "
+        "stored discount_pct must be CAPPED per channel. NOT for applying the "
+        "raw discount_pct, and NOT for tax/fee/shipping questions."
+    ),
+    overview=(
+        "# Discounts and promotions\n\n"
+        "The stored `discount_pct` is a **display discount**; the **billable "
+        "discount is capped per channel**. Clip discount_pct to the channel cap, "
+        "then net = quantity x unit_price_usd x (1 - capped_discount), over "
+        "**shipped orders only**. For cap tables load reference `caps` then "
+        "navigate to `caps/direct` or `caps/assisted`.\n"
+    ),
+    references={
+        "caps": Leaf(
+            name="caps",
+            description="Per-channel billable-discount-cap tables. Children: direct, assisted.",
+            body="# Discount caps\n\nSee `caps/direct` and `caps/assisted`.\n",
+            children={
+                "direct": Leaf(
+                    name="direct",
+                    description="Discount caps for direct channels (web, mobile).",
+                    body="# Direct-channel caps\n\n" + _render_cap_table(_DISCOUNT_CHANNEL_GROUPS["direct"]),
+                ),
+                "assisted": Leaf(
+                    name="assisted",
+                    description="Discount caps for assisted channels (store, phone).",
+                    body="# Assisted-channel caps\n\n" + _render_cap_table(_DISCOUNT_CHANNEL_GROUPS["assisted"]),
+                ),
+            },
+        ),
+    },
+    reference_fn=_discount_reference_fn,
+)
+
+
+# ---------------------------------------------------------------------------
+# Pack 5: payment-method-fees
+# ---------------------------------------------------------------------------
+# Non-default rule: subtract a processor fee per payment_method. Without the
+# pack a model reports gross -> plausibly wrong by the processor fee.
+
+PROCESSOR_FEES = {  # SINGLE SOURCE OF TRUTH: per-method processor fee
+    "card": 0.029, "paypal": 0.034, "bank_transfer": 0.008, "crypto": 0.015,
+    "cash": 0.000, "transfer": 0.008, "wallet": 0.020,
+}
+_PROCESSOR_METHOD_GROUPS = {
+    "electronic": ["card", "wallet", "paypal", "crypto"],
+    "manual": ["cash", "transfer", "bank_transfer"],
+}
+
+
+def _render_processor_table(methods: list[str]) -> str:
+    rows = "\n".join(f"| {m} | {PROCESSOR_FEES[m]*100:g}% |" for m in methods)
+    return f"| payment_method | processor_fee |\n|---|---|\n{rows}\n"
+
+
+def _payment_reference_fn(df, params):
+    fee = PROCESSOR_FEES[params["payment_method"]]
+    sub = df[(df["status"] == "shipped") & (df["payment_method"] == params["payment_method"])]
+    gross = float((sub["quantity"].astype(float) * sub["unit_price_usd"].astype(float)).sum())
+    return round(gross * (1 - fee), 2)
+
+
+_PAYMENT_PACK = CorePack(
+    name="payment-method-fees",
+    description=(
+        "Use when a question asks for net revenue after the payment-processor "
+        "fee for a payment_method. NOT for gross revenue and NOT for VAT, "
+        "platform-fee, or shipping questions."
+    ),
+    overview=(
+        "# Payment-method fees\n\n"
+        "Net settlement is **gross minus a processor fee that depends on "
+        "payment_method**: net = gross (quantity x unit_price_usd) x "
+        "(1 - processor_fee), over **shipped orders only**. For fee tables load "
+        "reference `processors` then navigate to `processors/electronic` or "
+        "`processors/manual`.\n"
+    ),
+    references={
+        "processors": Leaf(
+            name="processors",
+            description="Per-method processor-fee tables. Children: electronic, manual.",
+            body="# Processor fees\n\nSee `processors/electronic` and `processors/manual`.\n",
+            children={
+                "electronic": Leaf(
+                    name="electronic",
+                    description="Processor fees for electronic methods (card, wallet, paypal, crypto).",
+                    body="# Electronic-method fees\n\n" + _render_processor_table(_PROCESSOR_METHOD_GROUPS["electronic"]),
+                ),
+                "manual": Leaf(
+                    name="manual",
+                    description="Processor fees for manual methods (cash, transfer, bank_transfer).",
+                    body="# Manual-method fees\n\n" + _render_processor_table(_PROCESSOR_METHOD_GROUPS["manual"]),
+                ),
+            },
+        ),
+    },
+    reference_fn=_payment_reference_fn,
+)
+
+
+# ---------------------------------------------------------------------------
+# Pack 6: shipping-cost-allocation
+# ---------------------------------------------------------------------------
+# Non-default rule: net contribution = revenue MINUS shipping_usd, shipped only,
+# per country. Without the pack a model reports revenue ignoring shipping cost.
+# Each region has a free-shipping threshold (drives the rendered leaf table).
+
+FREE_SHIP_THRESHOLD = {  # SINGLE SOURCE OF TRUTH: per-country free-shipping threshold (USD)
+    # na
+    "US": 50,
+    # emea
+    "ES": 40,
+    # latam
+    "BR": 60, "MX": 55, "AR": 65, "CO": 60, "CL": 60, "PE": 70,
+}
+_SHIP_REGIONS = {
+    "na": ["US"],
+    "emea": ["ES"],
+    "latam": ["BR", "MX", "AR", "CO", "CL", "PE"],
+}
+
+
+def _render_threshold_table(codes: list[str]) -> str:
+    rows = "\n".join(f"| {c} | ${FREE_SHIP_THRESHOLD[c]} |" for c in codes)
+    return f"| country | free_ship_threshold_usd |\n|---|---|\n{rows}\n"
+
+
+def _shipping_reference_fn(df, params):
+    sub = df[(df["status"] == "shipped") & (df["country"] == params["country"])]
+    rev = sub["quantity"].astype(float) * sub["unit_price_usd"].astype(float)
+    return round(float((rev - sub["shipping_usd"].astype(float)).sum()), 2)
+
+
+_SHIPPING_PACK = CorePack(
+    name="shipping-cost-allocation",
+    description=(
+        "Use when a question asks for net contribution = revenue minus shipping "
+        "cost, per country, or references a free-shipping threshold. NOT for "
+        "gross revenue that ignores shipping, and NOT for tax/fee questions."
+    ),
+    overview=(
+        "# Shipping-cost allocation\n\n"
+        "Net contribution **subtracts shipping_usd from revenue**: contribution "
+        "= (quantity x unit_price_usd) - shipping_usd, summed over **shipped "
+        "orders only**, per country. Free-shipping thresholds are regional. For "
+        "threshold tables load reference `thresholds` then navigate to "
+        "`thresholds/na`, `thresholds/emea`, or `thresholds/latam`.\n"
+    ),
+    references={
+        "thresholds": Leaf(
+            name="thresholds",
+            description="Per-region free-shipping-threshold tables. Children: na, emea, latam.",
+            body="# Free-shipping thresholds\n\nSee `thresholds/na`, `thresholds/emea`, and `thresholds/latam`.\n",
+            children={
+                "na": Leaf(
+                    name="na",
+                    description="Free-shipping thresholds for North America (US).",
+                    body="# NA thresholds\n\n" + _render_threshold_table(_SHIP_REGIONS["na"]),
+                ),
+                "emea": Leaf(
+                    name="emea",
+                    description="Free-shipping thresholds for EMEA (ES).",
+                    body="# EMEA thresholds\n\n" + _render_threshold_table(_SHIP_REGIONS["emea"]),
+                ),
+                "latam": Leaf(
+                    name="latam",
+                    description="Free-shipping thresholds for LATAM (BR, MX, AR, CO, CL, PE).",
+                    body="# LATAM thresholds\n\n" + _render_threshold_table(_SHIP_REGIONS["latam"]),
+                ),
+            },
+        ),
+    },
+    reference_fn=_shipping_reference_fn,
+)
+
+
 CORE_PACKS: dict[str, CorePack] = {
     "tax-by-region": _TAX_PACK,
+    "returns-and-refunds": _RETURNS_PACK,
+    "revenue-recognition": _REVREC_PACK,
+    "discount-and-promo": _DISCOUNT_PACK,
+    "payment-method-fees": _PAYMENT_PACK,
+    "shipping-cost-allocation": _SHIPPING_PACK,
 }
 
 
