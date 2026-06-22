@@ -174,6 +174,34 @@ def test_all_four_field_types_exercised():
     assert {q.field for q in sk.QUESTION_BANK} == set(sk.POLICY_FIELDS)
 
 
+# --- scorer -----------------------------------------------------------------
+
+def test_scorer_exact_match_and_none_for_empty():
+    q = sk.QUESTION_BANK[0]
+    want = sk.expected_for(q)
+    assert sk.score_skill_answer(q, str(want))["correct"] is True
+    assert sk.score_skill_answer(q, f"El deducible es ${want}.")["correct"] is True
+    assert sk.score_skill_answer(q, str(want + 1))["correct"] is False
+    assert sk.score_skill_answer(q, "")["correct"] is None
+    assert sk.score_skill_answer(q, "no tengo esa información")["correct"] is None
+
+
+def test_scorer_handles_thousands_separators_both_locales():
+    # pick a question whose expected value is >= 1000 (a coverage_limit_usd one)
+    q = next(x for x in sk.QUESTION_BANK if x.field == "coverage_limit_usd")
+    want = sk.expected_for(q)
+    assert want >= 1000
+    assert sk.score_skill_answer(q, f"{want:,}")["correct"] is True          # US 95,000
+    es = f"{want:,}".replace(",", ".")                                        # ES 95.000
+    assert sk.score_skill_answer(q, es)["correct"] is True
+
+
+def test_scorer_every_question_self_scores_correct():
+    # feeding the authoritative value as the answer must score correct for all 18
+    for q in sk.QUESTION_BANK:
+        assert sk.score_skill_answer(q, str(sk.expected_for(q)))["correct"] is True
+
+
 # --- colmena skills DAG shape (no network) ----------------------------------
 
 def test_colmena_skills_dag_shape():

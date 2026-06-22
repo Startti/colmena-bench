@@ -37,7 +37,7 @@ Cost gate:
   (without --yes) if the estimate exceeds 20M tokens.
 
 Scoring:
-  sk.score_skill_answer(question, str(answer), df) -> {"correct": True/False/None}.
+  sk.score_skill_answer(question, str(answer)) -> {"correct": True/False/None}.
   retrieval_hit / skills_used_count are read from the runner's extras.
 
 Support flags:
@@ -320,7 +320,6 @@ def _run_cell(
     seed: int,
     qid: str,
     corpus_dir: Path,
-    df: Any,
     model_alias: str,
     proxy_base_url: str,
     out_dir: Path,
@@ -411,7 +410,7 @@ def _run_cell(
                 "stderr_tail": stderr[-600:] if stderr else None}
 
     # Score the numeric answer.
-    score = sk.score_skill_answer(question, str(answer), df)
+    score = sk.score_skill_answer(question, str(answer))
 
     return {
         **base_row,
@@ -567,10 +566,6 @@ def main(argv: list[str] | None = None) -> int:
     # Cost gate (before the full sweep). Materializes m50/s0 internally.
     _cost_gate(fw_list, arms, pack_counts, questions, len(seeds), args.yes)
 
-    # Load the orders dataframe ONCE for scoring (largest seed CSV: M.csv).
-    import pandas as pd  # noqa: PLC0415
-    df = pd.read_csv(REPO_ROOT / "data" / "orders_synthetic" / "seeds" / "M.csv")
-
     # Materialize all corpora up front (idempotent; reused across cells).
     corpus_dirs: dict[tuple[int, int], Path] = {}
     for M in pack_counts:
@@ -590,7 +585,7 @@ def main(argv: list[str] | None = None) -> int:
                         print(f"==> {fw} {arm}/m{M}/s{s}/{qid}")
                         row = _run_cell(
                             fw=fw, arm=arm, pack_count=M, seed=s, qid=qid,
-                            corpus_dir=corpus_dir, df=df,
+                            corpus_dir=corpus_dir,
                             model_alias=args.model_alias,
                             proxy_base_url=args.proxy_base_url,
                             out_dir=args.out_dir, spans_dir=args.spans_dir,

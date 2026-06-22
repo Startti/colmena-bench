@@ -617,8 +617,7 @@ def corpus_token_estimate(corpus_dir: str) -> int:
 
 
 # ---------------------------------------------------------------------------
-# Scorer — RW-C will restore exact-match grading against policy_value.
-# Minimal stub kept so this module stays importable during the pivot.
+# Scorer — exact-match grading against policy_value (single source of truth).
 # ---------------------------------------------------------------------------
 
 def _parse_number(text):
@@ -632,10 +631,37 @@ def _parse_number(text):
     return float(m.group()) if m else None
 
 
-def score_skill_answer(question, produced: str, df=None) -> dict:  # RW-C will restore
-    """STUB — RW-C will restore exact-match grading against policy_value.
-    For now returns 'not measured' so the module stays importable."""
-    return {"correct": None, "want": None, "got": _parse_number(produced)}
+def _candidate_ints(text: str) -> set[int]:
+    """All integers a produced answer could mean, robust to thousands/decimal
+    separators in either US or ES locale. Expected answers are always integers
+    (deductible/limit/days/copay%)."""
+    out: set[int] = set()
+    for m in re.findall(r"-?\d[\d.,]*", str(text)):
+        # interp 1: '.' and ',' are GROUPING separators -> strip both
+        s1 = m.replace(",", "").replace(".", "")
+        if s1.lstrip("-").isdigit():
+            out.add(int(s1))
+        # interp 2: ',' grouping, '.' decimal -> float then round
+        s2 = m.replace(",", "")
+        try:
+            out.add(int(round(float(s2))))
+        except (ValueError, TypeError):
+            pass
+    return out
+
+
+def score_skill_answer(question: "Question", produced: str) -> dict:
+    """Exact extractive match: correct iff the authoritative value appears in the
+    produced answer. None (not measured) when the answer is empty/unparseable —
+    never silently False/0 (honesty rule). No tolerance: this is a value LOOKUP,
+    not a computation."""
+    want = expected_for(question)
+    if produced is None or not str(produced).strip():
+        return {"correct": None, "want": want, "got": None}
+    cands = _candidate_ints(produced)
+    if not cands:
+        return {"correct": None, "want": want, "got": None}
+    return {"correct": int(want) in cands, "want": want, "got": sorted(cands)}
 
 
 # ---------------------------------------------------------------------------
