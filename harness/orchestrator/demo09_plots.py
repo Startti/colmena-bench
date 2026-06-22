@@ -111,15 +111,32 @@ def tokens_vs_packs(rows: list[dict], outdir: Path) -> "Path | None":
     live = _live(rows)
     fig, ax = plt.subplots(figsize=(8, 5))
     plotted = False
+    series: dict[str, dict[int, float]] = {}
     for arm in _arms_present(live):
         xs, ys = _mean_by_pack(live, arm, "llm_tokens_in")
         if not xs:
             continue
+        series[arm] = dict(zip(xs, ys))
         ax.plot(xs, ys, color=ARM_COLOR[arm], label=ARM_LABEL[arm], **_arm_style(arm))
         plotted = True
     if not plotted:
         plt.close(fig)
         return None
+
+    # Annotate naive/colmena ratio at the largest pack_count where both exist.
+    if "naive" in series and "colmena" in series:
+        common = set(series["naive"]) & set(series["colmena"])
+        if common:
+            m = max(common)
+            nv, cm = series["naive"][m], series["colmena"][m]
+            if cm:
+                ax.annotate(
+                    f"at M={m}: naive ≈ {nv:,.0f} tok\n"
+                    f"colmena ≈ {cm:,.0f} tok\n→ {nv / cm:.1f}× fewer (colmena)",
+                    xy=(0.97, 0.05), xycoords="axes fraction", ha="right",
+                    va="bottom", fontsize=8,
+                    bbox=dict(boxstyle="round", fc="#eafaf0", ec=C_COLMENA))
+
     ax.set_yscale("log")
     ax.set_xticks(_packs_present(live) or PACK_COUNTS)
     ax.set_xlabel("Knowledge-corpus size (number of packs)")
