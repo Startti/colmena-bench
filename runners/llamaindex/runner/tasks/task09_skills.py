@@ -1,11 +1,12 @@
-"""Demo #9 — LlamaIndex handler: naive (prompt-stuff) arm of the Skills demo.
+"""Demo #9 — LlamaIndex handler: naive (prompt-stuff) + RAG arms of the Skills demo.
 
-Stuffs the entire knowledge corpus into the system prompt (the naive strategy
-Colmena's load_skill is designed to beat) and asks one question. Tokens are
-measured by the driver from proxy spans; usage is returned as zeros.
+The naive arm stuffs the entire knowledge corpus into the system prompt (the
+strategy Colmena's load_skill is designed to beat). The RAG arm is the steelman
+competitor: it embeds the corpus into an in-memory vector index (embeddings
+routed through the proxy) and retrieves only the top-k chunks for the question.
 
-Only the `naive` arm is implemented here. The RAG arm (BENCH_SKILLS_ARM=rag)
-is added in a later task; non-naive arms raise ValueError for now.
+Tokens are measured by the driver from proxy spans; usage is returned as zeros.
+Arms other than naive/rag raise ValueError.
 """
 from __future__ import annotations
 
@@ -15,7 +16,15 @@ from typing import Any
 from llama_index.core.llms import ChatMessage, MessageRole
 
 from bench_common import RunnerArgs
+from bench_common import rag_index as ri
 from bench_common import scenario_skills as sk
+
+
+def _proxy_kwargs(args: RunnerArgs) -> dict[str, str]:
+    # Same proxy wiring as runner/llm.py build_llm: base_url + dummy bearer key.
+    base = args.proxy_base_url.rstrip("/")
+    key = os.environ.get("LITELLM_PROXY_API_KEY", "sk-bench-runner-do-not-use-in-prod")
+    return {"api_base": f"{base}/v1", "api_key": key}
 
 
 def _ask_llm(llm: Any, system: str, user: str) -> str:
@@ -29,6 +38,42 @@ def _ask_llm(llm: Any, system: str, user: str) -> str:
     return resp.message.content if hasattr(resp, "message") else str(resp)
 
 
+def _run_rag(llm: Any, args: RunnerArgs, skills_dir: str, question) -> tuple[str, dict[str, Any]]:
+    from llama_index.core import Document, VectorStoreIndex
+    from llama_index.embeddings.openai import OpenAIEmbedding
+
+    chunks = ri.chunk_corpus(skills_dir)
+    pk = _proxy_kwargs(args)
+    embed = OpenAIEmbedding(
+        model=os.environ.get("BENCH_EMBED_MODEL", "text-embedding-3-small"),
+        api_key=pk["api_key"],
+        api_base=pk["api_base"],
+    )
+    docs = [
+        Document(text=c["text"], metadata={"pack": c["pack"], "relpath": c["relpath"]})
+        for c in chunks
+    ]
+    index = VectorStoreIndex.from_documents(docs, embed_model=embed)
+    retriever = index.as_retriever(similarity_top_k=4)
+    nodes = retriever.retrieve(question.text)
+
+    retrieved = [
+        {"pack": n.metadata.get("pack"), "relpath": n.metadata.get("relpath")}
+        for n in nodes
+    ]
+    hit = ri.correct_chunk_hit(question, retrieved)
+
+    excerpts = "\n\n".join(n.get_content() for n in nodes)
+    system = (
+        "You are a finance analyst. Use ONLY the retrieved policy excerpts to "
+        "answer. Return only the final number."
+    )
+    user = excerpts + "\n\nQuestion: " + question.text
+    answer = _ask_llm(llm, system, user)
+    extras = {"retrieval_hit": hit, "retrieved_count": len(retrieved)}
+    return str(answer), extras
+
+
 def run(
     task_def: dict[str, Any], llm: Any, args: RunnerArgs
 ) -> tuple[Any, dict[str, int], dict[str, Any]]:
@@ -37,12 +82,17 @@ def run(
     qid = os.environ["BENCH_QUESTION_ID"]
     question = next(q for q in sk.QUESTION_BANK if q.id == qid)
 
-    if arm != "naive":
-        raise ValueError(f"arm {arm!r} not supported")
+    if arm == "naive":
+        system = sk.build_naive_system_prompt(skills_dir)
+        answer = _ask_llm(llm, system, question.text)
+        usage = {"input": 0, "output": 0, "cached": 0, "tool_calls": 0}
+        extras = {"arm": arm, "question_id": qid}
+        return str(answer), usage, extras
 
-    system = sk.build_naive_system_prompt(skills_dir)
-    answer = _ask_llm(llm, system, question.text)
+    if arm == "rag":
+        answer, rag_extras = _run_rag(llm, args, skills_dir, question)
+        usage = {"input": 0, "output": 0, "cached": 0, "tool_calls": 0}
+        extras = {"arm": arm, "question_id": qid, **rag_extras}
+        return answer, usage, extras
 
-    usage = {"input": 0, "output": 0, "cached": 0}
-    extras = {"arm": arm, "question_id": qid}
-    return str(answer), usage, extras
+    raise ValueError(f"arm {arm!r} not supported")
