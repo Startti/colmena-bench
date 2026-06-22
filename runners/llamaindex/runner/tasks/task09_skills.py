@@ -20,13 +20,6 @@ from bench_common import rag_index as ri
 from bench_common import scenario_skills as sk
 
 
-def _proxy_kwargs(args: RunnerArgs) -> dict[str, str]:
-    # Same proxy wiring as runner/llm.py build_llm: base_url + dummy bearer key.
-    base = args.proxy_base_url.rstrip("/")
-    key = os.environ.get("LITELLM_PROXY_API_KEY", "sk-bench-runner-do-not-use-in-prod")
-    return {"api_base": f"{base}/v1", "api_key": key}
-
-
 def _ask_llm(llm: Any, system: str, user: str) -> str:
     # Plain system+user chat through the proxy-wired OpenAILike client (mirror
     # task01/task08 wiring — the `llm` arg is already pointed at the proxy).
@@ -43,11 +36,13 @@ def _run_rag(llm: Any, args: RunnerArgs, skills_dir: str, question) -> tuple[str
     from llama_index.embeddings.openai import OpenAIEmbedding
 
     chunks = ri.chunk_corpus(skills_dir)
-    pk = _proxy_kwargs(args)
+    # Decision B fallback: the LiteLLM proxy /embeddings route fails with
+    # "No connected db" (litellm requires a DB for embeddings even with a
+    # configured model). Route embeddings DIRECTLY to OpenAI so RAG actually
+    # retrieves; the completion call below stays on the proxy-wired `llm`.
     embed = OpenAIEmbedding(
         model=os.environ.get("BENCH_EMBED_MODEL", "text-embedding-3-small"),
-        api_key=pk["api_key"],
-        api_base=pk["api_base"],
+        api_key=os.environ["OPENAI_API_KEY"],
     )
     docs = [
         Document(
@@ -75,7 +70,13 @@ def _run_rag(llm: Any, args: RunnerArgs, skills_dir: str, question) -> tuple[str
     )
     user = excerpts + "\n\nQuestion: " + question.text
     answer = _ask_llm(llm, system, user)
-    extras = {"retrieval_hit": hit, "retrieved_count": len(retrieved)}
+    embed_chars = sum(len(c["text"]) for c in chunks)
+    extras = {
+        "retrieval_hit": hit,
+        "retrieved_count": len(retrieved),
+        "embed_provider": "openai-direct",
+        "embed_chars": embed_chars,
+    }
     return str(answer), extras
 
 

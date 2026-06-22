@@ -397,6 +397,16 @@ def _run_cell(
     llm_tokens_in, llm_tokens_out = _sum_tokens(completion_spans)
     embed_tokens = sum(s.get("tokens_input", 0) for s in embed_spans)
 
+    # Embed-token fallback (Decision B): RAG embeddings bypass the proxy
+    # (direct-to-OpenAI, since the proxy /embeddings route needs a DB), so the
+    # span-based count is 0. Estimate from the handler's reported embed_chars at
+    # ~4 chars/token. The span-based path runs first, so a future proxy fix that
+    # routes embeddings would yield real numbers and win.
+    embed_estimated = False
+    if arm == "rag" and embed_tokens == 0:
+        embed_tokens = int(extras.get("embed_chars", 0)) // 4
+        embed_estimated = True
+
     # Hard error?
     if returncode != 0 or runner_error:
         return {**base_row, "skipped": False,
@@ -404,6 +414,7 @@ def _run_cell(
                 "llm_tokens_in": llm_tokens_in,
                 "llm_tokens_out": llm_tokens_out,
                 "embed_tokens": embed_tokens,
+                "embed_estimated": embed_estimated,
                 "retrieval_hit": extras.get("retrieval_hit"),
                 "skills_used_count": extras.get("skills_used_count", 0),
                 "error": runner_error or f"exit {returncode}",
@@ -420,6 +431,7 @@ def _run_cell(
         "llm_tokens_in": llm_tokens_in,
         "llm_tokens_out": llm_tokens_out,
         "embed_tokens": embed_tokens,
+        "embed_estimated": embed_estimated,
         "retrieval_hit": extras.get("retrieval_hit"),
         "skills_used_count": extras.get("skills_used_count", 0),
     }
@@ -432,7 +444,7 @@ def _run_cell(
 SUMMARY_COLS = [
     "framework", "arm", "pack_count", "seed", "question_id", "pack",
     "correct",
-    "llm_tokens_in", "llm_tokens_out", "embed_tokens",
+    "llm_tokens_in", "llm_tokens_out", "embed_tokens", "embed_estimated",
     "retrieval_hit",
     "skills_used_count",
     "error", "skipped",

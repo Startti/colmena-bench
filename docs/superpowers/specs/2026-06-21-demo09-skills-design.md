@@ -222,6 +222,11 @@ to credit RAG's real-but-different cost.
 > bar). If a framework cannot point its embeddings at `OPENAI_BASE_URL`, fall back to a
 > size-based estimate with a noted caveat. (Both RAG arms — LlamaIndex, LangChain —
 > support a configurable embeddings base URL, so the proxy path is expected to hold.)
+> In practice the LiteLLM proxy's `/embeddings` route returned "No connected db" (a
+> litellm limitation: embeddings require a DB even for a configured model, while chat
+> completions do not), so RAG embeddings run direct-to-OpenAI and embed tokens are
+> ESTIMATED from chunk size (chars/4) — the headline completion-token metric remains
+> proxy-authoritative; embeddings are a secondary infra-cost figure.
 
 ---
 

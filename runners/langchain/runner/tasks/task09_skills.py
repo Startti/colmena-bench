@@ -31,13 +31,13 @@ def _run_rag(llm: Any, args: RunnerArgs, skills_dir: str, question) -> tuple[str
     from langchain_openai import OpenAIEmbeddings
 
     chunks = ri.chunk_corpus(skills_dir)
-    # Same proxy wiring as runner/llm.py build_llm: base_url + dummy bearer key.
-    base = args.proxy_base_url.rstrip("/")
-    key = os.environ.get("LITELLM_PROXY_API_KEY", "sk-bench-runner-do-not-use-in-prod")
+    # Decision B fallback: the LiteLLM proxy /embeddings route fails with
+    # "No connected db" (litellm requires a DB for embeddings even with a
+    # configured model). Route embeddings DIRECTLY to OpenAI so RAG actually
+    # retrieves; the completion call below stays on the proxy-wired `llm`.
     embed = OpenAIEmbeddings(
         model=os.environ.get("BENCH_EMBED_MODEL", "text-embedding-3-small"),
-        api_key=key,
-        base_url=f"{base}/v1",
+        api_key=os.environ["OPENAI_API_KEY"],
     )
     docs = [
         Document(page_content=c["text"], metadata={"pack": c["pack"], "relpath": c["relpath"]})
@@ -60,7 +60,13 @@ def _run_rag(llm: Any, args: RunnerArgs, skills_dir: str, question) -> tuple[str
     )
     user = excerpts + "\n\nQuestion: " + question.text
     answer = _ask_llm(llm, system, user)
-    extras = {"retrieval_hit": hit, "retrieved_count": len(retrieved)}
+    embed_chars = sum(len(c["text"]) for c in chunks)
+    extras = {
+        "retrieval_hit": hit,
+        "retrieved_count": len(retrieved),
+        "embed_provider": "openai-direct",
+        "embed_chars": embed_chars,
+    }
     return str(answer), extras
 
 
