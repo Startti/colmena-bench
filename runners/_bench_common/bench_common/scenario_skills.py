@@ -590,22 +590,25 @@ def _frontmatter(name: str, description: str, child_refs: list[Leaf]) -> str:
     return "\n".join(lines)
 
 
-def _render_leaf(rel_parent: str, key: str, leaf: Leaf, out: dict[str, str]) -> None:
-    rel = f"{rel_parent}/{key}.md" if rel_parent else f"references/{key}.md"
+def _render_leaf(key: str, leaf: Leaf, out: dict[str, str]) -> None:
+    # Colmena stores ALL reference files FLAT in references/<name>.md; nesting is
+    # declared logically in each file's frontmatter (children listed under
+    # `references:`), NOT via subdirectories. So write flat and recurse.
     children = list(leaf.children.values())
-    out[rel] = _frontmatter(leaf.name, leaf.description, children) + leaf.body
-    base = rel[: -len(".md")]  # nested children live under references/<key>/<child>.md
+    out[f"references/{key}.md"] = _frontmatter(leaf.name, leaf.description, children) + leaf.body
     for ck, cl in leaf.children.items():
-        _render_leaf(base, ck, cl, out)
+        _render_leaf(ck, cl, out)
 
 
 def render_pack(pack: CorePack) -> dict[str, str]:
-    """Return {relpath: content} for the whole pack tree (SKILL.md + references/*)."""
+    """Return {relpath: content} for the whole pack. SKILL.md + a FLAT references/
+    dir (Colmena reads references/<name>.md flat; the tree is declared in
+    frontmatter, navigated via load_skill(pack, 'parent/child'))."""
     out: dict[str, str] = {}
     top = list(pack.references.values())
     out["SKILL.md"] = _frontmatter(pack.name, pack.description, top) + pack.overview
     for key, leaf in pack.references.items():
-        _render_leaf("", key, leaf, out)
+        _render_leaf(key, leaf, out)
     return out
 
 

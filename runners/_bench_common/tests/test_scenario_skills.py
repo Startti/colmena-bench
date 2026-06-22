@@ -33,7 +33,7 @@ def test_tax_pack_no_drift_rendered_table_matches_facts():
     # the reference_fn uses — single source of truth, cannot diverge.
     pack = sk.CORE_PACKS["tax-by-region"]
     files = sk.render_pack(pack)            # {relpath: content}
-    eu_md = files["references/rates/eu.md"]
+    eu_md = files["references/eu.md"]
     assert "| DE | 19% |" in eu_md                    # DE row shows exactly 19%
     assert sk.TAX_RATES["DE"] == 0.19
 
@@ -41,14 +41,13 @@ def test_tax_pack_no_drift_rendered_table_matches_facts():
 def test_tax_pack_reference_tree_is_nested():
     pack = sk.CORE_PACKS["tax-by-region"]
     files = sk.render_pack(pack)
-    # nested 3-level structure: SKILL.md -> references/rates.md -> references/rates/eu.md
-    assert "references/rates.md" in files
-    assert "references/rates/eu.md" in files
-    assert "references/rates/latam.md" in files
-    assert "references/rates/apac.md" in files
-    assert "references/edge-cases/b2b.md" in files
-    # the parent `rates` frontmatter must DECLARE its children (so load_skill can navigate)
+    # files are FLAT in references/ ...
+    for f in ["references/rates.md", "references/eu.md", "references/latam.md",
+              "references/apac.md", "references/edge-cases.md", "references/b2b.md"]:
+        assert f in files, f
+    # ... but nesting is declared logically: parent `rates` lists child `eu`
     assert "name: eu" in files["references/rates.md"]
+    assert "name: b2b" in files["references/edge-cases.md"]
 
 
 def test_rendered_frontmatter_is_valid_yaml():
@@ -99,10 +98,20 @@ def test_all_core_packs_nested_and_valid_yaml():
     import yaml
     for name, pack in sk.CORE_PACKS.items():
         files = sk.render_pack(pack)
-        # at least one 3-level nested leaf: references/<parent>/<child>.md
-        assert any("/" in rel.split("references/",1)[1] for rel in files if rel.startswith("references/")), name
+        # logical nesting: at least one reference file declares child references
+        assert any(
+            rel.startswith("references/") and "references:" in content
+            for rel, content in files.items()
+        ), name
         for content in files.values():
-            yaml.safe_load(content.split("---\n",2)[1])   # raises if invalid
+            yaml.safe_load(content.split("---\n", 2)[1])   # valid YAML
+
+
+def test_no_flat_reference_name_collisions():
+    for name, pack in sk.CORE_PACKS.items():
+        files = sk.render_pack(pack)
+        ref_files = [r for r in files if r.startswith("references/")]
+        assert len(ref_files) == len(set(ref_files)), (name, "flat reference name collision")
 
 
 def test_core_pack_reference_fns_run_on_real_dataset():
@@ -154,7 +163,7 @@ def test_materialize_corpus_always_includes_core_packs(tmp_path):
     dirs = {p.name for p in tmp_path.iterdir() if p.is_dir()}
     assert set(sk.CORE_PACKS).issubset(dirs)
     assert len(dirs) == 50
-    assert (tmp_path / "tax-by-region" / "references" / "rates" / "eu.md").exists()
+    assert (tmp_path / "tax-by-region" / "references" / "eu.md").exists()
 
 
 def test_corpus_is_information_dense_enough(tmp_path):

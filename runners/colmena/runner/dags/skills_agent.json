@@ -4,7 +4,7 @@
     "trigger": { "type": "trigger_webhook", "config": { "path": "/skills" } },
     "assistant": {
       "type": "llm_call",
-      "max_total_calls": 12,
+      "max_total_calls": 16,
       "config": {
         "provider": "openai",
         "model": "${MODEL_ALIAS}",

@@ -68,7 +68,8 @@ def run(task_def: dict, caller: Any, args: RunnerArgs):
     else:
         answer = raw
 
-    skills_used = node.get("skills_used") if isinstance(node, dict) else None
+    extra = node.get("extra_info", {}) if isinstance(node, dict) else {}
+    skills_used = extra.get("skills_used") if isinstance(extra, dict) else None
     extras = {
         "arm": "colmena",
         "question_id": qid,
