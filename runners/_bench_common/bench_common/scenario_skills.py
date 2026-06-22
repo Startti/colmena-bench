@@ -7,6 +7,8 @@ drift. Distractor packs are templated bulk to inflate the library to M packs.
 """
 from __future__ import annotations
 
+import hashlib
+import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
@@ -604,3 +606,104 @@ def render_pack(pack: CorePack) -> dict[str, str]:
     for key, leaf in pack.references.items():
         _render_leaf("", key, leaf, out)
     return out
+
+
+# ---------------------------------------------------------------------------
+# Distractor packs + corpus materialization (Task 4)
+# ---------------------------------------------------------------------------
+# Distractor packs are templated bulk: realistic NESTED reference trees for
+# non-core domains that no question targets. They exist purely to inflate the
+# library to M packs and add retrieval confusion — the whole point of the demo
+# is that naive prompt-stuffing the corpus is expensive (>=150k tokens at M=50).
+
+_DISTRACTOR_DOMAINS = [
+    "cohort-definitions", "channel-attribution", "fx-and-currency", "cogs-and-margin",
+    "fiscal-calendar", "chargebacks-and-fraud", "inventory-valuation", "loyalty-points",
+    "subscription-billing", "gift-cards", "marketplace-commissions", "warranty-claims",
+    "price-matching", "bundle-pricing", "tax-exemptions", "credit-memos", "dunning",
+    "deferred-revenue", "regional-rounding", "settlement-timing",
+]
+
+_DISTRACTOR_ROWS = 26  # tuned so the 50-pack corpus clears the 150k-token floor (~190k)
+
+
+def _distractor_pack_files(name: str, rng_seed: str) -> dict[str, str]:
+    """A realistic, bulky NESTED tree for a non-core domain. No reference_fn.
+    Deterministic per (name, seed). Tune row counts so the 50-pack corpus clears
+    the 150k-token density floor."""
+    h = hashlib.sha256(rng_seed.encode()).hexdigest()
+    regions = ["na", "emea", "apac", "latam"]
+    # SKILL.md declares the 4 regional references as children
+    files = {
+        "SKILL.md": _frontmatter(
+            name, f"Reference knowledge for {name.replace('-', ' ')}.",
+            [Leaf(r, f"{name} parameters for region {r}.", "") for r in regions],
+        ) + f"# {name}\n\nDomain rules and parameter tables for {name}. "
+            f"Load the regional reference for specifics.\n",
+    }
+    for i, r in enumerate(regions):
+        rows = "\n".join(
+            f"| param_{j} | {int(h[(i + j) % len(h)], 16) * 7 % 100}% | "
+            f"applies to {name} {r} param {j}; review at period close and reconcile "
+            f"against the {r} schedule of record before posting any adjustment |"
+            for j in range(_DISTRACTOR_ROWS)
+        )
+        files[f"references/{r}.md"] = _frontmatter(
+            r, f"{name} parameter table for {r}.", []
+        ) + (f"# {name} — {r}\n\nParameter schedule for {r}. Apply the value that "
+             f"matches the row key.\n\n| parameter | value | notes |\n|---|---|---|\n{rows}\n")
+    return files
+
+
+def _write_files(pack_dir: Path, files: dict[str, str]) -> None:
+    for rel, content in files.items():
+        fp = pack_dir / rel
+        fp.parent.mkdir(parents=True, exist_ok=True)
+        fp.write_text(content)
+
+
+def materialize_corpus(out_dir: str, pack_count: int, seed: int) -> str:
+    """Write `pack_count` packs to out_dir: core packs first (always present when
+    pack_count >= number of core packs), the remainder filled with deterministic
+    distractor packs. Returns out_dir. Idempotent (clears out_dir first)."""
+    import random
+    root = Path(out_dir)
+    sentinel = root / ".colmena_corpus"
+    if root.exists():
+        # Safety: only clear a dir that is empty or that we previously created
+        # (marked with the sentinel). Refuse anything else so a bad path can't
+        # silently delete user data.
+        if any(root.iterdir()) and not sentinel.exists():
+            raise ValueError(
+                f"refusing to clear {root!s}: not empty and missing .colmena_corpus "
+                f"sentinel (not a corpus dir created by materialize_corpus)"
+            )
+        shutil.rmtree(root)
+    root.mkdir(parents=True)
+    (root / ".colmena_corpus").write_text("demo09 corpus\n")
+
+    core_items = list(CORE_PACKS.items())
+    if pack_count <= len(core_items):
+        for name, pack in core_items[:pack_count]:
+            _write_files(root / name, render_pack(pack))
+        return out_dir
+
+    for name, pack in core_items:
+        _write_files(root / name, render_pack(pack))
+    n_distract = pack_count - len(core_items)
+    rng = random.Random(f"{pack_count}-{seed}")
+    pool = list(_DISTRACTOR_DOMAINS)
+    rng.shuffle(pool)
+    chosen = list(pool[:n_distract])
+    while len(chosen) < n_distract:  # deterministic suffixing if pool too small
+        base = pool[len(chosen) % len(pool)]
+        chosen.append(f"{base}-{len(chosen)}")
+    for name in chosen:
+        _write_files(root / name, _distractor_pack_files(name, f"{name}-{seed}"))
+    return out_dir
+
+
+def corpus_token_estimate(corpus_dir: str) -> int:
+    """~4 chars/token estimate over every .md file in the corpus."""
+    total = sum(len(p.read_text()) for p in Path(corpus_dir).rglob("*.md"))
+    return total // 4

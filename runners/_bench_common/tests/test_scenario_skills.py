@@ -145,3 +145,51 @@ def test_every_question_has_a_nonzero_or_defined_answer():
     for q in sk.QUESTION_BANK:
         val = sk.CORE_PACKS[q.pack].reference_fn(df, q.params)
         assert val != 0.0, (q.id, "selects empty/zero frame — pick params present in M.csv shipped rows")
+
+
+# --- Task 4: corpus materialization + density floor -------------------------
+
+def test_materialize_corpus_always_includes_core_packs(tmp_path):
+    sk.materialize_corpus(str(tmp_path), pack_count=50, seed=0)
+    dirs = {p.name for p in tmp_path.iterdir() if p.is_dir()}
+    assert set(sk.CORE_PACKS).issubset(dirs)
+    assert len(dirs) == 50
+    assert (tmp_path / "tax-by-region" / "references" / "rates" / "eu.md").exists()
+
+
+def test_corpus_is_information_dense_enough(tmp_path):
+    sk.materialize_corpus(str(tmp_path), pack_count=50, seed=0)
+    assert sk.corpus_token_estimate(str(tmp_path)) >= 150_000
+
+
+def test_materialize_is_deterministic(tmp_path):
+    a = tmp_path / "a"; b = tmp_path / "b"
+    sk.materialize_corpus(str(a), 20, seed=7)
+    sk.materialize_corpus(str(b), 20, seed=7)
+    assert {p.name for p in a.iterdir()} == {p.name for p in b.iterdir()}
+
+
+def test_materialize_small_corpus_is_just_core_or_subset(tmp_path):
+    sk.materialize_corpus(str(tmp_path), pack_count=5, seed=0)
+    dirs = {p.name for p in tmp_path.iterdir() if p.is_dir()}
+    assert len(dirs) == 5
+    # all 5 must be core packs (no distractors needed when pack_count<=len(core))... but
+    # we have 6 core packs; with pack_count=5 the materializer keeps the FIRST 5 core packs.
+    assert dirs.issubset(set(sk.CORE_PACKS))
+
+
+def test_distractor_frontmatter_is_valid_yaml(tmp_path):
+    import yaml
+    sk.materialize_corpus(str(tmp_path), pack_count=50, seed=0)
+    non_core = [p for p in tmp_path.iterdir() if p.is_dir() and p.name not in sk.CORE_PACKS]
+    assert non_core
+    for md in (non_core[0]).rglob("*.md"):
+        yaml.safe_load(md.read_text().split("---\n",2)[1])  # raises if invalid
+
+
+def test_materialize_refuses_non_corpus_dir(tmp_path):
+    import pytest
+    (tmp_path / "precious.txt").write_text("do not delete")
+    with pytest.raises(ValueError):
+        sk.materialize_corpus(str(tmp_path), 5, seed=0)
+    assert (tmp_path / "precious.txt").exists()   # untouched
