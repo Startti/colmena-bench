@@ -230,3 +230,18 @@ def test_build_naive_system_prompt_contains_every_pack(tmp_path):
     import os
     for d in [x for x in os.listdir(tmp_path) if os.path.isdir(os.path.join(tmp_path, x))]:
         assert d in prompt
+
+
+# --- Task 6: colmena skills DAG shape (no network) --------------------------
+
+def test_colmena_skills_dag_shape():
+    import json
+    dag_path = (PKG.parents[1] / "runners" / "colmena" / "runner" / "dags" / "skills_agent.json")
+    dag = json.loads(dag_path.read_text())
+    cfg = dag["nodes"]["assistant"]["config"]
+    assert cfg["skills_path"] == "${SKILLS_DIR}"
+    assert cfg["tool_configurations"] == {}
+    assert dag["nodes"]["assistant"]["type"] == "llm_call"
+    # edges: trigger->assistant->log
+    pairs = {(e["from"], e["to"]) for e in dag["edges"]}
+    assert ("trigger", "assistant") in pairs and ("assistant", "log") in pairs
