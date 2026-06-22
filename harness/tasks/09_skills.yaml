@@ -1,0 +1,31 @@
+# Demo #9 — progressive knowledge loading ("skills"). Driven by
+# harness/orchestrator/demo_skills_run.py (not full_run). The handler reads
+# everything from env: BENCH_SKILLS_DIR (materialized corpus dir),
+# BENCH_SKILLS_ARM (naive|rag|colmena), and BENCH_QUESTION_ID. The runner CLI
+# requires --variant; the driver always passes --variant default, so a single
+# `default` variant is declared here.
+#
+# NOTE: the driver scores the numeric answer itself via scenario_skills, but
+# bench_common.run() still calls score_success(task["success"], answer)
+# unconditionally — so a minimal (always-applicable) success block is required.
+id: "09_skills"
+title: "Progressive knowledge loading over a policy corpus"
+version: "0.1.0"
+description: >
+  The agent answers a customer question that requires consulting one leaf of a
+  large policy/"skills" corpus. The naive arm dumps the whole corpus into
+  context; the RAG arm retrieves; the Colmena arm loads progressively. All
+  arms read their corpus dir + question id from env.
+variants:
+  - name: default
+prompt: |
+  You are a Colmena Seguros support agent. Answer the customer's question using
+  the policy corpus available to you. Return ONLY the answer.
+tools: []
+metrics: [accuracy, tokens, success]
+success:
+  kind: regex
+  pattern: ".*"
+model_alias: gemini-2.5-flash
+timeout_seconds: 300
+n_runs: 1
