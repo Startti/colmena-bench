@@ -1,0 +1,14 @@
+{
+  "nodes": {
+    "say_hello": {
+      "type": "llm_call",
+      "config": {
+        "provider": "openai",
+        "api_key": "${OPENAI_API_KEY}",
+        "model": "gemini-2.5-flash",
+        "prompt": "Respond with the single word: hello"
+      }
+    }
+  },
+  "edges": []
+}

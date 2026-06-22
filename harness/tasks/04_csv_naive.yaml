@@ -1,0 +1,31 @@
+# Task 4 (naive) — answer 20 analytical questions with the full CSV in context.
+# Tokens scale with rows; expected to break at L (context overflow).
+id: "04_csv_naive"
+title: "CSV analytical — naive (CSV in context)"
+version: "0.1.0"
+description: >
+  The agent receives the entire CSV as text plus 20 analytical questions and
+  must return a JSON object mapping question id to answer.
+variants:
+  - name: S
+    dataset_path: data/orders_synthetic/seeds/S.csv
+  - name: M
+    dataset_path: data/orders_synthetic/seeds/M.csv
+  - name: L
+    dataset_path: data/orders_synthetic/seeds/L.csv
+prompt: |
+  You are a data analyst. Answer ALL of the questions using ONLY the CSV data
+  provided. Return ONLY a JSON object mapping each question id to its answer,
+  e.g. {"Q01": 500, "Q02": 494, ...}. Numbers must be plain numbers (no
+  currency symbols). For questions asking for a mapping, return a JSON object.
+tools: []
+metrics: [latency, tokens, cost_usd, ram_peak_mb, success]
+success:
+  kind: dataset_qa
+  ground_truth_path: data/orders_synthetic/ground_truth.json
+model_alias: gemini-2.5-flash
+# Naive is slow: the whole CSV in context can take minutes (Colmena ~254s on
+# S). Generous timeout so the orchestrator doesn't kill a legitimately slow
+# run; the asymptote uses small N.
+timeout_seconds: 600
+n_runs: 3

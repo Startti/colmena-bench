@@ -47,6 +47,10 @@ data/multimodal/*.wav
 # Results: keep aggregated + reports, ignore raw
 results/*/raw/
 results/*/proxy_spans/
+results/verify_baseline-*/
+
+# Local bench venv (Python 3.11, litellm + frameworks)
+.venv-bench/
 
 # But keep committed dataset metadata
 !data/orders_synthetic/schema.json
@@ -55,3 +59,11 @@ results/*/proxy_spans/
 !data/orders_synthetic/generator.py
 !data/orders_synthetic/compute_ground_truth.py
 !data/orders_synthetic/README.md
+
+# demo run scratch artifacts (keep report/, not raw per-run json)
+runs/*/raw/
+
+runs/**/raw/
+
+# Task-run raw scratch (distilled into runs/task04 + committed reports)
+results/

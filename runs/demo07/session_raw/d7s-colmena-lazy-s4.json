@@ -1,0 +1,65 @@
+{
+  "run_id": "d7s-colmena-lazy-s4",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "colmena",
+  "framework_version": "0.4.0",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-20T21:48:24.077924Z",
+  "ended_at": "2026-06-20T21:51:13.183497Z",
+  "latency_ms": 169105,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 48.8,
+  "cpu_user_s": 0.607,
+  "cpu_sys_s": 0.251,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-20T21:48:24.078200Z",
+      "2026-06-20T21:48:41.104204Z",
+      "2026-06-20T21:48:58.911677Z",
+      "2026-06-20T21:49:16.114660Z",
+      "2026-06-20T21:49:33.711903Z",
+      "2026-06-20T21:49:51.364919Z",
+      "2026-06-20T21:50:08.128811Z",
+      "2026-06-20T21:50:24.236288Z",
+      "2026-06-20T21:50:41.254783Z",
+      "2026-06-20T21:50:56.692698Z",
+      "2026-06-20T21:51:13.183358Z"
+    ],
+    "lazy": true,
+    "n_turns": 10,
+    "answers": [
+      "The shipment for order A-1042 has been created with 2-day delivery. The shipment ID is SHP-A-1042-CREATED.",
+      "The Q3 report has been emailed to finance@acme.com.",
+      "The customer's card has been charged 49.99 for the subscription renewal.",
+      "A new bug report has been logged for customer c_31 regarding the checkout page crashing. The ticket ID is TKT-C31-OPENED.",
+      "A password reset link has been sent to user u_88 by email.",
+      "A 30-minute call has been scheduled with Ana for next Tuesday at 3pm.",
+      "The shipment for order A-1042 has been created with 2-day delivery. The shipment ID is SHP-A-1042-CREATED.",
+      "The Q3 report has been emailed to finance@acme.com.",
+      "The customer's card has been charged 49.99 for the subscription renewal.",
+      "A new bug report has been logged for customer c_31 regarding the checkout page crashing. The ticket ID is TKT-C31-OPENED."
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+# Task 4 (expert) — answer 20 questions via a run_sql tool over SQLite.
+# CSV is NOT in context; tokens scale with questions, ~flat across sizes.
+id: "04_csv_expert"
+title: "CSV analytical — expert (run_sql tool)"
+version: "0.1.0"
+description: >
+  The agent has a run_sql(query) tool over an in-memory SQLite table `orders`
+  (all columns TEXT; CAST for math). It must answer 20 analytical questions
+  and return a JSON object mapping question id to answer.
+variants:
+  - name: S
+    dataset_path: data/orders_synthetic/seeds/S.csv
+  - name: M
+    dataset_path: data/orders_synthetic/seeds/M.csv
+  - name: L
+    dataset_path: data/orders_synthetic/seeds/L.csv
+prompt: |
+  You are a data analyst with a run_sql(query) tool over a SQLite table named
+  `orders` (every column is TEXT — use CAST(... AS REAL/INTEGER) for math).
+  Use the tool as many times as needed to answer ALL 20 questions.
+
+  Your FINAL answer must be ONLY a single JSON object mapping EVERY question id
+  (Q01 through Q20) to its answer — nothing else, no prose, no markdown. Example
+  shape: {"Q01": 500, "Q02": 494, "Q06": {"AR": 300237.17}, ...}. Numbers must
+  be plain numbers (no $ or commas). For mapping questions return a JSON object;
+  for list questions return a JSON array. Do not stop until all 20 are present.
+tools:
+  - name: run_sql
+metrics: [latency, tokens, cost_usd, ram_peak_mb, success]
+success:
+  kind: dataset_qa
+  ground_truth_path: data/orders_synthetic/ground_truth.json
+model_alias: gemini-2.5-flash
+timeout_seconds: 300
+n_runs: 3

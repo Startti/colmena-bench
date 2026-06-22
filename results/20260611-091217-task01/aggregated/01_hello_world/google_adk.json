@@ -1,0 +1,92 @@
+{
+  "task_id": "01_hello_world",
+  "variant": "default",
+  "framework": "google_adk",
+  "framework_version": "2.2.0",
+  "model_alias": "gemini-2.5-flash",
+  "n": 10,
+  "n_failed": 0,
+  "success_rate": 1.0,
+  "stats": {
+    "latency_ms": {
+      "mean": 1639.5,
+      "stdev": 68.91915553748464,
+      "p50": 1611.5,
+      "p95": 1766.9499999999998,
+      "p99": 1784.59,
+      "min": 1560.0,
+      "max": 1789.0,
+      "ci95_low": 1601.1,
+      "ci95_high": 1684.4025000000001
+    },
+    "cold_start_ms": {
+      "mean": 0.2,
+      "stdev": 0.4,
+      "p50": 0.0,
+      "p95": 1.0,
+      "p99": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "ci95_low": 0.0,
+      "ci95_high": 0.5
+    },
+    "tokens_input": {
+      "mean": 35.0,
+      "stdev": 0.0,
+      "p50": 35.0,
+      "p95": 35.0,
+      "p99": 35.0,
+      "min": 35.0,
+      "max": 35.0,
+      "ci95_low": 35.0,
+      "ci95_high": 35.0
+    },
+    "tokens_output": {
+      "mean": 28.0,
+      "stdev": 0.0,
+      "p50": 28.0,
+      "p95": 28.0,
+      "p99": 28.0,
+      "min": 28.0,
+      "max": 28.0,
+      "ci95_low": 28.0,
+      "ci95_high": 28.0
+    },
+    "tokens_cached": {
+      "mean": 0.0,
+      "stdev": 0.0,
+      "p50": 0.0,
+      "p95": 0.0,
+      "p99": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "ci95_low": 0.0,
+      "ci95_high": 0.0
+    },
+    "ram_peak_mb": {
+      "mean": 249.106,
+      "stdev": 1.0103187615797302,
+      "p50": 248.79500000000002,
+      "p95": 250.8315,
+      "p99": 251.8143,
+      "min": 248.53,
+      "max": 252.06,
+      "ci95_low": 248.670975,
+      "ci95_high": 249.81305000000003
+    }
+  },
+  "cost": {
+    "usd_per_run": {
+      "mean": 8.05e-05,
+      "stdev": 0.0,
+      "p50": 8.05e-05,
+      "p95": 8.05e-05,
+      "p99": 8.05e-05,
+      "min": 8.05e-05,
+      "max": 8.05e-05,
+      "ci95_low": 8.05e-05,
+      "ci95_high": 8.05e-05
+    },
+    "pricing_table_date": "2026-06-10"
+  }
+}

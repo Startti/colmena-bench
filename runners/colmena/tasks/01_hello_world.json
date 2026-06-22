@@ -1,0 +1,16 @@
+{
+  "$comment": "Colmena DAG for Task 1 — single LLM node, no tools. Schema TBD (Colmena owns it). This file is what the Colmena CLI receives via --task; the prompt is passed separately on stdin so we don't duplicate it across runners.",
+  "id": "01_hello_world",
+  "version": "0.1.0",
+  "nodes": [
+    {
+      "id": "respond",
+      "kind": "llm",
+      "input": "prompt",
+      "output": "answer"
+    }
+  ],
+  "edges": [],
+  "entry": "respond",
+  "exit": "respond"
+}

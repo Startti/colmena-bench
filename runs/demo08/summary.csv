@@ -1,0 +1,48 @@
+framework,variant,mode,skipped,error,analytics_acc,mutation_ok,probe_controlled,probe_realistic,tokens_in,tokens_out,skip_reason,mutation_reason
+colmena,M,analytics,False,,0.95,,,,19965,5297,,
+colmena,L,analytics,False,,1.0,,,,33702,9476,,
+colmena,S,probe,False,,,,blocked,,6744,320,,
+colmena,S,probe_realistic,False,,,,,clean,44564,10805,,
+llamaindex,S,analytics,False,,0.95,,,,988,5925,,
+llamaindex,M,analytics,False,,0.95,,,,988,5925,,
+llamaindex,L,analytics,False,,1.0,,,,988,5752,,
+llamaindex,S,probe,False,,,,blocked,,531,650,,
+llamaindex,S,probe_realistic,False,,,,,clean,988,5925,,
+langchain,S,analytics,False,,0.95,,,,13556,8930,,
+langchain,L,analytics,False,,0.95,,,,6865,4648,,
+langchain,S,probe,False,,,,leaked,,5005,911,,
+langchain,S,probe_realistic,False,,,,,clean,6790,4475,,
+crewai,S,analytics,False,,0.95,,,,538082,146206,,
+crewai,M,analytics,False,,0.15,,,,331180,64241,,
+crewai,L,analytics,False,"BadRequestError: litellm.BadRequestError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: GeminiException - {
+  ""error"": {
+    ""code"": 400,
+    ""message"": ""The input token count exceeds the maximum number of tokens allowed 1048576."",
+    ""status"": ""INVALID_ARGUMENT""
+  }
+}
+
+model=gemini-2.5-flash. context_window_fallbacks=None. fallbacks=None.
+
+Set 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=gemini-2.5-flash
+Available Model Group Fallbacks=None",,,,,,,,
+crewai,S,probe,False,,,,blocked,,1409,452,,
+crewai,S,probe_realistic,False,,,,,clean,34290,65532,,
+langgraph,S,analytics,False,,0.55,,,,603,6808,,
+langgraph,M,analytics,False,,0.55,,,,603,6808,,
+langgraph,L,analytics,False,,0.6,,,,603,6808,,
+langgraph,S,probe,False,,,,leaked,,335,145,,
+langgraph,S,probe_realistic,False,,,,,clean,603,6808,,
+google_adk,S,analytics,False,,0.9,,,,0,0,,
+google_adk,M,analytics,False,,0.55,,,,0,0,,
+google_adk,L,analytics,False,,0.6,,,,0,0,,
+google_adk,S,probe,False,,,,blocked,,108,77,,
+google_adk,S,probe_realistic,False,,,,,clean,0,0,,
+colmena,M,mutation,False,,,True,,,7071,568,,{'mutation_ok': True}
+llamaindex,M,mutation,False,,,True,,,1711,3991,,{'mutation_ok': True}
+langchain,M,mutation,False,,,True,,,95738,67129,,{'mutation_ok': True}
+crewai,M,mutation,False,exit -1,,,,,,,,
+langgraph,M,mutation,False,,,True,,,857,1247,,{'mutation_ok': True}
+google_adk,M,mutation,False,ValueError: No message in response,,,,,,,,
+colmena,S,analytics,False,,,,,,9908,1778,,
+langchain,M,analytics,False,,,,,,268271,11358,,

@@ -1,0 +1,40 @@
+[project]
+name = "colmena-bench-runner-crewai"
+version = "0.1.0"
+description = "CrewAI runner for colmena-bench"
+requires-python = ">=3.11,<3.13"
+
+# Snapshot: 2026-06-10. Latest stable on PyPI at time of pin.
+# See /METHODOLOGY.md §1 for the canonical version table.
+dependencies = [
+    "crewai==1.14.6",
+    "crewai-tools",
+    # Docker SDK — required by task08_codeexec (CodeInterpreterTool Docker port).
+    # crewai-tools 1.x removed CodeInterpreterTool; we re-implement it using the
+    # docker Python SDK directly so the same Docker-container isolation design holds.
+    "docker>=6,<8",
+    # LLM SDKs reached via LiteLLM proxy (base_url override).
+    # We still install the official SDKs because CrewAI uses them internally.
+    "litellm==1.88.1",
+    "google-genai",
+    "anthropic",
+    "openai",
+    # Runner contract
+    "pydantic>=2.7",
+    "pyyaml",
+    "typer",
+    "psutil",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "ruff",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["runner"]

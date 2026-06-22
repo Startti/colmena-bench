@@ -1,0 +1,7 @@
+framework,quality_score_mean,quality_score_std,n_judged
+crewai,1.0,0.0,48
+langgraph,1.0,0.0,48
+colmena,0.9881,0.0452,48
+google_adk,0.9854,0.0357,48
+llamaindex,0.9812,0.0352,48
+langchain,0.9708,0.0713,48

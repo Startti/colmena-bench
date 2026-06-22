@@ -1,0 +1,65 @@
+{
+  "run_id": "d7s-colmena-lazy-s0",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "colmena",
+  "framework_version": "0.4.0",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-20T21:36:12.003132Z",
+  "ended_at": "2026-06-20T21:39:03.373371Z",
+  "latency_ms": 171370,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 48.84,
+  "cpu_user_s": 0.697,
+  "cpu_sys_s": 0.299,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-20T21:36:12.003436Z",
+      "2026-06-20T21:36:31.445547Z",
+      "2026-06-20T21:36:48.618686Z",
+      "2026-06-20T21:37:05.228735Z",
+      "2026-06-20T21:37:22.165415Z",
+      "2026-06-20T21:37:40.034861Z",
+      "2026-06-20T21:37:58.333740Z",
+      "2026-06-20T21:38:14.288997Z",
+      "2026-06-20T21:38:30.822924Z",
+      "2026-06-20T21:38:46.495721Z",
+      "2026-06-20T21:39:03.373272Z"
+    ],
+    "lazy": true,
+    "n_turns": 10,
+    "answers": [
+      "The shipment for order A-1042 has been created with 2-day delivery. The shipment ID is SHP-A-1042-CREATED.",
+      "The Q3 report has been emailed to finance@acme.com.",
+      "A password reset link has been sent to u_88 by email.",
+      "A refund of 25 USD has been issued for order A-1042 due to a damaged item.",
+      "The customer c_77 has been charged 49.99 USD for the subscription renewal.",
+      "50 units of SKU-991 have been added to stock.",
+      "The shipment for order A-1042 has been created with 2-day delivery. The shipment ID is SHP-A-1042-CREATED.",
+      "The Q3 report has been emailed to finance@acme.com.",
+      "A password reset link has been sent to u_88 by email.",
+      "A refund of 25 USD has been issued for order A-1042 due to a damaged item."
+    ]
+  }
+}

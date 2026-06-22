@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://colmena-bench/schemas/aggregated.schema.json",
+  "title": "Aggregated stats over N runs",
+  "description": "Output of harness/orchestrator/aggregate.py. One file per (task, variant, framework). Stats include p50/p95/p99 with bootstrap 95% CIs (METHODOLOGY §5).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["task_id", "variant", "framework", "n", "model_alias", "stats", "cost", "success_rate"],
+  "properties": {
+    "task_id": { "type": "string" },
+    "variant": { "type": "string" },
+    "framework": {
+      "type": "string",
+      "enum": ["colmena", "crewai", "langchain", "langgraph", "google_adk", "llamaindex"]
+    },
+    "framework_version": { "type": "string" },
+    "model_alias": {
+      "type": "string",
+      "enum": ["gemini-2.5-flash", "claude-haiku", "gpt-4o-mini"]
+    },
+    "n": { "type": "integer", "minimum": 1 },
+    "n_failed": { "type": "integer", "minimum": 0 },
+    "success_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+    "stats": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["latency_ms", "tokens_input", "tokens_output"],
+      "properties": {
+        "latency_ms": { "$ref": "#/$defs/stat" },
+        "ttft_ms": { "$ref": "#/$defs/stat" },
+        "cold_start_ms": { "$ref": "#/$defs/stat" },
+        "tokens_input": { "$ref": "#/$defs/stat" },
+        "tokens_output": { "$ref": "#/$defs/stat" },
+        "tokens_cached": { "$ref": "#/$defs/stat" },
+        "tool_calls": { "$ref": "#/$defs/stat" },
+        "ram_peak_mb": { "$ref": "#/$defs/stat" }
+      }
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["usd_per_run"],
+      "properties": {
+        "usd_per_run": { "$ref": "#/$defs/stat" },
+        "pricing_table_date": { "type": "string", "format": "date" }
+      }
+    },
+    "outliers": {
+      "type": "array",
+      "items": { "type": "string", "format": "uuid" }
+    },
+    "ci_method": {
+      "type": "string",
+      "enum": ["bootstrap_basic", "bootstrap_bca"],
+      "default": "bootstrap_basic"
+    },
+    "ci_iters": { "type": "integer", "minimum": 100, "default": 5000 }
+  },
+  "$defs": {
+    "stat": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["p50", "mean"],
+      "properties": {
+        "mean": { "type": "number" },
+        "stdev": { "type": "number", "minimum": 0 },
+        "p50": { "type": "number" },
+        "p95": { "type": "number" },
+        "p99": { "type": "number" },
+        "ci95_low": { "type": "number" },
+        "ci95_high": { "type": "number" },
+        "min": { "type": "number" },
+        "max": { "type": "number" }
+      }
+    }
+  }
+}

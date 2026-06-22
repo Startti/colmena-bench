@@ -1,0 +1,65 @@
+{
+  "run_id": "d7s-colmena-eager-s1",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "colmena",
+  "framework_version": "0.4.0",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-20T21:53:55.225970Z",
+  "ended_at": "2026-06-20T21:56:37.394258Z",
+  "latency_ms": 162168,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 52.31,
+  "cpu_user_s": 0.582,
+  "cpu_sys_s": 0.24,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-20T21:53:55.226245Z",
+      "2026-06-20T21:54:11.918057Z",
+      "2026-06-20T21:54:27.922597Z",
+      "2026-06-20T21:54:43.818874Z",
+      "2026-06-20T21:54:59.691472Z",
+      "2026-06-20T21:55:16.004141Z",
+      "2026-06-20T21:55:31.973836Z",
+      "2026-06-20T21:55:47.961468Z",
+      "2026-06-20T21:56:03.731422Z",
+      "2026-06-20T21:56:20.324870Z",
+      "2026-06-20T21:56:37.394111Z"
+    ],
+    "lazy": false,
+    "n_turns": 10,
+    "answers": [
+      "I've created a shipment for order A-1042 with 2-day delivery. The shipment ID is SHP-A-1042-CREATED.",
+      "I've issued a refund of 25 USD for order A-1042 due to a damaged item. The refund ID is REF-A-1042.",
+      "I've charged customer c_77's card 49.99 USD for the subscription renewal. The charge ID is CHG-C77-CAPTURED.",
+      "I've opened a new ticket for customer c_31 regarding the checkout page crashing. The ticket ID is TKT-C31-OPENED.",
+      "I've adjusted the stock for SKU-991 by adding 50 units.",
+      "I've scheduled a 30-minute call with Ana for next Tuesday at 3 PM. The meeting ID is MTG-ANA-CONFIRMED.",
+      "I've created a shipment for order A-1042 with 2-day delivery. The shipment ID is SHP-A-1042-CREATED.",
+      "I've issued a refund of 25 USD for order A-1042 due to a damaged item. The refund ID is REF-A-1042.",
+      "I've charged customer c_77's card 49.99 USD for the subscription renewal. The charge ID is CHG-C77-CAPTURED.",
+      "I've opened a new ticket for customer c_31 regarding the checkout page crashing. The ticket ID is TKT-C31-OPENED."
+    ]
+  }
+}

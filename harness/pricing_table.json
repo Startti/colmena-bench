@@ -1,0 +1,36 @@
+{
+  "$schema": "https://colmena-bench/schemas/pricing_table.schema.json",
+  "version": "0.1.0",
+  "snapshot_date": "2026-06-10",
+  "currency": "USD",
+  "unit": "per_million_tokens",
+  "notes": "Verify against the provider's official pricing page before each official benchmark run. Cached-input discounts are applied by the proxy when the provider reports cached tokens (METHODOLOGY §4). Batch-API discounts are NOT applied — benchmarks are real-time, not batch.",
+  "sources": {
+    "gemini-2.5-flash": "https://ai.google.dev/gemini-api/docs/pricing",
+    "claude-haiku": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "gpt-4o-mini": "https://openai.com/api/pricing/"
+  },
+  "models": {
+    "gemini-2.5-flash": {
+      "provider": "google",
+      "provider_model": "gemini/gemini-2.5-flash",
+      "input_per_1m": 0.30,
+      "output_per_1m": 2.50,
+      "cached_input_per_1m": 0.075
+    },
+    "claude-haiku": {
+      "provider": "anthropic",
+      "provider_model": "anthropic/claude-haiku-4-5-20251001",
+      "input_per_1m": 1.00,
+      "output_per_1m": 5.00,
+      "cached_input_per_1m": 0.10
+    },
+    "gpt-4o-mini": {
+      "provider": "openai",
+      "provider_model": "openai/gpt-4o-mini",
+      "input_per_1m": 0.15,
+      "output_per_1m": 0.60,
+      "cached_input_per_1m": 0.075
+    }
+  }
+}

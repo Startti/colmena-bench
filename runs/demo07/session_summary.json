@@ -1,0 +1,632 @@
+[
+  {
+    "config": "colmena-eager",
+    "turn": 0,
+    "cum_tokens_mean": 5923.4,
+    "per_turn_tokens_mean": 5923.4,
+    "selection_acc": 0.8,
+    "arg_acc": 0.6,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-eager",
+    "turn": 1,
+    "cum_tokens_mean": 12727.8,
+    "per_turn_tokens_mean": 6804.4,
+    "selection_acc": 1.0,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-eager",
+    "turn": 2,
+    "cum_tokens_mean": 19718.2,
+    "per_turn_tokens_mean": 6990.4,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-eager",
+    "turn": 3,
+    "cum_tokens_mean": 26913.6,
+    "per_turn_tokens_mean": 7195.4,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-eager",
+    "turn": 4,
+    "cum_tokens_mean": 34338.6,
+    "per_turn_tokens_mean": 7425,
+    "selection_acc": 1.0,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-eager",
+    "turn": 5,
+    "cum_tokens_mean": 41966,
+    "per_turn_tokens_mean": 7627.4,
+    "selection_acc": 1.0,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-eager",
+    "turn": 6,
+    "cum_tokens_mean": 49773.2,
+    "per_turn_tokens_mean": 7807.2,
+    "selection_acc": 1.0,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-eager",
+    "turn": 7,
+    "cum_tokens_mean": 57752.2,
+    "per_turn_tokens_mean": 7979,
+    "selection_acc": 1.0,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-eager",
+    "turn": 8,
+    "cum_tokens_mean": 65958.6,
+    "per_turn_tokens_mean": 8206.4,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-eager",
+    "turn": 9,
+    "cum_tokens_mean": 74337.2,
+    "per_turn_tokens_mean": 8378.6,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-lazy",
+    "turn": 0,
+    "cum_tokens_mean": 5016.6,
+    "per_turn_tokens_mean": 5016.6,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-lazy",
+    "turn": 1,
+    "cum_tokens_mean": 11003.8,
+    "per_turn_tokens_mean": 5987.2,
+    "selection_acc": 1.0,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-lazy",
+    "turn": 2,
+    "cum_tokens_mean": 17711.6,
+    "per_turn_tokens_mean": 6707.8,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-lazy",
+    "turn": 3,
+    "cum_tokens_mean": 25173,
+    "per_turn_tokens_mean": 7461.4,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-lazy",
+    "turn": 4,
+    "cum_tokens_mean": 32824.6,
+    "per_turn_tokens_mean": 7651.6,
+    "selection_acc": 0.8,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-lazy",
+    "turn": 5,
+    "cum_tokens_mean": 41774,
+    "per_turn_tokens_mean": 8949.4,
+    "selection_acc": 1.0,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-lazy",
+    "turn": 6,
+    "cum_tokens_mean": 47948.6,
+    "per_turn_tokens_mean": 6174.6,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-lazy",
+    "turn": 7,
+    "cum_tokens_mean": 54063.8,
+    "per_turn_tokens_mean": 6115.2,
+    "selection_acc": 1.0,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-lazy",
+    "turn": 8,
+    "cum_tokens_mean": 60324.8,
+    "per_turn_tokens_mean": 6261,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "colmena-lazy",
+    "turn": 9,
+    "cum_tokens_mean": 66808,
+    "per_turn_tokens_mean": 6483.2,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "crewai",
+    "turn": 0,
+    "cum_tokens_mean": 60538,
+    "per_turn_tokens_mean": 60538,
+    "selection_acc": 0.6,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "crewai",
+    "turn": 1,
+    "cum_tokens_mean": 65581.6,
+    "per_turn_tokens_mean": 5043.6,
+    "selection_acc": 0.8,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "crewai",
+    "turn": 2,
+    "cum_tokens_mean": 71398,
+    "per_turn_tokens_mean": 5816.4,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "crewai",
+    "turn": 3,
+    "cum_tokens_mean": 77416.4,
+    "per_turn_tokens_mean": 6018.4,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "crewai",
+    "turn": 4,
+    "cum_tokens_mean": 83640,
+    "per_turn_tokens_mean": 6223.6,
+    "selection_acc": 1.0,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "crewai",
+    "turn": 5,
+    "cum_tokens_mean": 90064.8,
+    "per_turn_tokens_mean": 6424.8,
+    "selection_acc": 1.0,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "crewai",
+    "turn": 6,
+    "cum_tokens_mean": 96013.4,
+    "per_turn_tokens_mean": 5948.6,
+    "selection_acc": 0.8,
+    "arg_acc": 0.6,
+    "seeds": 5
+  },
+  {
+    "config": "crewai",
+    "turn": 7,
+    "cum_tokens_mean": 102117.8,
+    "per_turn_tokens_mean": 6104.4,
+    "selection_acc": 0.8,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "crewai",
+    "turn": 8,
+    "cum_tokens_mean": 109089.8,
+    "per_turn_tokens_mean": 6972,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "crewai",
+    "turn": 9,
+    "cum_tokens_mean": 116263.8,
+    "per_turn_tokens_mean": 7174,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "google_adk",
+    "turn": 0,
+    "cum_tokens_mean": 58339.4,
+    "per_turn_tokens_mean": 58339.4,
+    "selection_acc": 0.6,
+    "arg_acc": 0.6,
+    "seeds": 5
+  },
+  {
+    "config": "google_adk",
+    "turn": 1,
+    "cum_tokens_mean": 63375.6,
+    "per_turn_tokens_mean": 5036.2,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "google_adk",
+    "turn": 2,
+    "cum_tokens_mean": 68630.8,
+    "per_turn_tokens_mean": 5255.2,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "google_adk",
+    "turn": 3,
+    "cum_tokens_mean": 74092,
+    "per_turn_tokens_mean": 5461.2,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "google_adk",
+    "turn": 4,
+    "cum_tokens_mean": 79759.4,
+    "per_turn_tokens_mean": 5667.4,
+    "selection_acc": 1.0,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "google_adk",
+    "turn": 5,
+    "cum_tokens_mean": 85633.8,
+    "per_turn_tokens_mean": 5874.4,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "google_adk",
+    "turn": 6,
+    "cum_tokens_mean": 91708.6,
+    "per_turn_tokens_mean": 6074.8,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "google_adk",
+    "turn": 7,
+    "cum_tokens_mean": 97980.8,
+    "per_turn_tokens_mean": 6272.2,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "google_adk",
+    "turn": 8,
+    "cum_tokens_mean": 104454.8,
+    "per_turn_tokens_mean": 6474,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "google_adk",
+    "turn": 9,
+    "cum_tokens_mean": 111134.8,
+    "per_turn_tokens_mean": 6680,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "langchain",
+    "turn": 0,
+    "cum_tokens_mean": 75714,
+    "per_turn_tokens_mean": 75714,
+    "selection_acc": 0.6,
+    "arg_acc": 0.6,
+    "seeds": 5
+  },
+  {
+    "config": "langchain",
+    "turn": 1,
+    "cum_tokens_mean": 80213,
+    "per_turn_tokens_mean": 4499,
+    "selection_acc": 0.8,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "langchain",
+    "turn": 2,
+    "cum_tokens_mean": 84879.8,
+    "per_turn_tokens_mean": 4666.8,
+    "selection_acc": 0.8,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "langchain",
+    "turn": 3,
+    "cum_tokens_mean": 89721,
+    "per_turn_tokens_mean": 4841.2,
+    "selection_acc": 0.8,
+    "arg_acc": 0.2,
+    "seeds": 5
+  },
+  {
+    "config": "langchain",
+    "turn": 4,
+    "cum_tokens_mean": 95259.8,
+    "per_turn_tokens_mean": 5538.8,
+    "selection_acc": 1.0,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "langchain",
+    "turn": 5,
+    "cum_tokens_mean": 100998.6,
+    "per_turn_tokens_mean": 5738.8,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "langchain",
+    "turn": 6,
+    "cum_tokens_mean": 106335.4,
+    "per_turn_tokens_mean": 5336.8,
+    "selection_acc": 0.8,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "langchain",
+    "turn": 7,
+    "cum_tokens_mean": 112456.6,
+    "per_turn_tokens_mean": 6121.2,
+    "selection_acc": 1.0,
+    "arg_acc": 0.6,
+    "seeds": 5
+  },
+  {
+    "config": "langchain",
+    "turn": 8,
+    "cum_tokens_mean": 118775.8,
+    "per_turn_tokens_mean": 6319.2,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "langchain",
+    "turn": 9,
+    "cum_tokens_mean": 125304.6,
+    "per_turn_tokens_mean": 6528.8,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "langgraph",
+    "turn": 0,
+    "cum_tokens_mean": 60081.2,
+    "per_turn_tokens_mean": 60081.2,
+    "selection_acc": 0.6,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "langgraph",
+    "turn": 1,
+    "cum_tokens_mean": 65089,
+    "per_turn_tokens_mean": 5007.8,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "langgraph",
+    "turn": 2,
+    "cum_tokens_mean": 70309.4,
+    "per_turn_tokens_mean": 5220.4,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "langgraph",
+    "turn": 3,
+    "cum_tokens_mean": 75740.6,
+    "per_turn_tokens_mean": 5431.2,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "langgraph",
+    "turn": 4,
+    "cum_tokens_mean": 81376.6,
+    "per_turn_tokens_mean": 5636,
+    "selection_acc": 1.0,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "langgraph",
+    "turn": 5,
+    "cum_tokens_mean": 87212.6,
+    "per_turn_tokens_mean": 5836,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "langgraph",
+    "turn": 6,
+    "cum_tokens_mean": 92647.6,
+    "per_turn_tokens_mean": 5435,
+    "selection_acc": 0.8,
+    "arg_acc": 0.6,
+    "seeds": 5
+  },
+  {
+    "config": "langgraph",
+    "turn": 7,
+    "cum_tokens_mean": 98869,
+    "per_turn_tokens_mean": 6221.4,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "langgraph",
+    "turn": 8,
+    "cum_tokens_mean": 105290.2,
+    "per_turn_tokens_mean": 6421.2,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "langgraph",
+    "turn": 9,
+    "cum_tokens_mean": 111922.2,
+    "per_turn_tokens_mean": 6632,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "llamaindex",
+    "turn": 0,
+    "cum_tokens_mean": 61309.6,
+    "per_turn_tokens_mean": 61309.6,
+    "selection_acc": 0.8,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "llamaindex",
+    "turn": 1,
+    "cum_tokens_mean": 66618.6,
+    "per_turn_tokens_mean": 5309,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "llamaindex",
+    "turn": 2,
+    "cum_tokens_mean": 72096.6,
+    "per_turn_tokens_mean": 5478,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "llamaindex",
+    "turn": 3,
+    "cum_tokens_mean": 77797.6,
+    "per_turn_tokens_mean": 5701,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "llamaindex",
+    "turn": 4,
+    "cum_tokens_mean": 83678,
+    "per_turn_tokens_mean": 5880.4,
+    "selection_acc": 1.0,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "llamaindex",
+    "turn": 5,
+    "cum_tokens_mean": 89157.6,
+    "per_turn_tokens_mean": 5479.6,
+    "selection_acc": 0.8,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "llamaindex",
+    "turn": 6,
+    "cum_tokens_mean": 94777.6,
+    "per_turn_tokens_mean": 5620,
+    "selection_acc": 0.8,
+    "arg_acc": 0.8,
+    "seeds": 5
+  },
+  {
+    "config": "llamaindex",
+    "turn": 7,
+    "cum_tokens_mean": 101169,
+    "per_turn_tokens_mean": 6391.4,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  },
+  {
+    "config": "llamaindex",
+    "turn": 8,
+    "cum_tokens_mean": 107738.6,
+    "per_turn_tokens_mean": 6569.6,
+    "selection_acc": 1.0,
+    "arg_acc": 1.0,
+    "seeds": 5
+  },
+  {
+    "config": "llamaindex",
+    "turn": 9,
+    "cum_tokens_mean": 114514.8,
+    "per_turn_tokens_mean": 6776.2,
+    "selection_acc": 1.0,
+    "arg_acc": 0.4,
+    "seeds": 5
+  }
+]

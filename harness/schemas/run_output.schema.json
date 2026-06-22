@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://colmena-bench/schemas/run_output.schema.json",
+  "title": "Single run output (one task × one framework × one repetition)",
+  "description": "Emitted by every runner. The orchestrator (T08) collects N of these per (task, variant, framework) and produces aggregated.schema.json. Contract owner: harness/runner_contract.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "task_id",
+    "variant",
+    "framework",
+    "framework_version",
+    "model_alias",
+    "started_at",
+    "ended_at",
+    "latency_ms",
+    "tokens",
+    "tool_calls",
+    "success",
+    "answer",
+    "host"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "description": "UUIDv4. Must match the run_id used by the proxy spans file."
+    },
+    "task_id": { "type": "string" },
+    "variant": { "type": "string" },
+    "framework": {
+      "type": "string",
+      "enum": ["colmena", "crewai", "langchain", "langgraph", "google_adk", "llamaindex"]
+    },
+    "framework_version": { "type": "string" },
+    "model_alias": {
+      "type": "string",
+      "enum": ["gemini-2.5-flash", "claude-haiku", "gpt-4o-mini"]
+    },
+    "started_at": { "type": "string", "format": "date-time" },
+    "ended_at": { "type": "string", "format": "date-time" },
+    "latency_ms": { "type": "integer", "minimum": 0 },
+    "cold_start_ms": { "type": "integer", "minimum": 0 },
+    "ttft_ms": { "type": ["integer", "null"], "minimum": 0 },
+    "tokens": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input", "output"],
+      "properties": {
+        "input": { "type": "integer", "minimum": 0 },
+        "output": { "type": "integer", "minimum": 0 },
+        "cached": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "tool_calls": { "type": "integer", "minimum": 0 },
+    "ram_peak_mb": { "type": "number", "minimum": 0 },
+    "cpu_user_s": { "type": ["number", "null"], "minimum": 0 },
+    "cpu_sys_s": { "type": ["number", "null"], "minimum": 0 },
+    "success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ok"],
+      "properties": {
+        "ok": { "type": "boolean" },
+        "reason": { "type": "string" },
+        "judge_score": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "answer": {
+      "description": "Final answer as returned by the framework (free-form, scored by success.kind).",
+      "type": ["string", "number", "object", "array", "boolean", "null"]
+    },
+    "error": {
+      "type": ["string", "null"],
+      "description": "Set when the runner crashed before producing a meaningful answer."
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hostname", "os", "cpu_model", "ram_gb"],
+      "properties": {
+        "hostname": { "type": "string" },
+        "os": { "type": "string" },
+        "cpu_model": { "type": "string" },
+        "ram_gb": { "type": "number", "minimum": 0 }
+      }
+    },
+    "extras": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Framework-specific debug payload. Not used for scoring."
+    }
+  }
+}

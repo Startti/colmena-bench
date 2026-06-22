@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://colmena-bench/schemas/proxy_span.schema.json",
+  "title": "Proxy span — one LLM call observed by the LiteLLM proxy",
+  "description": "One JSONL line per LLM call, emitted by proxy/spans_callback.py to proxy/spans/run-<id>.jsonl. Source of truth for token / cost metrics — METHODOLOGY §4.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "span_id",
+    "run_id",
+    "ts_start",
+    "ts_end",
+    "latency_ms",
+    "model_alias",
+    "tokens_input",
+    "tokens_output",
+    "ok"
+  ],
+  "properties": {
+    "span_id": { "type": "string", "format": "uuid" },
+    "run_id": { "type": "string" },
+    "ts_start": { "type": "number", "minimum": 0 },
+    "ts_end": { "type": "number", "minimum": 0 },
+    "latency_ms": { "type": "integer", "minimum": 0 },
+    "model_alias": { "type": "string" },
+    "provider_model": { "type": "string" },
+    "tokens_input": { "type": "integer", "minimum": 0 },
+    "tokens_output": { "type": "integer", "minimum": 0 },
+    "tokens_cached": { "type": "integer", "minimum": 0 },
+    "ttft_ms": { "type": ["integer", "null"], "minimum": 0 },
+    "ok": { "type": "boolean" },
+    "error": { "type": ["string", "null"] }
+  }
+}
