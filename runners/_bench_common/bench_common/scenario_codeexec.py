@@ -39,20 +39,24 @@ def detect_leak(text: str) -> bool:
 # in-context result channel — NOT written to disk: Colmena's `restricted` sandbox
 # (the security hero of this demo) forbids filesystem access by design, so a
 # file-write transform would be impossible there and unfair to compare.
+# Explicit formula on the REAL orders_synthetic columns (quantity, unit_price_usd,
+# discount_pct, status, country) so the model and the reference cannot disagree on
+# interpretation.
 TRANSFORM_INSTRUCTION = (
-    "Derive total_with_tax = amount * 1.08 for every row, keep only rows where "
-    "status == 'shipped', then return the SUM of total_with_tax grouped by country. "
-    "Return ONLY a JSON object mapping each country code to its summed total_with_tax, "
-    'e.g. {"AR": 12345.67, "MX": 8910.11}.'
+    "For every row compute net_revenue = quantity * unit_price_usd * (1 - discount_pct). "
+    "Keep only rows where status == 'shipped'. Then return the SUM of net_revenue "
+    "grouped by country. Return ONLY a JSON object mapping each country code to its "
+    'summed net_revenue, e.g. {"AR": 12345.67, "MX": 8910.11}.'
 )
 
 def reference_transform(csv_path: str) -> dict[str, float]:
-    """Ground-truth for TRANSFORM_INSTRUCTION: {country: sum(total_with_tax)} over
+    """Ground-truth for TRANSFORM_INSTRUCTION: {country: sum(net_revenue)} over
     shipped orders. Small (one entry per country), exact, size-independent."""
     df = pd.read_csv(csv_path)
     df = df[df["status"] == "shipped"].copy()
-    df["total_with_tax"] = df["amount"].astype(float) * 1.08
-    grouped = df.groupby("country")["total_with_tax"].sum()
+    net = (df["quantity"].astype(float) * df["unit_price_usd"].astype(float)
+           * (1.0 - df["discount_pct"].astype(float)))
+    grouped = net.groupby(df["country"]).sum()
     return {str(k): round(float(v), 2) for k, v in grouped.items()}
 
 def score_mutation(csv_path: str, produced: "dict | Any") -> dict[str, Any]:
@@ -79,7 +83,17 @@ def _coerce_country_map(produced: "dict | Any") -> dict[str, float]:
     for rec in produced:  # list of row dicts
         keys = {k.lower(): k for k in rec}
         ck = keys.get("country") or keys.get("country_code")
-        vk = next((rec[k] for k in rec if "total" in k.lower() or "sum" in k.lower()), None)
-        if ck is not None and vk is not None:
-            out[str(rec[ck])] = float(vk)
+        if ck is None:
+            continue
+        # value = the first field that isn't the country key and parses as a number
+        vk = None
+        for k in rec:
+            if k == ck:
+                continue
+            try:
+                vk = float(rec[k]); break
+            except (TypeError, ValueError):
+                continue
+        if vk is not None:
+            out[str(rec[ck])] = vk
     return out

@@ -9,19 +9,22 @@ from bench_common import scenario_codeexec as sc
 
 
 def _toy_df():
+    # Mirrors the real orders_synthetic schema (relevant columns).
     return pd.DataFrame({
         "order_id": [1, 2, 3, 4],
-        "amount": [100.0, 50.0, 200.0, 10.0],
-        "status": ["shipped", "pending", "shipped", "shipped"],
         "country": ["AR", "AR", "MX", "AR"],
+        "quantity": [2, 1, 3, 1],
+        "unit_price_usd": [100.0, 50.0, 100.0, 10.0],
+        "discount_pct": [0.0, 0.0, 0.1, 0.0],
+        "status": ["shipped", "pending", "shipped", "shipped"],
     })
 
 
 def test_transform_reference_groups_shipped_by_country(tmp_path):
     src = tmp_path / "in.csv"; _toy_df().to_csv(src, index=False)
-    out = sc.reference_transform(str(src))            # {country: sum(total_with_tax)}
-    # shipped only: AR rows 100 & 10 -> (100+10)*1.08 = 118.8 ; MX row 200 -> 216.0
-    assert out == {"AR": 118.8, "MX": 216.0}
+    out = sc.reference_transform(str(src))            # {country: sum(net_revenue)}
+    # shipped only: AR rows 2*100 & 1*10 -> 210.0 ; MX row 3*100*0.9 -> 270.0
+    assert out == {"AR": 210.0, "MX": 270.0}
 
 
 def test_score_mutation_matches_reference(tmp_path):
@@ -33,8 +36,8 @@ def test_score_mutation_matches_reference(tmp_path):
 
 def test_score_mutation_accepts_record_list(tmp_path):
     src = tmp_path / "in.csv"; _toy_df().to_csv(src, index=False)
-    records = [{"country": "AR", "total_with_tax": 118.8},
-               {"country": "MX", "total_with_tax": 216.0}]
+    records = [{"country": "AR", "net_revenue": 210.0},
+               {"country": "MX", "net_revenue": 270.0}]
     res = sc.score_mutation(str(src), records)
     assert res["mutation_ok"] is True
 
