@@ -8,6 +8,7 @@ drift. Distractor packs are templated bulk to inflate the library to M packs.
 from __future__ import annotations
 
 import hashlib
+import re
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -707,3 +708,55 @@ def corpus_token_estimate(corpus_dir: str) -> int:
     """~4 chars/token estimate over every .md file in the corpus."""
     total = sum(len(p.read_text()) for p in Path(corpus_dir).rglob("*.md"))
     return total // 4
+
+
+# ---------------------------------------------------------------------------
+# Scorer (Task 5)
+# ---------------------------------------------------------------------------
+
+def _parse_number(text):
+    """First numeric value in a string, tolerant of commas, currency symbols,
+    surrounding prose, signs, and scientific notation. Returns None if no number
+    is present (the honesty rule: unparseable -> not measured, never 0.0)."""
+    if text is None:
+        return None
+    cleaned = re.sub(r"[,$€£]", "", str(text))
+    m = re.search(r"[-+]?\d*\.?\d+(?:[eE][+-]?\d+)?", cleaned)
+    return float(m.group()) if m else None
+
+
+def score_skill_answer(question: "Question", produced: str, df: "pd.DataFrame") -> dict:
+    """Grade a produced answer against the reference function.
+
+    Returns a dict with keys:
+      correct: True / False, or None when the answer is empty/unparseable
+               (NOT measured — never silently 0, per the Demo #8 honesty fix).
+      want:    the ground-truth float.
+      got:     the parsed float, or None.
+    """
+    want = CORE_PACKS[question.pack].reference_fn(df, question.params)
+    got = _parse_number(produced)
+    if got is None:
+        return {"correct": None, "want": want, "got": None}
+    ok = abs(got - want) <= 0.02 * max(1.0, abs(want))
+    return {"correct": bool(ok), "want": want, "got": got}
+
+
+# ---------------------------------------------------------------------------
+# Naive prompt builder (Task 5)
+# ---------------------------------------------------------------------------
+
+def build_naive_system_prompt(corpus_dir: str) -> str:
+    """Concatenate EVERY pack's full markdown tree — the naive arm's strategy.
+
+    Produces a single system-prompt string containing all pack content. At
+    M=50 this exceeds 150k tokens, making it the expensive baseline against
+    which Colmena's progressive-load arm is compared.
+    """
+    parts = [
+        "You are a finance analyst. The full policy manual follows. "
+        "Apply the correct policy to answer. Manual:\n"
+    ]
+    for md in sorted(Path(corpus_dir).rglob("*.md")):
+        parts.append(f"\n\n===== {md.relative_to(corpus_dir)} =====\n{md.read_text()}")
+    return "".join(parts)

@@ -193,3 +193,40 @@ def test_materialize_refuses_non_corpus_dir(tmp_path):
     with pytest.raises(ValueError):
         sk.materialize_corpus(str(tmp_path), 5, seed=0)
     assert (tmp_path / "precious.txt").exists()   # untouched
+
+
+# --- Task 5: scorer + naive prompt builder ----------------------------------
+
+def test_score_skill_answer_tolerant_and_none_for_empty():
+    q = sk.QUESTION_BANK[0]
+    df = pd.read_csv(PKG.parents[1] / "data" / "orders_synthetic" / "seeds" / "M.csv")
+    truth = sk.CORE_PACKS[q.pack].reference_fn(df, q.params)
+    assert sk.score_skill_answer(q, str(truth), df)["correct"] is True
+    assert sk.score_skill_answer(q, f"{truth*1.10:.2f}", df)["correct"] is False
+    assert sk.score_skill_answer(q, "", df)["correct"] is None     # not measured
+    assert sk.score_skill_answer(q, "no idea", df)["correct"] is None
+
+def test_parse_number_handles_scientific_and_signs():
+    # access the private helper directly
+    assert sk._parse_number("1.2e5") == 120000.0
+    assert sk._parse_number("-$1,234.56") == -1234.56
+    assert sk._parse_number("$0.50") == 0.5
+    assert sk._parse_number("no number here") is None
+    assert sk._parse_number("") is None
+    assert sk._parse_number(None) is None
+
+def test_score_skill_answer_parses_currency_and_commas():
+    q = sk.QUESTION_BANK[0]
+    df = pd.read_csv(PKG.parents[1] / "data" / "orders_synthetic" / "seeds" / "M.csv")
+    truth = sk.CORE_PACKS[q.pack].reference_fn(df, q.params)
+    # answer wrapped in prose + thousands separators + $ should still parse
+    assert sk.score_skill_answer(q, f"The answer is ${truth:,.2f} total.", df)["correct"] is True
+
+def test_build_naive_system_prompt_contains_every_pack(tmp_path):
+    sk.materialize_corpus(str(tmp_path), 20, seed=0)
+    prompt = sk.build_naive_system_prompt(str(tmp_path))
+    assert "tax-by-region" in prompt
+    # every pack dir name should appear somewhere in the concatenation
+    import os
+    for d in [x for x in os.listdir(tmp_path) if os.path.isdir(os.path.join(tmp_path, x))]:
+        assert d in prompt
