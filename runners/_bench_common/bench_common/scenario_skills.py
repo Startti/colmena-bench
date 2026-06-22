@@ -300,7 +300,151 @@ class Question:
     field: str = ""           # which POLICY_FIELDS value the question targets
 
 
-QUESTION_BANK: list = []  # RW-B will restore
+def expected_for(question: "Question"):
+    """Authoritative answer = the value in POLICY_FACTS at the question's leaf+field.
+    leaf_path is 'peril/sub'. Single source of truth — derived, cannot drift."""
+    peril, sub = question.leaf_path.split("/")
+    return policy_value(question.pack, peril, sub, question.field)
+
+
+# 18 customer questions — 3 per core policy. Each names the product, the peril,
+# the sub-condition, and which value is asked; the VALUE itself lives only in the
+# pack (non-guessable). Fields/branches varied within each pack; all 4 field
+# types appear across the bank.
+QUESTION_BANK: list["Question"] = [
+    # --- colmena-hogar-premium ---------------------------------------------
+    Question(
+        id="hogar_prem_agua_subita_ded",
+        pack="colmena-hogar-premium",
+        leaf_path="danio-agua/agua-subita",
+        field="deductible_usd",
+        text="Para la póliza Colmena Hogar Premium, ¿cuál es el deducible en USD por daño de agua súbita?",
+    ),
+    Question(
+        id="hogar_prem_incendio_contenido_lim",
+        pack="colmena-hogar-premium",
+        leaf_path="incendio/incendio-contenido",
+        field="coverage_limit_usd",
+        text="Para la póliza Colmena Hogar Premium, ¿cuál es el límite de cobertura en USD por incendio del contenido?",
+    ),
+    Question(
+        id="hogar_prem_robo_fuera_copago",
+        pack="colmena-hogar-premium",
+        leaf_path="robo/robo-fuera",
+        field="copay_pct",
+        text="Para la póliza Colmena Hogar Premium, ¿cuál es el copago en % por robo fuera del domicilio?",
+    ),
+    # --- colmena-hogar-basico ----------------------------------------------
+    Question(
+        id="hogar_bas_agua_gradual_espera",
+        pack="colmena-hogar-basico",
+        leaf_path="danio-agua/agua-basica-gradual",
+        field="waiting_period_days",
+        text="Para la póliza Colmena Hogar Basico, ¿cuántos días de período de espera aplican al daño de agua gradual?",
+    ),
+    Question(
+        id="hogar_bas_incendio_estructura_ded",
+        pack="colmena-hogar-basico",
+        leaf_path="incendio/incendio-basico-estructura",
+        field="deductible_usd",
+        text="Para la póliza Colmena Hogar Basico, ¿cuál es el deducible en USD por incendio de la estructura?",
+    ),
+    Question(
+        id="hogar_bas_robo_domicilio_lim",
+        pack="colmena-hogar-basico",
+        leaf_path="robo/robo-basico-domicilio",
+        field="coverage_limit_usd",
+        text="Para la póliza Colmena Hogar Basico, ¿cuál es el límite de cobertura en USD por robo en el domicilio?",
+    ),
+    # --- colmena-auto-full -------------------------------------------------
+    Question(
+        id="auto_colision_tercero_ded",
+        pack="colmena-auto-full",
+        leaf_path="colision/colision-tercero",
+        field="deductible_usd",
+        text="Para la póliza Colmena Auto Full, ¿cuál es el deducible en USD por colisión con un tercero?",
+    ),
+    Question(
+        id="auto_robo_total_lim",
+        pack="colmena-auto-full",
+        leaf_path="robo-vehiculo/robo-total",
+        field="coverage_limit_usd",
+        text="Para la póliza Colmena Auto Full, ¿cuál es el límite de cobertura en USD por robo total del vehículo?",
+    ),
+    Question(
+        id="auto_cristal_parabrisas_copago",
+        pack="colmena-auto-full",
+        leaf_path="cristales/cristal-parabrisas",
+        field="copay_pct",
+        text="Para la póliza Colmena Auto Full, ¿cuál es el copago en % por rotura del cristal del parabrisas?",
+    ),
+    # --- colmena-viaje-internacional ---------------------------------------
+    Question(
+        id="viaje_medico_hospital_lim",
+        pack="colmena-viaje-internacional",
+        leaf_path="gastos-medicos/medico-hospital",
+        field="coverage_limit_usd",
+        text="Para la póliza Colmena Viaje Internacional, ¿cuál es el límite de cobertura en USD por gastos médicos de hospitalización?",
+    ),
+    Question(
+        id="viaje_cancela_anticipada_ded",
+        pack="colmena-viaje-internacional",
+        leaf_path="cancelacion/cancela-anticipada",
+        field="deductible_usd",
+        text="Para la póliza Colmena Viaje Internacional, ¿cuál es el deducible en USD por cancelación anticipada del viaje?",
+    ),
+    Question(
+        id="viaje_equipaje_demora_espera",
+        pack="colmena-viaje-internacional",
+        leaf_path="equipaje/equipaje-demora",
+        field="waiting_period_days",
+        text="Para la póliza Colmena Viaje Internacional, ¿cuántos días de período de espera aplican a la demora de equipaje?",
+    ),
+    # --- colmena-salud-familiar --------------------------------------------
+    Question(
+        id="salud_hosp_cirugia_lim",
+        pack="colmena-salud-familiar",
+        leaf_path="hospitalizacion/hosp-cirugia",
+        field="coverage_limit_usd",
+        text="Para la póliza Colmena Salud Familiar, ¿cuál es el límite de cobertura en USD por cirugía durante la hospitalización?",
+    ),
+    Question(
+        id="salud_amb_consulta_copago",
+        pack="colmena-salud-familiar",
+        leaf_path="ambulatorio/amb-consulta",
+        field="copay_pct",
+        text="Para la póliza Colmena Salud Familiar, ¿cuál es el copago en % por consulta ambulatoria?",
+    ),
+    Question(
+        id="salud_mat_parto_espera",
+        pack="colmena-salud-familiar",
+        leaf_path="maternidad/mat-parto",
+        field="waiting_period_days",
+        text="Para la póliza Colmena Salud Familiar, ¿cuántos días de período de espera aplican a la cobertura de parto en maternidad?",
+    ),
+    # --- colmena-mascotas --------------------------------------------------
+    Question(
+        id="mascotas_vet_cirugia_lim",
+        pack="colmena-mascotas",
+        leaf_path="veterinario/vet-cirugia",
+        field="coverage_limit_usd",
+        text="Para la póliza Colmena Mascotas, ¿cuál es el límite de cobertura en USD por cirugía veterinaria?",
+    ),
+    Question(
+        id="mascotas_acc_fractura_ded",
+        pack="colmena-mascotas",
+        leaf_path="accidente/acc-fractura",
+        field="deductible_usd",
+        text="Para la póliza Colmena Mascotas, ¿cuál es el deducible en USD por fractura a causa de un accidente?",
+    ),
+    Question(
+        id="mascotas_acc_intoxicacion_espera",
+        pack="colmena-mascotas",
+        leaf_path="accidente/acc-intoxicacion",
+        field="waiting_period_days",
+        text="Para la póliza Colmena Mascotas, ¿cuántos días de período de espera aplican a la intoxicación por accidente?",
+    ),
+]
 
 
 def leaf_path_exists(pack_name: str, leaf_path: str) -> bool:

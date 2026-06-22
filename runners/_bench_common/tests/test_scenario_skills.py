@@ -140,6 +140,40 @@ def test_build_naive_system_prompt_contains_every_pack(tmp_path):
         assert d in prompt
 
 
+# --- question bank ----------------------------------------------------------
+
+def test_question_bank_size_and_packs():
+    assert len(sk.QUESTION_BANK) == 18
+    assert {q.pack for q in sk.QUESTION_BANK} == set(sk.CORE_POLICY_NAMES)
+
+
+def test_question_ids_unique():
+    ids = [q.id for q in sk.QUESTION_BANK]
+    assert len(ids) == len(set(ids))
+
+
+def test_every_question_binds_to_existing_leaf():
+    for q in sk.QUESTION_BANK:
+        assert sk.leaf_path_exists(q.pack, q.leaf_path), (q.id, q.pack, q.leaf_path)
+        assert q.field in sk.POLICY_FIELDS, (q.id, q.field)
+
+
+def test_expected_answer_is_verbatim_in_the_authoritative_leaf():
+    # single source of truth: expected_for == policy_value AND that value is rendered
+    # in exactly the leaf the question points to.
+    for q in sk.QUESTION_BANK:
+        want = sk.expected_for(q)
+        peril, sub = q.leaf_path.split("/")
+        assert want == sk.policy_value(q.pack, peril, sub, q.field)
+        files = sk.render_pack(sk.CORE_PACKS[q.pack])
+        leaf = files[f"references/{sub}.md"]   # FLAT layout
+        assert str(want) in leaf, (q.id, want)
+
+
+def test_all_four_field_types_exercised():
+    assert {q.field for q in sk.QUESTION_BANK} == set(sk.POLICY_FIELDS)
+
+
 # --- colmena skills DAG shape (no network) ----------------------------------
 
 def test_colmena_skills_dag_shape():
