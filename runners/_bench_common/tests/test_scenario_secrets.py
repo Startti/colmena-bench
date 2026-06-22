@@ -40,3 +40,16 @@ def test_echo_leaked_from_text():
     s = ss.secrets()
     assert ss.echo_leaked_from_text("the token is " + s["api_key"]) is True
     assert ss.echo_leaked_from_text("nothing here") is False
+
+def test_colmena_secrets_dag_shape():
+    import json
+    d = json.loads((PKG.parents[1] / "runners" / "colmena" / "runner" / "dags" / "secrets_agent.json").read_text())
+    cfg = d["nodes"]["assistant"]["config"]; tc = cfg["tool_configurations"]
+    sus = next(t for t in tc.values() if t.get("node_type") == "secure_suspend")
+    names = [s["name"] for s in sus["node_schema"]["secrets"]["fixed"]]
+    assert names == ["api_key", "api_secret", "webhook_signing_secret"]
+    conn = next(t for t in tc.values() if t.get("node_type") == "python_script")
+    assert conn["node_schema"]["secure"]["fixed"] is True
+    assert "BENCH_MOCK_URL" in conn["node_schema"]["code"]["fixed"]
+    pairs = {(e["from"], e["to"]) for e in d["edges"]}
+    assert ("trigger", "assistant") in pairs and ("assistant", "log") in pairs
