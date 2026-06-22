@@ -162,11 +162,18 @@ def _normalize_answer(text: Any) -> Any:
 # ---------------------------------------------------------------------------
 
 
-def _score_analytics(answer: Any, variant: str) -> float:
-    """Return success_rate [0..1] for a dataset_qa answer against ground truth."""
+def _score_analytics(answer: Any, variant: str) -> "float | None":
+    """Return success_rate [0..1] for a dataset_qa answer against ground truth, or
+    None when the run produced NO usable answer at all (empty/transient completion).
+
+    An empty or unparseable completion is a measurement artifact (the model returned
+    nothing — often a transient empty completion through the proxy), NOT a 0% accuracy
+    result. Scoring it as 0.0 would unfairly drag the parity numbers down, so we
+    report None ("not measured") and let the aggregation skip it.
+    """
     norm = _normalize_answer(answer)
     if not isinstance(norm, dict) or not norm:
-        return 0.0
+        return None
     truth = GROUND_TRUTH["by_size"][variant]["answers"]
     res = score_answers(norm, truth, QUESTIONS)
     return float(res["success_rate"])
