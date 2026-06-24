@@ -158,8 +158,47 @@ None of these capabilities require application-level code from the developer; th
 
 **LangGraph nuance.** LangGraph has a genuine durable human-in-the-loop primitive (`interrupt()`) that Colmena's `secure_suspend` conceptually resembles. The distinction is scope: keeping the secret out of the persisted state, encrypting it, auto-injecting it into downstream calls, and re-masking tool echoes are all still hand-rolled in LangGraph. Colmena makes the entire chain the default, not an exercise left to the developer.
 
-<!-- ART-5 -->
 ## 6. Production hardening as config (Demo 06)
+
+### The claim
+
+Taking a refund-decision agent from prototype to production requires at least four capabilities beyond a working LLM call: a **graph control flow** to express branching logic cleanly, **durable human-in-the-loop (HITL) suspend/resume** so an approval step survives process restarts, a **critic-retry loop** that catches bad outputs before they leave the agent, and **outbound secret masking** so credentials injected into tool calls never appear in logs, transcripts, or LLM contexts.
+
+All six frameworks can implement all four capabilities. The question Demo 06 tests is not *can you build it* but *where does the capability live*: in engine-enforced declarative config that is always on, or in imperative code that a developer writes, tests, ships — and can forget to write.
+
+That is the entire claim. This is not a lines-of-code comparison, and it is not "Colmena has a graph and others don't" — LangGraph and Google ADK are graph-first frameworks. The differentiator is the *mode of expression* and what happens when that expression is absent.
+
+### Capability matrix
+
+| Capability | colmena | langgraph | crewai | langchain | llamaindex | google_adk |
+|---|---|---|---|---|---|---|
+| Graph control flow | native | native | DIY | DIY | DIY | DIY |
+| Durable HITL | native | native | DIY | DIY | DIY | DIY |
+| Critic-retry loop | native | native | DIY | DIY | DIY | DIY |
+| Outbound secret masking | native | **DIY** | DIY | DIY | DIY | DIY |
+
+LangGraph is the honest near-peer: it provides native graph control flow, durable HITL, and a critic-retry loop, matching Colmena on three of four capabilities — the single differentiator is outbound masking, the one cell where every framework other than Colmena requires hand-rolled code.
+
+### Masking counterfactual
+
+The sharpest illustration of the difference between "safe by construction" and "safe because the developer remembered" comes from a controlled counterfactual: the same agent implemented twice, once with the scrubbing code included (hardened) and once with it omitted (naive).
+
+| Variant | colmena | 5 Python competitors |
+|---|---|---|
+| Hardened (scrub written) | safe | safe |
+| Naive (scrub omitted) | **safe** — engine `secure:true`, cannot be omitted | **LEAKS** |
+
+Every hardened implementation passes: the correct refund decision is returned, no secret appears in the outbound transcript, HITL suspend/resume works, and the critic gate is enforced across all six frameworks. The counterfactual is not a measured failure of any hardened implementation — it is a demonstration of what happens when the safeguard is omitted. In the Python frameworks that omission is a realistic developer mistake; in Colmena, `secure: true` is a field on the node definition and the engine enforces it unconditionally. There is no code path through which the secret escapes.
+
+Caveat: The leak is a demonstrated counterfactual of the NAIVE variant, not a measured failure of the hardened implementations — every hardened impl passes. The difference is that competitors are safe only because the developer remembered to scrub; Colmena is safe by construction.
+
+See §5 for the dedicated secret-handling measurement.
+
+### Lines of code — not a Colmena win
+
+The LOC count is reported for completeness and should not be read as a Colmena advantage. Colmena's hardened implementation is **120 lines of code** plus **115 lines of declarative config** (235 lines total). Python competitor totals: CrewAI 93, LangChain 99, LlamaIndex 99, Google ADK 117, LangGraph 171. Colmena is not shorter — LangGraph is the only framework with a higher total, and the Python frameworks cluster below Colmena in raw character count.
+
+The win is not fewer characters. The win is that the four production capabilities are expressed as engine-enforced config — auditable in a YAML diff, reviewable without understanding the surrounding call graph, and present or absent as a single field — rather than as imperative logic scattered across node functions that a code reviewer must trace to verify. For the full LOC discussion across all demos, see §9.
 
 <!-- ART-6 -->
 ## 7. Sandboxed code execution (Demo 08)
