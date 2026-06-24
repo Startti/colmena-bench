@@ -117,7 +117,7 @@ To match Colmena's token behavior, a Python framework developer would need to wr
 
 ### 4.5 Forward note
 
-Colmena makes approximately 18 LLM calls over the 10-turn session versus 13 for competitors, because each `load_attachment` round-trip is an additional model call. This counts against Colmena in both token and latency accounting, and it still wins by 12× on tokens. The full latency and LLM-call comparison — including the bench-harness caveat for wall-clock time — is in §9.
+Colmena makes approximately 18 LLM calls over the 10-turn session versus 13 for competitors, because each `load_attachment` round-trip is an additional model call. This counts against Colmena in both token and latency accounting, and it still wins by ~10–12× on tokens. The full latency and LLM-call comparison — including the bench-harness caveat for wall-clock time — is in §9.
 
 ## 5. Secret handling (Demo 10)
 
@@ -264,10 +264,10 @@ Over a 10-turn session with a 30-tool catalog, both mechanisms are in play. Cumu
 |---|--:|
 | **colmena-lazy** | **66,808** |
 | colmena-eager | 74,337 |
-| LangGraph | 111,135 |
-| LlamaIndex | 111,843 |
-| CrewAI | 120,274 |
-| Google ADK | 121,507 |
+| Google ADK | 111,135 |
+| LangGraph | 111,922 |
+| LlamaIndex | 114,515 |
+| CrewAI | 116,264 |
 | LangChain | 125,305 |
 
 ![Cumulative input tokens over a 10-turn session (lazy vs eager vs competitors)](assets/d07_session_cum.png)
@@ -326,7 +326,7 @@ Every framework in this benchmark calls the same model (`gemini-2.5-flash`) thro
 
 *Accuracy by framework at the largest dataset size: Colmena expert reaches ~96.7%; competitors cluster near 100%.*
 
-Task 04 is primarily a **strategy** result: querying a CSV via a SQL tool ("expert") beats stuffing raw rows into the prompt ("naive") by approximately 5–9× on tokens and 4–7× on accuracy, with expert input tokens flat at ~55k tokens across dataset sizes S, M, and L. Any framework using the expert/SQL strategy gets most of this benefit.
+Task 04 is primarily a **strategy** result: querying a CSV via a SQL tool ("expert") beats stuffing raw rows into the prompt ("naive") by approximately 5–9× on tokens and 4–7× on accuracy. Expert input tokens stay roughly flat as the dataset grows (Colmena ~76k→79k across S/M/L) while the naive approach explodes (~34k→330k); across frameworks expert input ranges ~37k–79k. Any framework using the expert/SQL strategy gets most of this benefit.
 
 The honest trade-off: **Colmena's expert accuracy is 93–97% (S=96.7%, M=93.3%, L=96.7%; the chart shows the largest variant ≈96.7%) versus competitors' ~100%.** The ~3–7 percentage-point residual gap is real and reproducible. Its cause is the same rolling-summary context compaction that produces the Demo 05 token win: the compaction pass can truncate a large mid-conversation tool result table before the final answer is assembled. The develop@14beaba9 rebuild raised this from an earlier 88–92% floor, so the gap has narrowed, but it has not closed.
 
@@ -425,10 +425,10 @@ LOC is **not** a Colmena win; the win is the capability mode (see §6). Masking 
 |---|--:|
 | **colmena-lazy** | **66,808** |
 | colmena-eager | 74,337 |
-| LangGraph | 111,135 |
-| LlamaIndex | 111,922 |
+| Google ADK | 111,135 |
+| LangGraph | 111,922 |
+| LlamaIndex | 114,515 |
 | CrewAI | 116,264 |
-| Google ADK | 121,507 |
 | LangChain | 125,305 |
 
 Tool-selection accuracy: 1.00 for all frameworks at the final turn.
@@ -473,9 +473,9 @@ No accuracy win for Colmena in Demo 08; lower numbers for LangGraph/Google ADK/C
 
 | Strategy | Input tokens at size L | Accuracy (S / M / L) |
 |---|--:|---|
-| Expert (SQL tool, Colmena) | ~55,000 (flat across S/M/L) | 96.7% / 93.3% / 96.7% |
-| Naive (raw CSV in prompt) | Explodes ~linearly with dataset size | ~40–60% (varies) |
-| Expert (Python competitors) | ~55,000 (flat across S/M/L) | ~100% |
+| Expert (SQL tool, Colmena) | ~37k–79k by framework; ~flat across S/M/L (Colmena ~76–79k) | 96.7% / 93.3% / 96.7% |
+| Naive (raw CSV in prompt) | Explodes ~linearly with dataset size (~34k→330k) | ~0–25% (S 22–25%, M 0–20%) |
+| Expert (Python competitors) | ~37k–79k by framework; ~flat across S/M/L (Colmena ~76–79k) | ~100% |
 
 The ~5–9× token win and ~4–7× accuracy win are a **strategy** result (SQL vs raw-CSV); any framework using the expert strategy gets most of this benefit. The 3–7 percentage-point accuracy gap between Colmena expert and Python competitors is real and reproducible; it traces to rolling-summary compaction truncating large mid-conversation tool-result tables (see §9.4). The develop@14beaba9 rebuild raised this from an earlier 88–92% floor.
 
