@@ -51,7 +51,7 @@ The headline numbers, reported as mean ± std over **N=12 runs**:
 
 | Framework | Total input tokens (mean ± std) | Turn-10 tokens | Cost (10 turns) |
 |---|--:|--:|--:|
-| **Colmena** | **37,619 ± 5,603** | **1,927** | **$0.0184** |
+| **Colmena** | **39,085 ± 9,326** | **2,296** | **$0.018** |
 | LangGraph | 404,095 ± 23,121 | 71,181 | $0.1255 |
 | LlamaIndex | 419,934 ± 34,873 | 71,225 | $0.1306 |
 | Google ADK | 445,370 ± 11,614 | 71,395 | $0.1390 |
@@ -60,15 +60,15 @@ The headline numbers, reported as mean ± std over **N=12 runs**:
 
 Three numbers anchor the claim:
 
-- **~12× fewer total input tokens** over the full 10-turn conversation (Colmena 37,619 vs competitor range 404,095–452,358).
-- **~37× fewer at turn 10 alone** (Colmena 1,927 vs competitor range 71,144–71,395) — the gap widens with each successive turn.
-- **~7.6× lower cost** (Colmena $0.0184 vs competitor range $0.1255–$0.1420). The per-token price is identical across all frameworks; the cost difference is entirely a function of context volume, not pricing.
+- **~10–12× fewer total input tokens** over the full 10-turn conversation (Colmena 39,085 vs competitor range 404,095–452,358).
+- **~31× fewer at turn 10 alone** (Colmena 2,296 vs competitor range 71,144–71,395) — the gap widens with each successive turn.
+- **~7–8× lower cost** (Colmena $0.018 vs competitor range $0.1255–$0.1420). The per-token price is identical across all frameworks; the cost difference is entirely a function of context volume, not pricing.
 
-These are not one-lucky-run numbers. N=12 runs per framework; Colmena's wider standard deviation (±5,603) reflects the model's per-turn decision of whether to re-read the document via `load_attachment` — an honest artifact of the mechanism, disclosed here. Competitors are near-deterministic (±285–±34,873).
+These are not one-lucky-run numbers. N=12 runs per framework; Colmena's wider standard deviation (±9,326) reflects the model's per-turn decision of whether to re-read the document via `load_attachment` — an honest artifact of the mechanism, disclosed here. Competitors are near-deterministic (±285–±34,873).
 
 ![Efficiency multiplier by turn: Colmena input tokens vs competitor mean](assets/d05_multiplier.png)
 
-*The efficiency multiplier grows with each turn as competitor histories accumulate; by turn 10 Colmena uses roughly 37× fewer tokens than the next-best competitor.*
+*The efficiency multiplier grows with each turn as competitor histories accumulate; by turn 10 Colmena uses roughly 31× fewer tokens than the next-best competitor.*
 
 ![Total input tokens per framework (10-turn sum, N=12 mean)](assets/d05_total_tokens.png)
 
@@ -76,7 +76,7 @@ These are not one-lucky-run numbers. N=12 runs per framework; Colmena's wider st
 
 ![Total cost per framework in USD](assets/d05_usd.png)
 
-*At $0.0184 for a full 10-turn session, Colmena's cost is 7.6× lower than the cheapest competitor — entirely from context volume, not a price-per-token advantage.*
+*At $0.018 for a full 10-turn session, Colmena's cost is 7–8× lower than competitors (7.0× vs the cheapest, LangGraph) — entirely from context volume, not a price-per-token advantage.*
 
 ### 4.3 No quality cost
 
@@ -106,7 +106,7 @@ To match Colmena's token behavior, a Python framework developer would need to wr
 
 ### 4.5 Forward note
 
-Colmena makes approximately 19 LLM calls over the 10-turn session versus 13 for competitors, because each `load_attachment` round-trip is an additional model call. This counts against Colmena in both token and latency accounting, and it still wins by 12× on tokens. The full latency and LLM-call comparison — including the bench-harness caveat for wall-clock time — is in §9.
+Colmena makes approximately 18 LLM calls over the 10-turn session versus 13 for competitors, because each `load_attachment` round-trip is an additional model call. This counts against Colmena in both token and latency accounting, and it still wins by 12× on tokens. The full latency and LLM-call comparison — including the bench-harness caveat for wall-clock time — is in §9.
 
 <!-- ART-4 -->
 ## 5. Secret handling (Demo 10)
