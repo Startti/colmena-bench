@@ -108,8 +108,55 @@ To match Colmena's token behavior, a Python framework developer would need to wr
 
 Colmena makes approximately 18 LLM calls over the 10-turn session versus 13 for competitors, because each `load_attachment` round-trip is an additional model call. This counts against Colmena in both token and latency accounting, and it still wins by 12× on tokens. The full latency and LLM-call comparison — including the bench-harness caveat for wall-clock time — is in §9.
 
-<!-- ART-4 -->
 ## 5. Secret handling (Demo 10)
+
+### 5.1 Scenario
+
+Many real-world agents must collect sensitive credentials mid-conversation — API keys, OAuth tokens, passwords — and forward them to a downstream service. The naive pattern is to ask the user to paste the credential into the chat, which places the plaintext into the model's message history, into any proxy or observability layer, and into every log that touches the conversation. Demo 10 tests whether a framework can collect and use credentials without the plaintext ever entering the LLM transcript.
+
+### 5.2 Test variants
+
+The benchmark runs two complementary variants to probe both collection and echo paths.
+
+**`collect` variant.** The agent asks the user for credentials; the user pastes them. In Colmena, the `secure_suspend` primitive intercepts each credential at collection time, encrypts it with AES, and returns an opaque handle of the form `<sv_*>` to the model. The plaintext never appears in the LLM message history. When the downstream API call is made, Colmena's executor resolves the handle and injects the real value into the HTTP request automatically. Every competitor places the pasted credential directly into the message history — the secret is visible in the transcript from the moment the user sends it.
+
+**`echo` variant.** A downstream tool echoes the secret back in its response (simulating a misconfigured service that returns credentials in its reply). Colmena's `dag_tool_executor` applies a re-masking pass before the tool result re-enters the model context, replacing the plaintext with the opaque handle. For competitors this variant is largely moot — they already leaked the secret during `collect` — but the variant confirms that Colmena holds even when a tool actively tries to surface the value.
+
+### 5.3 Leak-rate results
+
+"Leak" is defined as: the plaintext secret appears anywhere in the LLM-visible transcript (user message, assistant message, or tool result). Lower is better.
+
+| Framework  | variant=collect | variant=echo |
+|------------|-----------------|--------------|
+| **colmena**| **0%** (0/3)    | **0%** (0/3) |
+| langgraph  | 100% (3/3)      | 100% (3/3)   |
+| crewai     | 100% (3/3)      | 100% (3/3)   |
+| langchain  | 100% (3/3)      | 100% (3/3)   |
+| llamaindex | 100% (3/3)      | 100% (3/3)   |
+| google_adk | 100% (3/3)      | 100% (3/3)   |
+
+Results span 36 cells (6 frameworks × 2 variants × 3 seeds) with 0 errors. The outcome is binary — either the plaintext appears in the transcript or it does not — and is unambiguous across all runs.
+
+### 5.4 Why it is not luck — capability comparison
+
+The result follows directly from capabilities that Colmena provides at the engine layer and that every competitor must hand-roll:
+
+| Capability | Colmena | Competitors |
+|---|---|---|
+| Encrypted collection (AES) | ✓ native (`secure_suspend`) | ✗ hand-rolled |
+| Opaque handle to the LLM (`<sv_*>`) | ✓ | ✗ (plaintext in history) |
+| Auto-inject real value into the downstream call | ✓ | ✗ manual |
+| Re-mask if a tool echoes the secret | ✓ | ✗ |
+
+None of these capabilities require application-level code from the developer; they are active by default in Colmena's execution engine.
+
+### 5.5 Honesty notes
+
+**Scale.** This is a capability/counterfactual benchmark at modest scale (n=3 per cell, 36 cells total). It is not a large statistical sweep. Because the result is a hard binary — plaintext present or absent — scale does not change the conclusion, but readers should treat it as a proof-of-capability demonstration rather than a high-powered significance study.
+
+**Fairness guard — Colmena still delivers.** `delivered_to_api = true` for all Colmena runs: the real secret is correctly injected into the downstream HTTP call in every case. Colmena achieves zero leakage not by refusing to function but by routing the plaintext through an encrypted side-channel. Competitors are not penalized for "not working"; they work correctly, they simply expose the secret in the LLM transcript in the process. That is the fair comparison.
+
+**LangGraph nuance.** LangGraph has a genuine durable human-in-the-loop primitive (`interrupt()`) that Colmena's `secure_suspend` conceptually resembles. The distinction is scope: keeping the secret out of the persisted state, encrypting it, auto-injecting it into downstream calls, and re-masking tool echoes are all still hand-rolled in LangGraph. Colmena makes the entire chain the default, not an exercise left to the developer.
 
 <!-- ART-5 -->
 ## 6. Production hardening as config (Demo 06)
