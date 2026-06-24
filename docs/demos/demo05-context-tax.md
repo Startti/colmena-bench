@@ -45,7 +45,7 @@ while the competitors are stable ~385k–452k. The gap is consistently **≥6×*
 
 | Framework | ver | total input tok (mean±std) | turn-10 tok | USD (10 turns) |
 |---|---|--:|--:|--:|
-| **colmena** | 0.4.0 | **37,619 ± 5,603** | **1,927** | **$0.0184** |
+| **colmena** | 0.4.0 | **39,085 ± 9,326** | **2,296** | **$0.018** |
 | langgraph | 1.2.4 | 404,095 ± 23,121 | 71,181 | $0.1255 |
 | llamaindex | 0.14.22 | 419,934 ± 34,873 | 71,225 | $0.1306 |
 | google_adk | 2.2.0 | 445,370 ± 11,614 | 71,395 | $0.1390 |
@@ -53,10 +53,10 @@ while the competitors are stable ~385k–452k. The gap is consistently **≥6×*
 | crewai | 1.14.6 | 452,358 ± 285 | 71,202 | $0.1420 |
 
 **Headline (Colmena vs competitor median ~448k / ~71.2k):**
-- **~12×** fewer total input tokens (Colmena's wider ±std is the model choosing
+- **~10–12×** fewer total input tokens (Colmena's wider ±std is the model choosing
   per turn whether to re-read the doc; competitors are near-deterministic)
-- **~37×** lower at turn 10 alone — the gap widens with every turn
-- **~7.6×** lower USD
+- **~31×** lower at turn 10 alone — the gap widens with every turn
+- **~7–8×** lower USD (7.0× vs the cheapest competitor, LangGraph)
 
 Per-turn cumulative curve: see `plots/2_line_cumulative.png` (Colmena flat with a
 ±std band; the five competitors climb). Per-turn CSV: `agg_n12_per_turn.csv`.
