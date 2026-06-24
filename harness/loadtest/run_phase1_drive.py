@@ -20,8 +20,10 @@ from harness.loadtest.sampler import ResourceSampler
 COLMENA_REPO = os.environ.get("COLMENA_REPO", "/Users/danielgarcia/startti/colmena")
 COLMENA_BIN = os.environ.get(
     "COLMENA_DAG_ENGINE_BIN", f"{COLMENA_REPO}/target/release/dag_engine")
-LANGGRAPH_DIR = "runners/langgraph"
-LANGGRAPH_PY = f"{LANGGRAPH_DIR}/.venv/bin/python"
+# Anchor to the repo root (two dirs up from this file: harness/loadtest/run_phase1_drive.py)
+_REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+LANGGRAPH_DIR = str(_REPO_ROOT / "runners" / "langgraph")
+LANGGRAPH_PY = str(_REPO_ROOT / "runners" / "langgraph" / ".venv" / "bin" / "python")
 
 
 def _wait_health(url: str, timeout_s: float = 30.0) -> bool:
