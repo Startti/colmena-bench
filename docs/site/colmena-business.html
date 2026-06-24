@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colmena — leaner, safer AI agents</title>
+<style>
+  :root{
+    --ink:#1f2421; --muted:#5f5e5a; --line:#e6e3da; --bg:#ffffff; --surf:#f7f6f2;
+    --green:#1d9e75; --green-d:#0f6e56; --green-l:#e1f5ee;
+    --gray:#b4b2a9; --red:#d8453f; --red-l:#fbeae9; --amber:#ba7517;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6;font-size:17px}
+  .wrap{max-width:980px;margin:0 auto;padding:0 24px}
+  header.hero{padding:64px 0 36px;border-bottom:1px solid var(--line)}
+  .kicker{display:inline-flex;align-items:center;gap:8px;font-size:13px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--green-d);font-weight:600}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--green)}
+  h1{font-size:clamp(30px,5vw,46px);line-height:1.12;margin:18px 0 14px;font-weight:650;letter-spacing:-.01em}
+  h1 .hl{color:var(--green-d)}
+  .lede{font-size:19px;color:var(--muted);max-width:680px;margin:0}
+  section{padding:46px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber);
+    font-weight:600;margin:0 0 6px}
+  h3{font-size:25px;font-weight:600;margin:0 0 12px;letter-spacing:-.01em}
+  p{margin:0 0 14px}
+  .muted{color:var(--muted)}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:34px 0 4px}
+  .stat{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .stat .big{font-size:42px;font-weight:680;letter-spacing:-.02em;line-height:1;color:var(--green-d)}
+  .stat .lbl{font-size:14px;color:var(--muted);margin-top:10px}
+  .grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:34px;align-items:center}
+  .card{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:22px}
+  figure{margin:0}
+  .cap{font-size:13px;color:var(--muted);margin-top:10px}
+  .bars{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+  .barrow{display:grid;grid-template-columns:96px 1fr 84px;align-items:center;gap:12px;font-size:14px}
+  .track{height:18px;background:#efece4;border-radius:5px;overflow:hidden}
+  .fill{height:100%;border-radius:5px}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--muted);margin-top:14px}
+  .lg{display:inline-flex;align-items:center;gap:7px}
+  .sw{width:14px;height:4px;border-radius:2px;display:inline-block}
+  .caps{display:grid;grid-template-columns:1.4fr repeat(2,1fr);gap:0;border:1px solid var(--line);
+    border-radius:12px;overflow:hidden;font-size:15px}
+  .caps>div{padding:12px 14px;border-bottom:1px solid var(--line)}
+  .caps .hd{background:var(--surf);font-weight:600;font-size:13px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.04em}
+  .native{color:var(--green-d);font-weight:600}
+  .diy{color:var(--muted)}
+  .pill{display:inline-block;font-size:12px;font-weight:600;padding:3px 9px;border-radius:20px}
+  .pill.g{background:var(--green-l);color:var(--green-d)}
+  .pill.r{background:var(--red-l);color:#9a2b27}
+  .trust{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .trust .t{padding:18px;border:1px solid var(--line);border-radius:12px}
+  .trust .t b{display:block;margin-bottom:6px}
+  .note{background:#fbf6ea;border:1px solid #f0e2c0;border-radius:12px;padding:18px 20px;color:#6a4e12;font-size:15px}
+  .cta{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:18px}
+  .btn{display:inline-block;padding:12px 22px;border-radius:10px;font-weight:600;text-decoration:none;font-size:15px}
+  .btn.primary{background:var(--green-d);color:#fff}
+  .btn.ghost{border:1px solid var(--line);color:var(--ink)}
+  footer{padding:28px 0 56px;color:var(--muted);font-size:13px}
+  svg{display:block;width:100%;height:auto}
+  @media(max-width:760px){.stats{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}
+    .trust{grid-template-columns:1fr}.caps{font-size:13px}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <span class="kicker"><span class="dot"></span> Colmena · agent-framework benchmark</span>
+  <h1>Run AI agents for <span class="hl">a fraction of the cost</span><br>— with credentials the model never sees.</h1>
+  <p class="lede">An independent, provider-authoritative benchmark against five mainstream agent
+  frameworks. Same model, same tasks, same proxy. Here is where Colmena measurably wins —
+  and, honestly, where it doesn't.</p>
+</div></header>
+
+<section><div class="wrap">
+  <div class="stats">
+    <div class="stat"><div class="big">10–12×</div><div class="lbl">fewer input tokens over a 10-turn conversation</div></div>
+    <div class="stat"><div class="big">~7–8×</div><div class="lbl">lower cost for the same work, same model</div></div>
+    <div class="stat"><div class="big">0%</div><div class="lbl">credential leakage vs 100% for every competitor tested</div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>The cost problem</h2>
+  <h3>Every turn, other frameworks re-pay for the whole conversation</h3>
+  <div class="grid2">
+    <figure>
+      <svg viewBox="0 0 800 420" role="img" aria-label="Cumulative input tokens per turn: five frameworks climb to 404,000-452,000 by turn 10 while Colmena stays near 39,000.">
+        <line x1="70" y1="20" x2="70" y2="370" stroke="#d8d5cc"/>
+        <line x1="70" y1="370" x2="770" y2="370" stroke="#d8d5cc"/>
+        <g font-size="12" fill="#8a887f" font-family="sans-serif">
+          <text x="62" y="374" text-anchor="end">0</text>
+          <text x="62" y="297" text-anchor="end">100k</text>
+          <text x="62" y="221" text-anchor="end">200k</text>
+          <text x="62" y="145" text-anchor="end">300k</text>
+          <text x="62" y="69" text-anchor="end">400k</text>
+          <line x1="70" y1="293.9" x2="770" y2="293.9" stroke="#efece4"/>
+          <line x1="70" y1="217.8" x2="770" y2="217.8" stroke="#efece4"/>
+          <line x1="70" y1="141.7" x2="770" y2="141.7" stroke="#efece4"/>
+          <line x1="70" y1="65.7" x2="770" y2="65.7" stroke="#efece4"/>
+          <text x="70" y="392" text-anchor="middle">turn 1</text>
+          <text x="770" y="392" text-anchor="middle">turn 10</text>
+        </g>
+        <polyline fill="none" stroke="#c9c6bd" stroke-width="2.5" points="70.0,367.5 147.8,364.6 225.6,361.8 303.3,350.6 381.1,340.6 458.9,282.0 536.7,245.0 614.4,207.9 692.2,116.7 770.0,62.5"/>
+        <polyline fill="none" stroke="#c9c6bd" stroke-width="2.5" points="70.0,367.4 147.8,364.6 225.6,351.7 303.3,340.3 381.1,328.8 458.9,270.2 536.7,233.2 614.4,196.1 692.2,104.7 770.0,50.5"/>
+        <polyline fill="none" stroke="#c9c6bd" stroke-width="2.5" points="70.0,367.5 147.8,364.5 225.6,349.9 303.3,328.6 381.1,308.6 458.9,251.4 536.7,214.2 614.4,177.0 692.2,85.5 770.0,31.1"/>
+        <polyline fill="none" stroke="#c9c6bd" stroke-width="2.5" points="70.0,367.4 147.8,364.7 225.6,342.0 303.3,322.1 381.1,302.2 458.9,245.3 536.7,208.3 614.4,171.3 692.2,80.1 770.0,26.0"/>
+        <polyline fill="none" stroke="#c9c6bd" stroke-width="2.5" points="70.0,367.4 147.8,364.7 225.6,342.0 303.3,322.1 381.1,302.2 458.9,245.3 536.7,208.3 614.4,171.3 692.2,80.0 770.0,25.8"/>
+        <polyline fill="none" stroke="#1d9e75" stroke-width="4" points="70.0,366.3 147.8,363.2 225.6,360.5 303.3,357.2 381.1,355.8 458.9,351.8 536.7,349.6 614.4,345.2 692.2,342.0 770.0,340.3"/>
+        <circle cx="770" cy="340.3" r="4.5" fill="#1d9e75"/>
+        <text x="715" y="332" font-size="13" font-weight="600" fill="#0f6e56" font-family="sans-serif">Colmena 39k</text>
+        <text x="763" y="48" font-size="13" font-weight="600" fill="#8a887f" text-anchor="end" font-family="sans-serif">others 404k–452k</text>
+      </svg>
+      <div class="cap">Cumulative input tokens, mean of N=12 runs. The gap compounds with every turn.</div>
+    </figure>
+    <div>
+      <p>Mainstream frameworks resend the entire growing conversation — and every large tool
+      output — on each turn. Colmena keeps context lean by design: documents and bulky tool
+      results are managed by the engine, not pinned into history.</p>
+      <p class="muted">A 10-turn session costs about <b style="color:var(--green-d)">$0.018</b>
+      instead of <b>$0.13–$0.14</b> — same model, same answers. The longer the conversation,
+      the wider the gap.</p>
+      <div class="bars">
+        <div class="barrow"><span>Colmena</span><div class="track"><div class="fill" style="width:13%;background:#1d9e75"></div></div><span>$0.018</span></div>
+        <div class="barrow"><span class="muted">LangGraph</span><div class="track"><div class="fill" style="width:88%;background:#c9c6bd"></div></div><span class="muted">$0.126</span></div>
+        <div class="barrow"><span class="muted">CrewAI</span><div class="track"><div class="fill" style="width:100%;background:#c9c6bd"></div></div><span class="muted">$0.142</span></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>The trust problem</h2>
+  <h3>Customer credentials should never reach the model</h3>
+  <div class="grid2">
+    <div>
+      <p>When an agent collects an API key or password mid-conversation, every framework we
+      tested — using its normal, recommended pattern — placed that secret straight into the
+      model's transcript. Colmena encrypts it to an opaque handle and injects the real value
+      only into the outbound call.</p>
+      <p class="muted">Tested across two scenarios (collecting the secret, and a tool echoing
+      it back), three seeds each. Colmena still delivers the real credential to the API — it
+      just never exposes it to the model.</p>
+      <div class="note" style="margin-top:8px">Separately: 2 of the 5 popular frameworks will
+      run AI-written code with no sandbox by default. Colmena blocks it out of the box.</div>
+    </div>
+    <figure>
+      <svg viewBox="0 0 460 300" role="img" aria-label="Secret reaches the model: Colmena 0 percent, all five competitors 100 percent.">
+        <g font-size="13" fill="#8a887f" font-family="sans-serif">
+          <text x="40" y="40" text-anchor="end">100%</text>
+          <text x="40" y="150" text-anchor="end">50%</text>
+          <text x="40" y="258" text-anchor="end">0%</text>
+        </g>
+        <line x1="48" y1="34" x2="450" y2="34" stroke="#efece4"/>
+        <line x1="48" y1="144" x2="450" y2="144" stroke="#efece4"/>
+        <line x1="48" y1="254" x2="450" y2="254" stroke="#d8d5cc"/>
+        <rect x="70" y="250" width="44" height="4" rx="2" fill="#1d9e75"/>
+        <text x="92" y="272" font-size="12" text-anchor="middle" fill="#0f6e56" font-weight="600" font-family="sans-serif">Colmena</text>
+        <text x="92" y="242" font-size="13" text-anchor="middle" fill="#0f6e56" font-weight="600" font-family="sans-serif">0%</text>
+        <g fill="#d8453f">
+          <rect x="150" y="34" width="44" height="220" rx="4"/>
+          <rect x="216" y="34" width="44" height="220" rx="4"/>
+          <rect x="282" y="34" width="44" height="220" rx="4"/>
+          <rect x="348" y="34" width="44" height="220" rx="4"/>
+        </g>
+        <g font-size="13" text-anchor="middle" fill="#9a2b27" font-weight="600" font-family="sans-serif">
+          <text x="172" y="26">100%</text><text x="238" y="26">100%</text>
+          <text x="304" y="26">100%</text><text x="370" y="26">100%</text>
+        </g>
+        <g font-size="11.5" text-anchor="middle" fill="#8a887f" font-family="sans-serif">
+          <text x="172" y="272">LangGraph</text><text x="238" y="272">CrewAI</text>
+          <text x="304" y="272">LangChain</text><text x="370" y="272">+ 2 more</text>
+        </g>
+      </svg>
+      <div class="cap">Fraction of runs where the secret entered the model transcript — lower is better.</div>
+    </figure>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>The maintenance problem</h2>
+  <h3>Production safety as configuration, not code you maintain</h3>
+  <p class="muted" style="max-width:720px">The controls a production agent needs — human
+  approval steps, automatic retries, secret masking — are built-in configuration in Colmena.
+  In the others they are code your team writes, tests, and keeps working. (LangGraph is the
+  honest near-peer on three of four; masking is the one no competitor has natively.)</p>
+  <div class="caps" style="margin-top:18px">
+    <div class="hd">Capability</div><div class="hd">Colmena</div><div class="hd">Other frameworks</div>
+    <div>Human-in-the-loop approval</div><div class="native">built in</div><div class="diy">hand-rolled</div>
+    <div>Automatic critic / retry</div><div class="native">built in</div><div class="diy">hand-rolled</div>
+    <div>Encrypted secret masking</div><div class="native">built in</div><div class="diy">hand-rolled</div>
+    <div style="border-bottom:none">Graph control flow</div><div class="native" style="border-bottom:none">built in</div><div class="diy" style="border-bottom:none">mixed</div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Why you can trust these numbers</h2>
+  <div class="trust">
+    <div class="t"><b>Independent metering</b><span class="muted">Tokens and cost captured by a proxy between every framework and the AI provider — not self-reported.</span></div>
+    <div class="t"><b>Identical conditions</b><span class="muted">Same model, same temperature, same inputs and scripts; framework versions pinned.</span></div>
+    <div class="t"><b>Fair competitors</b><span class="muted">Each rival used in its normal, recommended way — no handicaps.</span></div>
+  </div>
+  <div class="note" style="margin-top:20px"><b>Where Colmena does not win:</b> it is not faster
+  or more parallel, and on trivial single-step agents the savings shrink. The wins are context
+  cost and built-in security — not raw speed. We publish the limitations alongside the wins.</div>
+  <div class="cta">
+    <a class="btn primary" href="../articles/colmena-whitepaper.md">Read the technical whitepaper</a>
+    <a class="btn ghost" href="colmena-poster.html">View the research poster</a>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  Colmena agent-framework benchmark · figures from a provider-authoritative run (gemini-2.5-flash,
+  temperature 0, N=12 for the context-tax measurement). Full methodology, per-demo detail, and
+  reproduction in the technical whitepaper.
+</div></footer>
+</body>
+</html>
