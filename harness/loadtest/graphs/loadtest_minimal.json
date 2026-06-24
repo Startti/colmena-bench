@@ -1,0 +1,61 @@
+{
+  "comment": "Minimal Colmena load-test DAG: webhook trigger -> llm_call with one http_request tool (run_sql). LLM base URL is controlled via OPENAI_BASE_URL env var (set to ${MOCK_BASE}/v1 at run time).",
+  "nodes": {
+    "trigger": {
+      "type": "trigger_webhook",
+      "config": {
+        "path": "/run",
+        "method": "POST",
+        "test_payload": {
+          "prompt": "How many orders are there?"
+        }
+      }
+    },
+    "agent_llm": {
+      "type": "llm_call",
+      "config": {
+        "provider": "openai",
+        "model": "gemini-2.5-flash",
+        "api_key": "sk-loadtest-mock",
+        "stream": false,
+        "temperature": 0.0,
+        "system_message": "Answer the user's question. Use the run_sql tool exactly once, then report the count.",
+        "enabled_tools": ["run_sql"],
+        "tool_configurations": {
+          "run_sql": {
+            "name": "run_sql",
+            "node_type": "http_request",
+            "description": "Run a SQL query and return rows.",
+            "node_schema": {
+              "base_url": {
+                "type": "string",
+                "fixed": "${MOCK_BASE}"
+              },
+              "endpoint": {
+                "type": "string",
+                "fixed": "/tool"
+              },
+              "method": {
+                "type": "string",
+                "fixed": "POST"
+              },
+              "body": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "required": true,
+                    "description": "SQL to execute"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "edges": [
+    { "from": "trigger", "to": "agent_llm" }
+  ]
+}
