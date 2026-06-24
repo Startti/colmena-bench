@@ -229,8 +229,53 @@ That said, **crewai's Docker container offers stronger isolation than an in-proc
 
 Where the analytical results were measured, accuracy is roughly at parity: colmena 0.975 (variants M=0.95, L=1.0; the S variant was not measured in this run), llamaindex 0.97, langchain 0.95. The lower numbers for langgraph, google_adk, and crewai (0.55–0.68) trace to transient empty model completions during those runs, not to any framework capability difference. There is no accuracy win to claim in Demo 08; the full cross-demo accuracy picture is in §9.
 
-<!-- ART-7 -->
 ## 8. Tools at scale (Demo 07)
+
+### 8.1 Scenario
+
+Real enterprise agents often expose large tool catalogs — dozens to hundreds of callable functions covering different data sources, APIs, and actions. Each Python framework tested here sends the full JSON schema for every tool in the catalog on every single LLM turn. As the catalog grows and the conversation extends across multiple turns, that cost accumulates quadratically: more tools × more turns = an ever-larger context on every request. Colmena's `lazy_tool_loading` changes the default: the engine sends the model a compact catalog (names and one-line summaries) and fetches a tool's full schema only when the model signals intent to call it. A second, independent mechanism — conversation-memory compaction — trims the growing message history by replacing earlier turns with a compressed summary. Demo 07 isolates the contribution of each mechanism.
+
+### 8.2 Single-turn isolation: lazy loading alone
+
+Because a single-turn probe has no accumulated conversation history, any gap here is attributable entirely to the lazy-loading mechanism, not to compaction. The probe runs the same task (tool selection from a catalog of varying size) at tool counts ranging from a handful to 200, with no prior turns in the session.
+
+![Input tokens vs number of tools (log scale), single-turn hard probe](assets/d07_tokens_vs_tools.png)
+
+*At 200 tools, colmena-lazy uses 22,190 input tokens versus 44,722–103,539 for competitors (2.0–4.7×); colmena-eager sits in the competitor pack, confirming the gap is the lazy-loading mechanism, not any other Colmena property.*
+
+The critical honest detail here is **colmena-eager**. When lazy loading is disabled and Colmena sends every schema in full — exactly as competitors do — its token count lands squarely in the competitor band. The two-to-five-fold spread among competitors at 200 tools reflects how verbose each framework's default schema serialization is, not a correctness difference. Colmena-lazy pulls away from all of them because the schemas for tools the model never touches in that turn are simply not sent. The gap grows with tool count because each additional unused schema is a constant per-tool overhead that lazy loading avoids entirely; the relationship is log-linear as plotted.
+
+### 8.3 Multi-turn result: lazy loading + compaction together
+
+Over a 10-turn session with a 30-tool catalog, both mechanisms are in play. Cumulative input tokens at the final turn:
+
+| Framework | Cumulative input tokens (turn 10) |
+|---|--:|
+| **colmena-lazy** | **66,808** |
+| colmena-eager | 74,337 |
+| LangGraph | 111,135 |
+| LlamaIndex | 111,843 |
+| CrewAI | 120,274 |
+| Google ADK | 121,507 |
+| LangChain | 125,305 |
+
+![Cumulative input tokens over a 10-turn session (lazy vs eager vs competitors)](assets/d07_session_cum.png)
+
+*Colmena-lazy accumulates 66,808 tokens over 10 turns versus 111,135–125,305 for competitors (≈1.7–1.9×), at identical tool-selection accuracy (1.00) across all configurations and all turns.*
+
+### 8.4 What is driving the multi-turn number — honest attribution
+
+The headline 1.7–1.9× multi-turn advantage deserves careful disaggregation, because most of it does **not** come from lazy loading.
+
+In the multi-turn setting, Colmena's conversation-memory compaction is active for both colmena-lazy and colmena-eager. Both configurations compress growing history; both hold a large cost advantage over the five Python competitors, which accumulate history verbatim. That shared compaction benefit is what produces the majority of the ~1.6–1.7× advantage that colmena-eager already shows over competitors without lazy loading doing any additional work.
+
+The lazy-loading increment over eager is modest at 30 tools: 74,337 (eager) vs 66,808 (lazy), approximately **1.11×**. That increment grows as tool count increases — which is exactly what the single-turn probe in §8.2 isolates cleanly. At 200 tools on a single turn, lazy loading produces a 2.0–4.7× advantage over competitors on its own; the multi-turn experiment uses 30 tools, so the lazy-specific contribution is smaller.
+
+The accurate summary is: **compaction is what drives the multi-turn headline number; lazy loading is the clean differentiator in high-tool-count regimes and grows in value as catalogs scale.** Both mechanisms are active by default; neither requires application-level code from the developer. A Python framework developer who wanted comparable behavior would need to implement both a history-compaction strategy and a schema-dispatch layer independently.
+
+### 8.5 No accuracy cost
+
+Tool-selection accuracy is 1.00 at the final session turn across all six frameworks, and 1.00 on the 200-tool single-turn probe for all configurations including colmena-lazy. There is no accuracy win here — the win is cost only. The full cross-demo accuracy picture, including where Colmena does and does not have an edge, is in §9.
 
 <!-- ART-8 -->
 ## 9. What Colmena does NOT win
