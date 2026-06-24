@@ -13,6 +13,8 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import time
+import uuid
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -24,11 +26,11 @@ _TOOL_RESULT = "1000"
 _FINAL_TEXT = "There are 1000 orders."
 
 
-def _tool_call_response(model: str) -> dict[str, Any]:
+def _tool_call_response(model: str, call_id: str, created: int) -> dict[str, Any]:
     return {
         "id": "chatcmpl-mock-tool",
         "object": "chat.completion",
-        "created": 0,
+        "created": created,
         "model": model,
         "choices": [{
             "index": 0,
@@ -37,7 +39,7 @@ def _tool_call_response(model: str) -> dict[str, Any]:
                 "role": "assistant",
                 "content": None,
                 "tool_calls": [{
-                    "id": "call_mock_1",
+                    "id": call_id,
                     "type": "function",
                     "function": {
                         "name": _TOOL_NAME,
@@ -50,11 +52,11 @@ def _tool_call_response(model: str) -> dict[str, Any]:
     }
 
 
-def _final_response(model: str) -> dict[str, Any]:
+def _final_response(model: str, created: int) -> dict[str, Any]:
     return {
         "id": "chatcmpl-mock-final",
         "object": "chat.completion",
-        "created": 0,
+        "created": created,
         "model": model,
         "choices": [{
             "index": 0,
@@ -77,12 +79,17 @@ def build_app(delay_ms: int = 0) -> FastAPI:
         messages = body.get("messages", [])
         model = body.get("model", "mock")
         has_tool_result = any(m.get("role") == "tool" for m in messages)
-        payload = _final_response(model) if has_tool_result else _tool_call_response(model)
+        created = int(time.time())
+        if has_tool_result:
+            payload = _final_response(model, created)
+        else:
+            call_id = f"call_{uuid.uuid4().hex[:12]}"
+            payload = _tool_call_response(model, call_id, created)
         return JSONResponse(payload)
 
     @app.post("/tool")
     async def tool(request: Request) -> JSONResponse:
-        # Trivial workload tool — constant, instant. (DB variant is Phase 2.)
+        # body intentionally ignored — constant-return stub
         return JSONResponse({"result": _TOOL_RESULT})
 
     @app.get("/health")
