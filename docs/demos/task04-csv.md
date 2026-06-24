@@ -19,8 +19,8 @@ L=50k rows), two ways:
 
 | Strategy | Variant | tok in | tok out | USD | accuracy |
 |---|---|--:|--:|--:|--:|
-| **expert** | S | ~51k | ~5k | $0.028 | **97–100%** |
-| **expert** | M | ~51k | ~5k | $0.028 | **90–100%** |
+| **expert** | S | ~37–79k | ~5k | $0.021–0.035 | **97–100%** |
+| **expert** | M | ~37–79k | ~5k | $0.021–0.038 | **93–100%** |
 | **expert** | L | ~52k | ~5k | $0.027 | **92–100%** |
 | **naive** | S | 33.6k | 53k | $0.14 | **22–25%** |
 | **naive** | M | 330k | 64k | $0.26 | **0–20%** |
@@ -59,13 +59,23 @@ mildly *advantaged* on prompting, not disadvantaged.
 
 ---
 
-## 3. Clarification — why Colmena expert scores 88–92%, not ~100%
+## 3. Clarification — why Colmena expert scores 93–97%, not ~100%
 
-The 5 Python frameworks land at ~100% on the expert task; Colmena lands at **88–92%**.
+The 5 Python frameworks land at ~100% on the expert task; on the current
+**develop@14beaba9** build Colmena lands at **93–97%** (S=96.7%, M=93.3%, L=96.7%).
 We investigated this thoroughly. **It is not a bug, not the bench handler, and not a
-prompt gap** — it is a *characterized, deliberate Colmena behavior*.
+prompt gap** — it is a *characterized, deliberate Colmena context-economy behavior*, the
+same one that wins Demo 05.
 
-**What we measured** (instrumented run logging every SQL query + result):
+> **Build note.** An earlier build using a fixed 180-char-per-line rolling summary scored
+> **88–92%** here. The develop@14beaba9 rebuild replaced that with an at-load
+> semantic-summary compaction, which **raised expert accuracy to 93–97%** while keeping the
+> same flat-token profile that wins Demo 05. The residual ~3–7-point gap to competitors'
+> ~100% is smaller than before but real. The detailed mechanism below characterizes the
+> earlier 180-char build; the current build mitigates — but does not fully close — the same
+> truncation effect on large mid-conversation tool tables.
+
+**What we measured on the earlier build** (instrumented run logging every SQL query + result):
 1. Colmena runs **all 20 correct queries** (incl. the per-month `GROUP BY` for Q16 and
    per-country `GROUP BY` for Q15).
 2. The tool **returns the full, correct rows** every time.
@@ -99,10 +109,10 @@ precision (the truncated line looks plausible), so it doesn't.
 ## 4. Why this clarification matters for the pitch
 
 **This is the same mechanism that wins Demo 05.** Colmena's flat-token "context tax"
-advantage (~12× cheaper on long conversations) comes from exactly this aggressive
+advantage (~10–12× cheaper on long conversations) comes from exactly this aggressive
 context compaction. Task 4 expert exposes the *other side of the same coin*:
 
-| | Demo 05 (Colmena wins) | Task 4 expert (Colmena 88–92%) |
+| | Demo 05 (Colmena wins) | Task 4 expert (Colmena 93–97%) |
 |---|---|---|
 | Mechanism | rolling summary + ephemeral attachments | **the same rolling summary** |
 | Effect | flat tokens, ~12× cheaper | large mid-conversation tool tables get truncated |
@@ -111,12 +121,12 @@ So the honest one-liner is: **Colmena defaults to context economy.** On a
 transcription-heavy workload that re-reads large mid-conversation tool dumps, that
 default costs a few points of accuracy; the same default is what makes long agent
 conversations dramatically cheaper. It is tunable (`KEEP_RECENT` / `LINE_MAX_CHARS`)
-and recoverable (`recall_history`), but out of the box it is 88–92% here vs ~100% for
+and recoverable (`recall_history`), but out of the box it is 93–97% here vs ~100% for
 frameworks that re-send full history (and pay for it in tokens elsewhere).
 
 **Do not "fix" this with a Colmena-only prompt hint** — it would be unfair (the others
 don't get it) and wouldn't address the cause (the model already has the richest prompt
-and ran the right queries). The 88–92% is a real, fairly-measured Colmena
+and ran the right queries). The 93–97% is a real, fairly-measured Colmena
 characteristic.
 
 ---
