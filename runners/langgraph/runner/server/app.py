@@ -1,9 +1,12 @@
 """LangGraph warm server for the concurrency load-test.
 
 Production-style deployment: one long-running uvicorn process with a pre-built
-agent and a warm httpx client. The single tool `run_sql` POSTs to the mock's
-/tool endpoint, matching the Colmena graph's http_request tool so the work is
-identical across frameworks.
+agent and a warm httpx async client. The single tool `run_sql` POSTs to the
+mock's /tool endpoint, matching the Colmena graph's http_request tool so the
+work is identical across frameworks.
+
+Fully async: AsyncClient + async tool coroutine + ainvoke — no threadpool
+blocking, required for a fair concurrency comparison against an async server.
 """
 from __future__ import annotations
 
@@ -12,6 +15,7 @@ import os
 
 import httpx
 from fastapi import FastAPI
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.tools import StructuredTool
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
@@ -29,15 +33,16 @@ class RunRequest(BaseModel):
 
 def build_app() -> FastAPI:
     app = FastAPI()
-    # warm, shared client reused across requests
-    client = httpx.Client(base_url=_MOCK_BASE, timeout=30.0)
+    # warm, shared async client reused across requests
+    client = httpx.AsyncClient(base_url=_MOCK_BASE, timeout=30.0)
 
-    def _run_sql(query: str) -> str:
-        return client.post("/tool", json={"query": query}).json()["result"]
+    async def _run_sql(query: str) -> str:
+        r = await client.post("/tool", json={"query": query})
+        return r.json()["result"]
 
     args_model = create_model("run_sql_Args", query=(str, ...))
     tool = StructuredTool.from_function(
-        func=_run_sql, name="run_sql",
+        coroutine=_run_sql, name="run_sql",
         description="Run a SQL query and return rows.", args_schema=args_model)
 
     llm = ChatOpenAI(
@@ -46,9 +51,8 @@ def build_app() -> FastAPI:
     agent = create_react_agent(llm, [tool])
 
     @app.post("/run")
-    def run(req: RunRequest) -> dict:
-        from langchain_core.messages import HumanMessage, SystemMessage
-        out = agent.invoke({"messages": [SystemMessage(_SYSTEM), HumanMessage(req.prompt)]})
+    async def run(req: RunRequest) -> dict:
+        out = await agent.ainvoke({"messages": [SystemMessage(_SYSTEM), HumanMessage(req.prompt)]})
         last = out["messages"][-1]
         return {"answer": getattr(last, "content", str(last))}
 
