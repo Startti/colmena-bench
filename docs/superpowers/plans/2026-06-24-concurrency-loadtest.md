@@ -1071,8 +1071,13 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
 
     # --- Colmena Serve ---
+    # NOTE (from Task 5 schema verification): the llm_call's base URL is NOT a
+    # graph JSON key — the engine reads it from OPENAI_BASE_URL
+    # (llm_provider_factory.rs). So we MUST set it on the subprocess env here.
     cenv = dict(os.environ)
     cenv["DATABASE_URL"] = os.environ.get("COLMENA_DATABASE_URL", "")
+    cenv["OPENAI_BASE_URL"] = f"{a.mock_base}/v1"
+    cenv["OPENAI_API_KEY"] = "sk-loadtest-mock"
     colmena = subprocess.Popen(
         [COLMENA_BIN, "serve", "/tmp/loadtest_minimal.rendered.json",
          "--host", "127.0.0.1", "--port", str(a.colmena_port)],
