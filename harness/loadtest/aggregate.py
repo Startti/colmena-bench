@@ -17,10 +17,13 @@ def compute_metrics(levels: list[dict[str, Any]], idle_rss_bytes: float) -> dict
 
     throughput_ceiling = max(l["throughput_rps"] for l in levels)
 
+    # Conservative: stop at the first level that breaches the latency budget, so a
+    # non-monotonic p95 blip at higher concurrency can't over-report useful concurrency.
     useful = levels[0]["concurrency"]
     for l in levels:
-        if l["p95_ms"] <= 2.0 * baseline_p95:
-            useful = l["concurrency"]
+        if l["p95_ms"] > 2.0 * baseline_p95:
+            break
+        useful = l["concurrency"]
 
     rss_per_session = {}
     cpu_per_request = {}
