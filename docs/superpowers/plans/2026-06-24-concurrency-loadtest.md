@@ -30,7 +30,7 @@
 - `calibrate.py` — one-time: measure real Gemini 2.5 Flash latency → `runs/demo13/calibration.json`.
 - `tests/` — `test_stub_llm.py`, `test_sampler.py`, `test_driver.py`, `test_aggregate.py`.
 
-**New Python server `runners/langgraph/server/`:**
+**New Python server `runners/langgraph/runner/server/`:** (under the existing `runner` package so it imports as `runner.server.app`)
 - `__init__.py` — empty.
 - `app.py` — FastAPI app: warm `create_react_agent` + httpx client, `POST /run`.
 
@@ -762,8 +762,8 @@ git commit -m "feat(loadtest): minimal Colmena DAG (webhook -> llm -> http tool 
 ### Task 6: LangGraph warm FastAPI server
 
 **Files:**
-- Create: `runners/langgraph/server/__init__.py`
-- Create: `runners/langgraph/server/app.py`
+- Create: `runners/langgraph/runner/server/__init__.py`
+- Create: `runners/langgraph/runner/server/app.py`
 
 A long-running FastAPI server holding a pre-built `create_react_agent` (one `run_sql` tool that POSTs to the mock `/tool`) and a warm httpx client. `POST /run` runs the agent once and returns the answer. This mirrors the production deployment we hold Colmena's `Serve` to (spec §2 fairness rule 1).
 
