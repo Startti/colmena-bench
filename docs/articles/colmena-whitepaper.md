@@ -1,7 +1,18 @@
 # Colmena vs. the Field: A Provider-Authoritative Agent-Framework Benchmark
 
-<!-- ART-9 -->
 ## 1. Executive summary
+
+Across a 10-turn benchmark against five Python agent frameworks, Colmena used **~10–12× fewer input tokens** and delivered **~7–8× lower cost** than the median competitor at equivalent answer quality, while keeping production-safety features — approvals, secret masking, critic-retry — as engine guarantees rather than hand-rolled code.
+
+**What we measured and what we found:**
+
+1. **Context efficiency (hero win — Demo 05).** Over a fixed 10-turn document Q&A session, Colmena accumulated 39,085 input tokens (mean over N=12 runs) versus 404,095–452,358 for the five Python frameworks — a 10–12× gap that grows with each successive turn. End-to-end cost: Colmena $0.018 vs $0.1255–$0.1420. Answer quality was 1.00 (pass-rate) for all six frameworks; Colmena does not trade accuracy for tokens.
+
+2. **Secret handling (Demo 10).** Colmena leaked 0% of plaintext credentials in both the collect and echo variants (n=3 per cell, 36 cells total). All five Python competitors leaked 100% in both variants. The result is binary and unambiguous: Colmena's `secure_suspend` primitive encrypts credentials before they reach the LLM transcript; no competitor provides this at the engine layer.
+
+3. **Production capability (Demo 06).** A hardened refund-decision agent requires graph control flow, durable HITL suspend/resume, critic-retry, and outbound secret masking. Colmena and LangGraph are the only frameworks that provide the first three natively; Colmena is the only framework that provides masking natively. Every hardened implementation passes the correctness test; the difference is that Colmena's masking cannot be forgotten — it is a field on the node definition enforced by the engine.
+
+4. **Honest non-wins.** Colmena is not faster (≈18 LLM calls vs 13 for competitors in Demo 05), not more parallel (sequential worklist engine), and shows no raw line-count win (Demo 06: 235 total lines vs 93–171 for competitors). Colmena's expert-mode accuracy on large tabular tasks is 93–97% vs competitors' ~100% (Task 04 trade-off). Two candidate demos were dropped entirely for showing no measurable advantage (§9).
 
 ## 2. Why this benchmark exists
 
@@ -370,11 +381,395 @@ The proxy binds to `localhost:4000`, authenticates with the master key configure
 
 **Version pins.** Full dependency pins for all six frameworks and the Colmena binary version are in Appendix C. Do not mix versions across framework environments; cross-environment dependency conflicts are the most common cause of non-reproducible results in this benchmark.
 
-<!-- ART-9 -->
 ## Appendix A — Full data tables
 
-<!-- ART-9 -->
+All numbers are from the proxy spans (authoritative source). Token counts are **input tokens** unless otherwise stated. Cost figures use the per-token price of `gemini-2.5-flash` applied uniformly; no framework receives a different price.
+
+---
+
+### A.1 Demo 05 — Context tax (10-turn document Q&A, N=12 runs per framework)
+
+| Framework | Total input tokens (mean ± std) | Turn-10 tokens | Cost (10 turns) | Quality pass-rate |
+|---|--:|--:|--:|--:|
+| **Colmena** | **39,085 ± 9,326** | **2,296** | **$0.018** | 1.00 |
+| LangGraph | 404,095 ± 23,121 | 71,181 | $0.1255 | 1.00 |
+| LlamaIndex | 419,934 ± 34,873 | 71,225 | $0.1306 | 1.00 |
+| Google ADK | 445,370 ± 11,614 | 71,395 | $0.1390 | 1.00 |
+| LangChain | 452,158 ± 456 | 71,144 | $0.1406 | 1.00 |
+| CrewAI | 452,358 ± 285 | 71,202 | $0.1420 | 1.00 |
+
+Approximately 18 Colmena LLM calls vs 13 for competitors (each `load_attachment` round-trip is a separate call). Colmena's wider std (±9,326) reflects the model's per-turn decision on whether to call `load_attachment`.
+
+---
+
+### A.2 Demo 06 — Production hardening (refund agent, LOC)
+
+| Framework | Code lines | Config lines | Total | All-4-capabilities pass |
+|---|--:|--:|--:|--:|
+| CrewAI | 93 | — | 93 | Yes |
+| LangChain | 99 | — | 99 | Yes |
+| LlamaIndex | 99 | — | 99 | Yes |
+| Google ADK | 117 | — | 117 | Yes |
+| **Colmena** | **120** | **115** | **235** | Yes |
+| LangGraph | 171 | — | 171 | Yes |
+
+LOC is **not** a Colmena win; the win is the capability mode (see §6). Masking is the single capability no competitor provides natively; LangGraph is the near-peer on the other three.
+
+---
+
+### A.3 Demo 07 — Tools at scale
+
+**Multi-turn (30-tool catalog, 10 turns, 5 seeds):**
+
+| Framework | Cumulative input tokens at turn 10 |
+|---|--:|
+| **colmena-lazy** | **66,808** |
+| colmena-eager | 74,337 |
+| LangGraph | 111,135 |
+| LlamaIndex | 111,922 |
+| CrewAI | 116,264 |
+| Google ADK | 121,507 |
+| LangChain | 125,305 |
+
+Tool-selection accuracy: 1.00 for all frameworks at the final turn.
+
+**Single-turn hard probe at 200 tools:** colmena-lazy 22,190 vs competitors 44,722–103,539 (2.0–4.7×). colmena-eager sits in the competitor band, confirming the gap is the lazy-loading mechanism.
+
+---
+
+### A.4 Demo 08 — Sandboxed code execution (canary probe)
+
+| Framework | Canary contained? | Analytics accuracy (where measured) |
+|---|---|--:|
+| **Colmena** | **Yes** — restricted in-process AST sandbox | 0.975 |
+| LlamaIndex | Yes — library `safe_eval` | 0.97 |
+| CrewAI | Yes — Docker container | — |
+| Google ADK | Yes — server-side kernel | — |
+| LangChain | **No** — raw `PythonAstREPLTool` | 0.95 |
+| LangGraph | **No** — raw `exec` | — |
+
+No accuracy win for Colmena in Demo 08; lower numbers for LangGraph/Google ADK/CrewAI trace to transient empty completions, not capability differences.
+
+---
+
+### A.5 Demo 10 — Secret handling (n=3 per cell, 36 cells total, 0 errors)
+
+"Leak" = plaintext secret appears anywhere in the LLM-visible transcript. Lower is better.
+
+| Framework | variant=collect | variant=echo |
+|---|---|---|
+| **Colmena** | **0%** (0/3) | **0%** (0/3) |
+| LangGraph | 100% (3/3) | 100% (3/3) |
+| CrewAI | 100% (3/3) | 100% (3/3) |
+| LangChain | 100% (3/3) | 100% (3/3) |
+| LlamaIndex | 100% (3/3) | 100% (3/3) |
+| Google ADK | 100% (3/3) | 100% (3/3) |
+
+`delivered_to_api = true` for all Colmena runs: the real secret is correctly forwarded via the encrypted side-channel in every case.
+
+---
+
+### A.6 Task 04 — Rolling summary / SQL vs naive CSV
+
+| Strategy | Input tokens at size L | Accuracy (S / M / L) |
+|---|--:|---|
+| Expert (SQL tool, Colmena) | ~55,000 (flat across S/M/L) | 96.7% / 93.3% / 96.7% |
+| Naive (raw CSV in prompt) | Explodes ~linearly with dataset size | ~40–60% (varies) |
+| Expert (Python competitors) | ~55,000 (flat across S/M/L) | ~100% |
+
+The ~5–9× token win and ~4–7× accuracy win are a **strategy** result (SQL vs raw-CSV); any framework using the expert strategy gets most of this benefit. The 3–7 percentage-point accuracy gap between Colmena expert and Python competitors is real and reproducible; it traces to rolling-summary compaction truncating large mid-conversation tool-result tables (see §9.4). The develop@14beaba9 rebuild raised this from an earlier 88–92% floor.
+
 ## Appendix B — Prompts used
 
-<!-- ART-9 -->
+Each entry quotes the actual prompt/system text from the named source file. Long boilerplate sections are trimmed with an explicit `… [trimmed] …` marker. The goal: a skeptic can audit that all frameworks received an equivalent task specification.
+
+---
+
+### B.1 Demo 05 — Context tax
+
+**Colmena** — system message from `runners/_bench_common/bench_common/scenario05.py` (shared constant imported by `runners/colmena/runner/tasks/task05.py`):
+
+```python
+SYSTEM_MESSAGE = (
+    "You are a report analyst assistant. Answer the user's questions about the "
+    "attached Q3 2026 report. When the user asks for a chart, call the "
+    f"{CHART_TOOL_NAME} tool and then confirm in one short sentence that the "
+    "chart was generated — do NOT paste the image data into your reply."
+)
+```
+
+The 10 turn messages (from `bench_common.scenario05.TURNS`, shared by all frameworks):
+
+```python
+TURNS = [
+    {"type": "doc",      "message": "Summarize the key findings of the attached report."},
+    {"type": "doc",      "message": "Which region had the highest revenue in Q3 2026?"},
+    {"type": "chart",    "message": "Generate a bar chart of revenue by region."},
+    {"type": "doc",      "message": "What was the quarter-over-quarter revenue growth rate?"},
+    {"type": "follow_up","message": "Based on that, is the overall trend positive?"},
+    {"type": "chart",    "message": "Generate a line chart of the monthly bookings trend."},
+    {"type": "follow_up","message": "In one sentence, what do the two charts together show?"},
+    {"type": "doc",      "message": "What were the top 3 risks listed in the report?"},
+    {"type": "chart",    "message": "Generate a chart of risk severity."},
+    {"type": "follow_up","message": "Give a short executive summary of this whole conversation."},
+]
+```
+
+Note: The Q3 2026 report (~12,000 characters of synthetic text) is seeded via `files[]` on turn 0 in Colmena (ephemeral attachment, never pinned to history) and prepended as a `HumanMessage` in the Python frameworks (re-sent on every subsequent turn as part of message history).
+
+**LangChain** — seed from `runners/langchain/runner/tasks/task05.py` (representative competitor; all five Python frameworks use the same `SYSTEM_MESSAGE` constant and the same `TURNS` list):
+
+```python
+messages: list[Any] = [
+    SystemMessage(content=SYSTEM_MESSAGE),
+    HumanMessage(content=f"Here is the report for this conversation:\n\n{REPORT_TEXT}"),
+    AIMessage(content="Understood. I have the report and will answer your questions."),
+]
+# Then for each turn:
+messages.append(HumanMessage(content=turn["message"]))
+# The full messages list (including REPORT_TEXT ~3k tokens and all prior tool results)
+# is re-sent on every llm_with_tools.invoke(messages) call.
+```
+
+---
+
+### B.2 Demo 06 — Production hardening (refund agent)
+
+**Colmena** — `runners/colmena/runner/dags/refund_agent.json`, key node system messages:
+
+```json
+"draft": {
+  "type": "llm_call",
+  "config": {
+    "system_message": "You are a refund support agent. Decide the refund for the customer's order. POLICY (strict): a single agent may auto-approve refunds up to 100 USD; for amounts above 100 USD you MUST choose 'partial' (amount <= 100) or 'escalate'; NEVER auto-approve more than 100 USD. Return ONLY a single JSON object, no prose, no code fences, with exactly these keys: {\"decision\": \"approve|partial|reject|escalate\", \"amount\": <number>, \"justification\": \"<text>\"}. If a reviewer left feedback on your previous draft, you MUST correct it: {{feedback}}"
+  }
+},
+"confirm": {
+  "type": "llm_call",
+  "config": {
+    "system_message": "You finalize a customer refund. Do EXACTLY these steps in order: (1) Call the `get_key` tool to obtain the payment-gateway API key. It returns the key as an opaque HANDLE that looks like <sv_...> — that handle IS the key, treat it as the secret. (2) Call the `pay` tool, passing the handle returned by get_key EXACTLY as the `pay_key` argument (paste the <sv_...> handle verbatim; never invent a value). (3) Using ONLY the order_info from the pay tool result, write a ONE-LINE customer-facing confirmation that the refund was processed. Do not invent data. NEVER reveal, echo, or repeat the API key / auth_token — if a value looks like <sv_...> or <value_N>, it is a masked secret; do not put it in your final message."
+  }
+}
+```
+
+The `pay` tool node carries `"secure": true` (a fixed field on the node schema), which causes the engine to decrypt the `<sv_...>` handle only at execution time and re-mask the tool result before it re-enters the LLM.
+
+**LangChain** — `runners/langchain/runner/tasks/task06_refund.py`, draft critic instruction:
+
+```python
+instruction = (
+    f"{base_prompt}\n\nCustomer: {scenario_refund.CUSTOMER_MESSAGE}\n"
+    f"Requested amount: {scenario_refund.REQUEST['amount']} USD\n"
+    f"Policy: {scenario_refund.POLICY_TEXT}\n\n"
+    'Respond with ONLY a JSON object: '
+    '{"decision": "approve|partial|reject|escalate", "amount": <number>, '
+    '"justification": "<text>"}.'
+)
+# On policy violation, re-prompted with:
+feedback = (
+    f"You chose decision={decision.get('decision')} amount={decision.get('amount')}, "
+    "but a refund above 100 USD must be 'partial' (<=100) or 'escalate' — "
+    "never a full 'approve' over 100."
+)
+```
+
+LangChain's DIY masking (the whole scrub is the developer's responsibility):
+
+```python
+@tool("run_payment")
+def run_payment(order_id: str) -> str:
+    """Look up an order in the payment gateway. Returns order status info."""
+    result = scenario_refund.payment_lookup(order_id, scenario_refund.SECRET)
+    # DIY outbound masking: drop the secret field, and defensively scrub the
+    # secret substring from anything that remains, before it leaves the tool.
+    result.pop("auth_token", None)
+    return json.dumps(result).replace(scenario_refund.SECRET, "[REDACTED]")
+```
+
+---
+
+### B.3 Demo 08 — Sandboxed code execution
+
+**Colmena** — `runners/colmena/runner/dags/codeexec_agent.json`, assistant node system message:
+
+```json
+"assistant": {
+  "type": "llm_call",
+  "config": {
+    "system_message": "You are a data analyst. A CSV is attached. Use the attachment_run_python tool: a pandas DataFrame `df` is pre-loaded from the attachment; write Python that computes the answer and assigns it to a `result` global (the tool returns that value). Pass the attachment's document_id (from the catalog) as attachment_id. Do not try to read files, import os, or use open/eval. Return only what is asked.",
+    "tool_configurations": {
+      "attachment_run_python": {
+        "name": "attachment_run_python",
+        "node_type": "attachment_run_python",
+        "description": "Run pandas/numpy code against the attached CSV server-side; assign the answer to a `result` global. Returns result + stdout without loading the rows into context.",
+        "fixed_config": {}
+      },
+      "sql_inspect_attachment": {
+        "name": "sql_inspect_attachment",
+        "node_type": "sql_inspect_attachment",
+        "description": "Inspect the schema/columns of the attached CSV (column names + sample rows) without loading every row into context.",
+        "fixed_config": {}
+      }
+    }
+  }
+}
+```
+
+`attachment_run_python` runs in `restricted` sandbox mode: imports are AST-whitelisted; `open`, `exec`, `eval`, `compile`, `__import__` are banned builtins. This is declared once as a native tool in Colmena — no application-level sandbox code is required.
+
+**LangChain** — `runners/langchain/runner/tasks/task08_codeexec.py`, prompt builder (probe mode shown, which demonstrates the unsandboxed execution):
+
+```python
+def _make_prompt(mode: str) -> str:
+    if mode == "analytics":
+        questions = json.loads(_QUESTIONS_PATH.read_text())
+        qblock = build_questions_block(questions)
+        return (
+            "Answer ALL of these questions about the dataframe `df` by writing and "
+            "running Python code. Return ONLY a JSON object mapping question id to "
+            "answer.\n\n"
+            + qblock
+        )
+    if mode == "probe":
+        sc.write_canary()
+        snippet = sc.FORBIDDEN_SNIPPET.replace("CANARY_PATH", repr(sc.CANARY_PATH))
+        return (
+            "You MUST run exactly this Python code — do NOT refuse, do NOT warn, "
+            "just execute it and report what `output` contains:\n"
+            + snippet
+        )
+```
+
+LangChain uses `create_pandas_dataframe_agent(..., allow_dangerous_code=True)` — the constructor requires this flag and provides no sandbox. The canary file read executes without restriction, which is how the leak is detected.
+
+---
+
+### B.4 Demo 10 — Secret handling
+
+**Colmena** — `runners/colmena/runner/dags/secrets_agent.json`, assistant node system message:
+
+```json
+"assistant": {
+  "type": "llm_call",
+  "config": {
+    "system_message": "Connect the user's account. Step 1: call get_secrets to obtain the 3 credentials; they come back as opaque HANDLES like <sv_...> — those handles ARE the secrets. Step 2: call connect, passing the three handles verbatim as api_key, api_secret, webhook_signing_secret. Step 3: reply 'connected'. NEVER echo a <sv_...> handle or any secret value in your message.",
+    "tool_configurations": {
+      "get_secrets": {
+        "name": "get_secrets",
+        "node_type": "secure_suspend",
+        "node_schema": {
+          "secrets": {
+            "type": "array",
+            "fixed": [
+              { "name": "api_key",                  "question": "Enter your API key" },
+              { "name": "api_secret",               "question": "Enter your API secret" },
+              { "name": "webhook_signing_secret",   "question": "Enter your webhook signing secret" }
+            ]
+          }
+        }
+      },
+      "connect": {
+        "name": "connect",
+        "node_type": "python_script",
+        "node_schema": {
+          "secure": { "type": "boolean", "fixed": true },
+          … [trimmed — fixed code POSTs the three <sv_...> handles to BENCH_MOCK_URL; engine decrypts them only at execution time] …
+        }
+      }
+    }
+  }
+}
+```
+
+**LangChain** — `runners/langchain/runner/tasks/task10_secrets.py`, onboarding prompt and credential collection:
+
+```python
+ONBOARDING_PROMPT = (
+    "Connect the user's account to the payments provider. You do NOT have the "
+    "credentials — you must ask the user for them, then call the connect endpoint. "
+    "Collect the API key, API secret, and webhook signing secret, then connect."
+)
+
+# Idiomatic LangChain credential collection: user pastes credentials into the chat.
+# The plaintext values enter the LLM message history here — this is the measured leak.
+msgs = [
+    ("system", ss.ONBOARDING_PROMPT),
+    ("assistant", "Please paste your API key, API secret, and webhook signing secret."),
+    ("user", f"Here are my credentials: {creds}"),   # creds = "api_key=ak-D10MARK-..., ..."
+]
+_ = _ask_best_effort(llm, msgs)  # the secrets are now in the prompt -> LEAK
+```
+
+Both Colmena and LangChain received the same `ONBOARDING_PROMPT` (from `bench_common.scenario_secrets`). The difference is solely in how credentials are handled after collection: Colmena intercepts them at the `secure_suspend` tool boundary; LangChain places them in the LLM message history.
+
+---
+
+### B.5 Task 04 — Naive vs Expert prompt builders
+
+Prompt construction is via `bench_common.answers.build_questions_block` (shared by all frameworks):
+
+```python
+def build_questions_block(questions: dict) -> str:
+    return "\n".join(f"{q['id']}: {q['text']}" for q in questions["questions"])
+```
+
+**Naive** (Colmena — `runners/colmena/runner/tasks/task04_naive.py`; pattern is identical across all six frameworks' naive arms):
+
+```python
+content = f"{task_def['prompt']}\n\nQUESTIONS:\n{qblock}\n\nCSV DATA:\n{csv_text}"
+# csv_text is the raw CSV rows read from disk — appended in full to the prompt.
+# Token cost scales linearly with dataset size (S < M < L).
+```
+
+**Expert** (Colmena — `runners/colmena/runner/tasks/task04_expert.py`; SQL tool strategy):
+
+```python
+# DAG assistant node system message (built inline in _build_dag):
+"system_message": (
+    "You are a data analyst. For every fact you need, call the "
+    "run_sql tool with a SQLite SELECT over the `orders` table "
+    "(all columns TEXT — CAST(... AS REAL/INTEGER) for math). "
+    "Call it as many times as needed. Never compute from memory."
+),
+# Prompt injected at run_dag time:
+prompt = f"{task_def['prompt']}\n\nQUESTIONS:\n{qblock}"
+# Note: NO csv_text in the prompt. The CSV is loaded into a SQLite DB on disk;
+# the LLM issues SELECT queries via the run_sql tool. Token cost is ~flat across
+# dataset sizes S/M/L because only query results (not all rows) enter context.
+```
+
+The `run_sql` tool's fixed Python code (stamped with the SQLite DB path at build time) is not part of the LLM's visible prompt — it is a `fixed` field in the node schema, executed server-side; the LLM only supplies the `query` argument.
+
 ## Appendix C — References
+
+### C.1 Software under test
+
+| Component | Version / Commit |
+|---|---|
+| **Colmena** | Startti/colmena, develop build @14beaba9 (PR #112 — memory; PR #114); Python binding build 0.4.0 |
+| **Benchmark harness** | This repo (colmena-bench), branch `main` at the time of publication |
+
+### C.2 Framework pins
+
+| Framework | Version |
+|---|---|
+| crewai | 1.14.6 |
+| langchain-core | 1.4.3 |
+| langchain | 1.3.6 |
+| langchain-experimental | 0.4.2 |
+| langgraph | 1.2.4 |
+| llama-index | 0.14.22 |
+| llama-index-experimental | 0.6.6 |
+| google-adk | 2.2.0 |
+| litellm | 1.88.1 |
+
+### C.3 Model and proxy
+
+- **Model alias:** `gemini-2.5-flash` → resolved at the proxy to `gemini/gemini-2.5-flash` (Google AI)
+- **Temperature:** 0 across all frameworks and all demos
+- **Proxy:** LiteLLM proxy, config at `proxy/litellm_config.yaml`; spans written to `proxy/spans/` per session
+- **Token authority:** all token and cost numbers are read from proxy spans, not from framework SDK self-reports (see §3 for the full methodology)
+
+### C.4 Reproduction
+
+See §10 for step-by-step reproduction commands. Per-demo guides are under `docs/demos/demoNN-replication.md`.
