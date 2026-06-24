@@ -277,11 +277,98 @@ The accurate summary is: **compaction is what drives the multi-turn headline num
 
 Tool-selection accuracy is 1.00 at the final session turn across all six frameworks, and 1.00 on the 200-tool single-turn probe for all configurations including colmena-lazy. There is no accuracy win here — the win is cost only. The full cross-demo accuracy picture, including where Colmena does and does not have an edge, is in §9.
 
-<!-- ART-8 -->
 ## 9. What Colmena does NOT win
 
-<!-- ART-8 -->
+This section documents every result where Colmena shows no advantage, every demo we built and then dropped, and every trade-off that accompanies a genuine win. The claims in §4 and §5 are credible precisely because this section exists.
+
+### 9.1 Lines of code is not a win
+
+![Maintained-code comparison across demos and frameworks](assets/d05_loc.png)
+
+*Maintained-code comparison: Colmena is not categorically shorter.*
+
+In Demo 05, the maintained Python wrapper is 53 lines, but the agent is also described as a ~71-line declarative JSON DAG — the real "code" cost includes both. In Demo 06 the production agent is 120 lines of code plus 115 lines of declarative config (235 lines total) against competitor totals of 93–171 lines — LangGraph at 171 is the only competitor that exceeds Colmena, and the other four Python frameworks are all shorter in raw character count.
+
+Colmena is **not** categorically fewer lines. The honest framing is "least *imperative* code you maintain, plus guarantees that the engine enforces" — but on trivial agents, even that framing softens. A single-step agent with no memory requirements, no HITL, and no secret handling can be written more concisely in any of the Python frameworks than in Colmena's DAG format. The LOC comparison becomes meaningful only when the capabilities in §5 and §6 are required; at that point the question shifts from "how many lines?" to "which lines are enforced?" Do not use this whitepaper to claim a raw line-count win.
+
+### 9.2 Not faster, not more parallel
+
+![LLM-call count by framework in Demo 05](assets/d05_calls.png)
+
+*LLM-call count: Colmena makes more round-trips, not fewer.*
+
+Colmena makes approximately **18 LLM calls** over the 10-turn Demo 05 session versus **13 for competitors**, because each `load_attachment` invocation is a separate model round-trip. Colmena is not the fastest on wall-clock time; the additional calls add latency, and the bench harness cannot report reliable wall-clock comparisons for Colmena because its runs are serialized for token attribution (see §3).
+
+Beyond Demo 05: Colmena's execution engine is a **sequential worklist**. Even tasks that are nominally marked as parallelizable are awaited in a loop — there is no concurrent fan-out. The Rust implementation buys low per-node overhead and efficient memory usage, not concurrency or throughput. If a use case requires raw parallel fan-out — many simultaneous tool calls, a scatter-gather over dozens of APIs, a map-reduce over independent subtasks — Colmena is the wrong tool. Python frameworks with native async and proper thread-pool dispatch will outperform it on that dimension.
+
+### 9.3 No per-token price advantage
+
+Every framework in this benchmark calls the same model (`gemini-2.5-flash`) through the same proxy at the same per-token price. There is no Colmena pricing tier, no batching discount, and no model substitution in play. All cost differences reported in §4 and §8 are entirely a function of how much context each framework sends — Colmena wins by sending less, never by paying less per token. A team that already manages context size carefully in a Python framework will not see a pricing-line improvement from switching.
+
+### 9.4 The context-economy trade-off (Task 04)
+
+![Expert vs naive SQL strategy: input tokens flat vs exploding as dataset grows](assets/t04_tokens_asymptote.png)
+
+*Expert/SQL strategy keeps tokens flat as the dataset grows while naive/raw-CSV explodes — a strategy win, not a Colmena-native win.*
+
+![Accuracy by framework on Task 04, largest dataset variant](assets/t04_accuracy.png)
+
+*Accuracy by framework at the largest dataset size: Colmena expert reaches ~96.7%; competitors cluster near 100%.*
+
+Task 04 is primarily a **strategy** result: querying a CSV via a SQL tool ("expert") beats stuffing raw rows into the prompt ("naive") by approximately 5–9× on tokens and 4–7× on accuracy, with expert input tokens flat at ~55k tokens across dataset sizes S, M, and L. Any framework using the expert/SQL strategy gets most of this benefit.
+
+The honest trade-off: **Colmena's expert accuracy is 93–97% (S=96.7%, M=93.3%, L=96.7%; the chart shows the largest variant ≈96.7%) versus competitors' ~100%.** The ~3–7 percentage-point residual gap is real and reproducible. Its cause is the same rolling-summary context compaction that produces the Demo 05 token win: the compaction pass can truncate a large mid-conversation tool result table before the final answer is assembled. The develop@14beaba9 rebuild raised this from an earlier 88–92% floor, so the gap has narrowed, but it has not closed.
+
+The mechanism is tunable (`KEEP_RECENT` and `recall_history` parameters govern how aggressively older tool results are compressed), and it is a known, documented trade-off, not a surprise. Teams that need 99–100% analytical recall on large tabular results should test their specific workload against these knobs before treating the Task 04 token numbers as a free lunch.
+
+### 9.5 Where the result is parity, not a win
+
+![Tool-selection accuracy parity in Demo 07](assets/d07_accuracy.png)
+
+*Tool-selection accuracy is 1.00 across all frameworks in Demo 07 — the win is cost only.*
+
+In Demo 07, every configuration — Colmena-lazy, Colmena-eager, and all five Python competitors — achieves **1.00 tool-selection accuracy** at the final session turn and on the 200-tool single-turn probe. The Demo 07 result is a cost win, not an accuracy win; claiming otherwise would be false.
+
+In Demo 08 (sandboxed code execution), analytical accuracy is also roughly at parity where measured: Colmena ≈0.975 (M=0.95, L=1.0), LlamaIndex 0.97, LangChain 0.95. The lower numbers reported for LangGraph, Google ADK, and CrewAI in that run trace to transient empty model completions, not a structural capability difference. Colmena has no accuracy edge in Demo 08 either.
+
+### 9.6 Two demos we dropped
+
+Two candidate demos were designed, built to completion, and then dropped because the naive baseline matched Colmena's output quality — and we do not ship non-wins.
+
+**(1) API-explorer demo.** The agent was given a moderately large API specification and tasked with constructing valid requests. Colmena used a schema-loading strategy to progressively pull in endpoint definitions. A naive "paste the spec into the system prompt" agent performed equally well and cost less for a small, well-known API — there was no regime where Colmena's approach was measurably better. The win would have required an API surface large enough that the naive approach exceeds the context window; we did not find that breakpoint within the models and spec sizes we tested.
+
+**(2) Deterministic-router demo.** The agent applied a stated business policy to route incoming requests across several categories, including override cases. At temperature 0 with the policy stated plainly in the system prompt, a naive single-call LLM applied the routing policy correctly 100% of the time — including all override cases — across every framework tested. Colmena's declarative rule engine showed no measurable advantage: the policy was simple enough that the LLM internalized it without a structured rule evaluator. Naming these dropped demos is part of the methodology. A benchmark that only shows winners is a marketing document; a methodology that drops non-wins is science.
+
+### 9.7 A note on the skills demo (Demo 09)
+
+A progressive-knowledge-loading demo (`load_skill`) is approximately 21× cheaper on tokens than stuffing the full knowledge corpus into the system prompt on every turn. However, it ties a properly implemented RAG/vector-retrieval pipeline on both token efficiency and accuracy — the two approaches converge when retrieval quality is good. The only remaining edge for `load_skill` is operational simplicity: no vector store to deploy, index, or maintain. That is a real engineering convenience, but it is not a measured metric win, so Demo 09 is not featured in this whitepaper's core claims.
+
 ## 10. Reproduction
+
+All results in this whitepaper are reproducible from the `colmena-bench` repository on the `main` branch. The instructions below describe the minimal path to re-run the core experiments.
+
+**Environment setup.** Run `setup_all.sh` from the repository root. This script creates per-framework Python virtual environments, installs pinned dependencies (see Appendix C for the full version manifest), and verifies that the Colmena binary is present.
+
+**Proxy.** All LLM calls must be routed through the LiteLLM proxy. Start it with:
+
+```
+proxy/start_proxy.sh
+```
+
+The proxy binds to `localhost:4000`, authenticates with the master key configured in `proxy/config.yaml`, and writes per-session span files to `proxy/spans/`. The spans are the authoritative source for all token and cost numbers in this paper.
+
+**Per-demo run scripts.** Each demo has a dedicated run script:
+
+- Demo 05 (context tax): `scripts/run_demo05.sh`
+- Demo 06 (production hardening): `scripts/run_demo06.sh`
+- Demo 07 (tools at scale): `scripts/run_demo07.sh`
+- Demo 08 (sandboxed execution): `scripts/run_demo08.sh`
+- Demo 10 (secret handling): run scripts are co-located in `runners/demo10/`
+- Task 04 (rolling summary / token asymptote): the sweep runner is documented in `docs/demos/demo04-replication.md`
+
+**Per-demo replication guides.** Each demo has a detailed replication guide under `docs/demos/demoNN-replication.md`, covering exact commands, expected outputs, evaluation scripts, and known variance sources (e.g., the Colmena serial-sweep requirement described in §3).
+
+**Version pins.** Full dependency pins for all six frameworks and the Colmena binary version are in Appendix C. Do not mix versions across framework environments; cross-environment dependency conflicts are the most common cause of non-reproducible results in this benchmark.
 
 <!-- ART-9 -->
 ## Appendix A — Full data tables
