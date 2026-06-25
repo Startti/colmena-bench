@@ -16,7 +16,7 @@ climbs turn after turn. Colmena keeps cumulative input tokens much lower through
 
 **Final result (5 seeds, provider-authoritative), cumulative input tokens after a
 10-turn / 30-tool conversation:** colmena-lazy **66.8k**, colmena-eager **74.3k**,
-competitors **111k–125k** → **Colmena uses ~1.7–1.9× fewer cumulative input tokens
+competitors **111k–125k** → **Colmena uses 1.66–1.88× fewer cumulative input tokens
 than every competitor**, at identical accuracy. The lazy-vs-eager increment is now
 **only ~1.11×** because the new compaction also benefits eager — so most of the
 framework-level win now comes from conversation-memory compaction, with lazy adding
@@ -217,7 +217,7 @@ does not 4xx even when handed all 200 full schemas.
 
 - **The framework-level win is cumulative tokens, at equal accuracy.** Across the
   full 5-seed sweep all configs hit `selection_acc` = 1.00, and Colmena (either
-  mode) lands at ~1.7–1.9× fewer cumulative input tokens than every competitor by
+  mode) lands at 1.66–1.88× fewer cumulative input tokens than every competitor by
   turn 10. Most of that gap comes from **conversation-memory compaction**, which the
   competitors do not do (they re-send the full transcript each turn).
 - **The lazy-specific increment is now small (~1.11× over eager).** Because the new

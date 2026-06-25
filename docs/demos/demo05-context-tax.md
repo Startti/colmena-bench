@@ -49,7 +49,7 @@ while the competitors are stable ~385k–452k. The gap is consistently **≥6×*
 | langgraph | 1.2.4 | 404,095 ± 23,121 | 71,181 | $0.1255 |
 | llamaindex | 0.14.22 | 419,934 ± 34,873 | 71,225 | $0.1306 |
 | google_adk | 2.2.0 | 445,370 ± 11,614 | 71,395 | $0.1390 |
-| langchain | 1.3.6 | 452,158 ± 456 | 71,144 | $0.1406 |
+| langchain | 1.3.6 | 452,158 ± 456 | 71,144 | $0.1405 |
 | crewai | 1.14.6 | 452,358 ± 285 | 71,202 | $0.1420 |
 
 **Headline (Colmena vs competitor median ~448k / ~71.2k):**
