@@ -24,7 +24,7 @@ Every run executes under identical conditions: the same model (`gemini-2.5-flash
 
 Each competitor framework was used idiomatically — its own default memory management, context-window strategy, and tool-calling conventions. No competitor was handicapped or steered toward a suboptimal pattern to make Colmena look better.
 
-Colmena does not win everywhere, and this whitepaper says so explicitly. Colmena is not faster at wall-clock time. It is not more parallel. On trivial single-step agents, the code-size advantage shrinks to near zero. Two candidate demos were dropped entirely because the naive baseline matched Colmena's output quality at comparable cost (§9, What Colmena does NOT win). We lead with these limitations because they are what make the strong claims in §4 and §5 credible.
+Colmena does not win everywhere, and this whitepaper says so explicitly — a dedicated section (§9, *What Colmena does NOT win*) enumerates every limitation, from wall-clock speed and parallelism to the two demos we dropped when the naive baseline matched Colmena at comparable cost. We lead by pointing at those limitations because they are what make the strong claims in §4 and §5 credible.
 
 ## 3. Methodology
 
@@ -192,7 +192,7 @@ LangGraph is the honest near-peer: it provides native graph control flow, durabl
 
 ### Masking counterfactual
 
-The sharpest illustration of the difference between "safe by construction" and "safe because the developer remembered" comes from a controlled counterfactual: the same agent implemented twice, once with the scrubbing code included (hardened) and once with it omitted (naive).
+Demo 10 (§5) is the dedicated, measured secret-handling result; Demo 06 adds only what is specific to a hardened production agent — the *config-vs-code* counterfactual. It is the sharpest illustration of "safe by construction" versus "safe because the developer remembered": the same agent implemented twice, once with the scrubbing code included (hardened) and once with it omitted (naive).
 
 | Variant | colmena | 5 Python competitors |
 |---|---|---|
@@ -203,13 +203,9 @@ Every hardened implementation passes: the correct refund decision is returned, n
 
 Caveat: The leak is a demonstrated counterfactual of the NAIVE variant, not a measured failure of the hardened implementations — every hardened impl passes. The difference is that competitors are safe only because the developer remembered to scrub; Colmena is safe by construction.
 
-See §5 for the dedicated secret-handling measurement.
-
 ### Lines of code — not a Colmena win
 
-The LOC count is reported for completeness and should not be read as a Colmena advantage. Colmena's hardened implementation is **120 lines of code** plus **115 lines of declarative config** (235 lines total). Python competitor totals: CrewAI 93, LangChain 99, LlamaIndex 99, Google ADK 117, LangGraph 171. Colmena is not shorter — LangGraph is the only framework with a higher total, and the Python frameworks cluster below Colmena in raw character count.
-
-The win is not fewer characters. The win is that the four production capabilities are expressed as engine-enforced config — auditable in a YAML diff, reviewable without understanding the surrounding call graph, and present or absent as a single field — rather than as imperative logic scattered across node functions that a code reviewer must trace to verify. For the full LOC discussion across all demos, see §9.
+For Demo 06 specifically, Colmena's hardened implementation is **120 lines of code plus 115 lines of declarative config** (235 total), against competitor totals of 93–171 (CrewAI 93, LangChain 99, LlamaIndex 99, Google ADK 117, LangGraph 171). Colmena is not shorter — only LangGraph exceeds it. LOC is not a Colmena advantage; the full argument is in §9.1. The point of *this* section is not character count but that the four capabilities above are expressed as engine-enforced config rather than imperative logic a reviewer must trace.
 
 ### Configuration, not code — one server, many agents
 
@@ -408,14 +404,7 @@ All numbers are from the proxy spans (authoritative source). Token counts are **
 
 ### A.1 Demo 05 — Context tax (10-turn document Q&A, N=12 runs per framework)
 
-| Framework | Total input tokens (mean ± std) | Turn-10 tokens | Cost (10 turns) | Quality pass-rate |
-|---|--:|--:|--:|--:|
-| **Colmena** | **39,085 ± 9,326** | **2,296** | **$0.018** | 1.00 |
-| LangGraph | 404,095 ± 23,121 | 71,181 | $0.1255 | 1.00 |
-| LlamaIndex | 419,934 ± 34,873 | 71,225 | $0.1306 | 1.00 |
-| Google ADK | 445,370 ± 11,614 | 71,395 | $0.1390 | 1.00 |
-| LangChain | 452,158 ± 456 | 71,144 | $0.1406 | 1.00 |
-| CrewAI | 452,358 ± 285 | 71,202 | $0.1420 | 1.00 |
+The full token/cost table is in §4.2 and is not reprinted here. The only appendix-level addition is the **quality pass-rate: 1.00 for all six frameworks** — every framework answered the fixed-rubric questions correctly, so the order-of-magnitude token savings carry no accuracy cost.
 
 Approximately 18 Colmena LLM calls vs 13 for competitors (each `load_attachment` round-trip is a separate call). Colmena's wider std (±9,326) reflects the model's per-turn decision on whether to call `load_attachment`.
 

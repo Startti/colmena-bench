@@ -124,17 +124,11 @@ does not win the per-process throughput axis."* And horizontal scaling is **not*
 advantage either — any Python agent can be wrapped in the same pattern.
 
 **The real differentiator this investigation surfaced is not throughput at all — it is the
-configuration-driven model.** The production API accepts the agent graph **as data in the
-request body** (`dag_json`), and a generic worker fleet executes whatever graph it is handed.
-In the five Python frameworks the agent is **code** (e.g. `runners/<fw>/runner/tasks/task06_refund.py`);
-in Colmena the same agent is a **document** (`runners/colmena/runner/dags/refund_agent.json`).
-The consequence: **one running server serves many agents, and you add or change an agent by
-handing it a different file — no code change, no redeploy.** This is the architectural point
-worth selling; it is covered in the whitepaper (§6, *Configuration, not code*), framed as the
-operating-model difference it is — not as a benchmarked number, and explicitly **not** as a
-line-count win. The one measured quantity from this demo that supports it is the **low
-per-instance memory footprint**, which is what makes a fleet of many durable workers cheap to
-run.
+configuration-driven model**, argued in full in the whitepaper (§6, *Configuration, not code*):
+the production API accepts the agent graph as data and a generic worker fleet runs it, so one
+server serves many agents with no per-agent redeploy. The bridge to this demo's only measured
+win: the **low per-instance memory footprint** is exactly what makes a fleet of many durable
+workers cheap to run.
 
 ---
 
