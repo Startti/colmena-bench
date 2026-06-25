@@ -209,29 +209,32 @@
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px" class="cfg2">
     <div class="card">
       <span class="pill g">Colmena — configuration</span>
-      <pre style="margin:12px 0 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.5;color:#27302b;white-space:pre-wrap;overflow:auto"><code>// refund_agent.json — the agent IS this file
+      <pre style="margin:12px 0 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.5;color:#27302b;white-space:pre-wrap;overflow:auto"><code>// agent.json — the agent IS this file
 {
   "nodes": {
-    "decide": { "type": "llm_call", ... },
-    "approval": { "type": "human_suspend" },
-    "refund": { "type": "http_request",
-                "secure": true }
+    "classify": { "type": "llm_call", ... },
+    "lookup":   { "type": "http_request" },
+    "reply":    { "type": "llm_call" }
   },
-  "edges": [ ... ]
+  "edges": [
+    { "from": "classify", "to": "lookup" },
+    { "from": "lookup",   "to": "reply" }
+  ]
 }</code></pre>
       <div class="cap">Hand this document to the running server → it runs. Change it → it changes.</div>
     </div>
     <div class="card">
       <span class="pill r">Other frameworks — code</span>
-      <pre style="margin:12px 0 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.5;color:#27302b;white-space:pre-wrap;overflow:auto"><code># task06_refund.py — the agent IS code
+      <pre style="margin:12px 0 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.5;color:#27302b;white-space:pre-wrap;overflow:auto"><code># agent.py — the agent IS code
 from langgraph.graph import StateGraph
-def decide(state): ...
-def approval(state): ...
-def refund(state): ...   # remember to mask!
+def classify(state): ...
+def lookup(state): ...
+def reply(state): ...
 g = StateGraph(...)
-g.add_node("decide", decide)
-g.add_edge("decide", "approval")
-# ...then redeploy the service</code></pre>
+g.add_node("classify", classify)
+g.add_edge("classify", "lookup")
+g.add_edge("lookup", "reply")
+# ...then rebuild & redeploy</code></pre>
       <div class="cap">Edit the program, rebuild, redeploy to ship a change.</div>
     </div>
   </div>
