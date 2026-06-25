@@ -257,6 +257,21 @@
         no sandbox by default. Colmena contains it in-process with one native tool — though
         CrewAI's Docker is stronger OS-level isolation. Analytical accuracy is at parity.</p>
       </div>
+
+      <div class="block">
+        <h2><span class="n">9</span> Architecture · agents as data</h2>
+        <h3>Configuration, not code</h3>
+        <table>
+          <tr><th></th><th>Add / change an agent</th></tr>
+          <tr><td>Colmena</td><td class="ok">POST a new JSON graph · no redeploy</td></tr>
+          <tr><td>Python frameworks</td><td class="leak">edit code · rebuild · redeploy</td></tr>
+        </table>
+        <p class="cap" style="margin-top:5mm">In production (API + worker fleet) the agent is a
+        configuration document a generic server interprets — one server serves many agents. The
+        competitors author agents in code. This is an operating-model difference, not a benchmark
+        number, and not a line-count claim; a DIY config layer over a Python framework is exactly
+        what Colmena already ships.</p>
+      </div>
     </div>
   </div>
 

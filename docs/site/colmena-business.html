@@ -65,7 +65,7 @@
   footer{padding:28px 0 56px;color:var(--muted);font-size:13px}
   svg{display:block;width:100%;height:auto}
   @media(max-width:760px){.stats{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}
-    .trust{grid-template-columns:1fr}.caps{font-size:13px}}
+    .trust{grid-template-columns:1fr}.caps{font-size:13px}.cfg2{grid-template-columns:1fr!important}}
 </style>
 </head>
 <body>
@@ -186,9 +186,9 @@
   <h2>The maintenance problem</h2>
   <h3>Production safety as configuration, not code you maintain</h3>
   <p class="muted" style="max-width:720px">The controls a production agent needs — human
-  approval steps, automatic retries, secret masking — are built-in configuration in Colmena.
-  In the others they are code your team writes, tests, and keeps working. (LangGraph is the
-  honest near-peer on three of four; masking is the one no competitor has natively.)</p>
+  approval steps, automatic retries, masking — are built-in configuration in Colmena. In the
+  others they are code your team writes, tests, and keeps working. (LangGraph is the honest
+  near-peer, matching Colmena on three of the four below.)</p>
   <div class="caps" style="margin-top:18px">
     <div class="hd">Capability</div><div class="hd">Colmena</div><div class="hd">Other frameworks</div>
     <div>Human-in-the-loop approval</div><div class="native">built in</div><div class="diy">hand-rolled</div>
@@ -196,6 +196,52 @@
     <div>Encrypted secret masking</div><div class="native">built in</div><div class="diy">hand-rolled</div>
     <div style="border-bottom:none">Graph control flow</div><div class="native" style="border-bottom:none">built in</div><div class="diy" style="border-bottom:none">mixed</div>
   </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>The deployment problem</h2>
+  <h3>An agent is a file you hand the server — not a code deploy</h3>
+  <p class="muted" style="max-width:720px">This is the sharpest architectural difference. In the
+  other frameworks an agent <i>is a program</i>: to add a new agent or change one, your engineers
+  edit code and redeploy the service. In Colmena an agent is a <b>configuration file</b> a generic
+  server runs — one platform serves many agents, and you add, version, or roll one back by handing
+  it a new file. No code change, no redeploy.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px" class="cfg2">
+    <div class="card">
+      <span class="pill g">Colmena — configuration</span>
+      <pre style="margin:12px 0 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.5;color:#27302b;white-space:pre-wrap;overflow:auto"><code>// agent.json — the agent IS this file
+{
+  "nodes": {
+    "classify": { "type": "llm_call", ... },
+    "lookup":   { "type": "http_request" },
+    "reply":    { "type": "llm_call" }
+  },
+  "edges": [
+    { "from": "classify", "to": "lookup" },
+    { "from": "lookup",   "to": "reply" }
+  ]
+}</code></pre>
+      <div class="cap">Hand this document to the running server → it runs. Change it → it changes.</div>
+    </div>
+    <div class="card">
+      <span class="pill r">Other frameworks — code</span>
+      <pre style="margin:12px 0 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.5;color:#27302b;white-space:pre-wrap;overflow:auto"><code># agent.py — the agent IS code
+from langgraph.graph import StateGraph
+def classify(state): ...
+def lookup(state): ...
+def reply(state): ...
+g = StateGraph(...)
+g.add_node("classify", classify)
+g.add_edge("classify", "lookup")
+g.add_edge("lookup", "reply")
+# ...then rebuild & redeploy</code></pre>
+      <div class="cap">Edit the program, rebuild, redeploy to ship a change.</div>
+    </div>
+  </div>
+  <div class="note" style="margin-top:18px"><b>Honest framing:</b> this is an architecture and
+  operating-model advantage, not a benchmark number, and not a "fewer lines of code" claim. Another
+  team could build a configuration layer over a Python framework — but that layer is exactly what
+  Colmena already is.</div>
 </div></section>
 
 <section><div class="wrap">

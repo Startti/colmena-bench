@@ -17,6 +17,8 @@ dependencies = [
     "pyyaml",
     "typer",
     "psutil",
+    "fastapi>=0.138.0",
+    "uvicorn>=0.49.0",
 ]
 
 [project.optional-dependencies]
