@@ -87,7 +87,7 @@ These are not one-lucky-run numbers. N=12 runs per framework; Colmena's wider st
 
 ![Total cost per framework in USD](assets/d05_usd.png)
 
-*At $0.018 for a full 10-turn session, Colmena's cost is 7–8× lower than competitors (7.0× vs the cheapest, LangGraph) — entirely from context volume, not a price-per-token advantage.*
+*At $0.018 for a full 10-turn session, Colmena's cost is 7–8× lower than competitors (about 7× vs the cheapest, LangGraph) — entirely from context volume, not a price-per-token advantage.*
 
 ### 4.3 No quality cost
 
@@ -205,7 +205,7 @@ Caveat: The leak is a demonstrated counterfactual of the NAIVE variant, not a me
 
 ### Lines of code — not a Colmena win
 
-For Demo 06 specifically, Colmena's hardened implementation is **120 lines of code plus 115 lines of declarative config** (235 total), against competitor totals of 93–171 (CrewAI 93, LangChain 99, LlamaIndex 99, Google ADK 117, LangGraph 171). Colmena is not shorter — only LangGraph exceeds it. LOC is not a Colmena advantage; the full argument is in §9.1. The point of *this* section is not character count but that the four capabilities above are expressed as engine-enforced config rather than imperative logic a reviewer must trace.
+For Demo 06 specifically, Colmena's hardened implementation is **120 lines of code plus 115 lines of declarative config** (235 total), against competitor totals of 93–171 (CrewAI 93, LangChain 99, LlamaIndex 99, Google ADK 117, LangGraph 171). Colmena is not shorter — its 235-line total is in fact the highest of the six, and even counting only imperative code its 120 lines trail just LangGraph's 171. LOC is not a Colmena advantage; the full argument is in §9.1. The point of *this* section is not character count but that the four capabilities above are expressed as engine-enforced config rather than imperative logic a reviewer must trace.
 
 ### Configuration, not code — one server, many agents
 
@@ -249,7 +249,7 @@ That said, **crewai's Docker container offers stronger isolation than an in-proc
 
 ### Analytics accuracy — no win here
 
-Where the analytical results were measured, accuracy is roughly at parity: colmena 0.975 (variants M=0.95, L=1.0; the S variant was not measured in this run), llamaindex 0.97, langchain 0.95. The lower numbers for langgraph, google_adk, and crewai (0.55–0.68) trace to transient empty model completions during those runs, not to any framework capability difference. There is no accuracy win to claim in Demo 08; the full cross-demo accuracy picture is in §9.
+Where the analytical results were measured, accuracy is roughly at parity. Reported as the **per-framework mean across measured variants**: colmena 0.975 (M=0.95, L=1.0; the S variant was not measured in this run), llamaindex 0.97, langchain 0.95. The lower per-framework means for langgraph, google_adk, and crewai (0.55–0.68) trace to transient empty model completions on individual variants — crewai in particular swings from 0.95 (S) to 0.15 (M) — not to any framework capability difference. There is no accuracy win to claim in Demo 08; the full cross-demo accuracy picture is in §9.
 
 ## 8. Tools at scale (Demo 07)
 
@@ -309,7 +309,7 @@ This section documents every result where Colmena shows no advantage, every demo
 
 *Maintained-code comparison: Colmena is not categorically shorter.*
 
-In Demo 05, the maintained Python wrapper is 53 lines, but the agent is also described as a ~71-line declarative JSON DAG — the real "code" cost includes both. In Demo 06 the production agent is 120 lines of code plus 115 lines of declarative config (235 lines total) against competitor totals of 93–171 lines — LangGraph at 171 is the only competitor that exceeds Colmena, and the other four Python frameworks are all shorter in raw character count.
+In Demo 05, the maintained Python wrapper is 53 lines, but the agent is also described as a ~71-line declarative JSON DAG — the real "code" cost includes both. In Demo 06 the production agent is 120 lines of code plus 115 lines of declarative config (235 lines total) against competitor totals of 93–171 lines. Colmena's 235-line total is the highest of all six; counting only imperative code, its 120 lines trail only LangGraph's 171 and exceed the other four Python frameworks.
 
 Colmena is **not** categorically fewer lines. The honest framing is "least *imperative* code you maintain, plus guarantees that the engine enforces" — but on trivial agents, even that framing softens. A single-step agent with no memory requirements, no HITL, and no secret handling can be written more concisely in any of the Python frameworks than in Colmena's DAG format. The LOC comparison becomes meaningful only when the capabilities in §5 and §6 are required; at that point the question shifts from "how many lines?" to "which lines are enforced?" Do not use this whitepaper to claim a raw line-count win.
 
@@ -341,7 +341,7 @@ Every framework in this benchmark calls the same model (`gemini-2.5-flash`) thro
 
 *Accuracy by framework at the largest dataset size: Colmena expert reaches ~96.7%; competitors cluster near 100%.*
 
-Task 04 is primarily a **strategy** result: querying a CSV via a SQL tool ("expert") beats stuffing raw rows into the prompt ("naive") by approximately 5–9× on tokens and 4–7× on accuracy. Expert input tokens stay roughly flat as the dataset grows (Colmena ~76k→79k across S/M/L) while the naive approach explodes (~34k→330k); across frameworks expert input ranges ~37k–79k. Any framework using the expert/SQL strategy gets most of this benefit.
+Task 04 is primarily a **strategy** result: querying a CSV via a SQL tool ("expert") beats stuffing raw rows into the prompt ("naive") by approximately 5–9× on tokens and 4–7× on accuracy. Expert input tokens stay roughly flat as the dataset grows (Colmena ~76k→79k across S/M/L) while the naive approach explodes (~34k→330k); across frameworks expert input ranges ~36k–79k. Any framework using the expert/SQL strategy gets most of this benefit.
 
 The honest trade-off: **Colmena's expert accuracy is 93–97% (S=96.7%, M=93.3%, L=96.7%; the chart shows the largest variant ≈96.7%) versus competitors' ~100%.** The ~3–7 percentage-point residual gap is real and reproducible. Its cause is the same rolling-summary context compaction that produces the Demo 05 token win: the compaction pass can truncate a large mid-conversation tool result table before the final answer is assembled. The develop@14beaba9 rebuild raised this from an earlier 88–92% floor, so the gap has narrowed, but it has not closed.
 
@@ -481,9 +481,9 @@ No accuracy win for Colmena in Demo 08; lower numbers for LangGraph/Google ADK/C
 
 | Strategy | Input tokens at size L | Accuracy (S / M / L) |
 |---|--:|---|
-| Expert (SQL tool, Colmena) | ~37k–79k by framework; ~flat across S/M/L (Colmena ~76–79k) | 96.7% / 93.3% / 96.7% |
+| Expert (SQL tool, Colmena) | ~36k–79k by framework; ~flat across S/M/L (Colmena ~76–79k) | 96.7% / 93.3% / 96.7% |
 | Naive (raw CSV in prompt) | Explodes ~linearly with dataset size (~34k→330k) | ~0–25% (S 22–25%, M 0–20%) |
-| Expert (Python competitors) | ~37k–79k by framework; ~flat across S/M/L (Colmena ~76–79k) | ~100% |
+| Expert (Python competitors) | ~36k–79k by framework; ~flat across S/M/L (Colmena ~76–79k) | ~100% |
 
 The ~5–9× token win and ~4–7× accuracy win are a **strategy** result (SQL vs raw-CSV); any framework using the expert strategy gets most of this benefit. The 3–7 percentage-point accuracy gap between Colmena expert and Python competitors is real and reproducible; it traces to rolling-summary compaction truncating large mid-conversation tool-result tables (see §9.4). The develop@14beaba9 rebuild raised this from an earlier 88–92% floor.
 
