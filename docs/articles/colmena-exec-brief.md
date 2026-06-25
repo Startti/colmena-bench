@@ -25,6 +25,8 @@ When an agent collects a customer credential — a card number, an account token
 
 The safety and control features a production agent needs — human approval steps, automatic retries, secret masking — are built-in configuration in Colmena, versus code your team writes, tests, and maintains in the others.
 
+**Change agents without shipping code.** This goes deeper than feature count. In the other frameworks an agent *is* a program — to add a new agent or change an existing one, your engineers edit code and redeploy the service. In Colmena an agent is a configuration file that one generic server runs: the same running platform serves many different agents, and you add, change, version, or roll one back by handing it a new file — no code change, no redeploy. That means faster iteration, a single platform for your whole agent portfolio, and the ability for product or operations teams to define agents against a schema rather than queuing an engineering deploy. (This is an architectural difference, not a benchmark number — and the others could build a configuration layer themselves, but that layer is exactly what Colmena already ships.)
+
 ## Why you can trust these numbers
 
 Token counts and costs were captured by an independent proxy sitting between every framework and the AI provider — not self-reported by the frameworks themselves. Every test ran under identical conditions: same AI model, same inputs, same conversation structure, with each competitor used in its normal, documented way. For full methodology, per-experiment detail, and reproduction instructions, see the [technical whitepaper](colmena-whitepaper.md).

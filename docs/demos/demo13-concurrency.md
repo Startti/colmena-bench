@@ -107,7 +107,38 @@ ever gains concurrent DAG execution, re-running this sweep is a one-command chec
 
 ---
 
-## 5. Files
+## 5. What production actually looks like — and where the real differentiator is
+
+The test above drove Colmena's **embedded single-process `serve` binary**. That is not how
+Colmena scales in production. The production deployment (the ADP platform at
+`apps/service/ia/platform`) is a **producer–consumer architecture**: a thin API
+(`POST /api/v1/executions`) validates the request, enqueues the job in Redis, and returns
+immediately; a **horizontally-scaled worker fleet** pulls jobs and runs the DAG engine,
+streaming results back over SSE. Concurrency comes from **worker count**, the queue absorbs
+spikes, and each worker running one durable graph at a time is the normal, expected shape of
+a durable-execution engine (the same model as Temporal or Celery workers).
+
+So the honest correction to §2 is: *"Colmena cannot serve concurrent load"* is **wrong** —
+it scales horizontally like any queue-and-worker system. The accurate statement is *"Colmena
+does not win the per-process throughput axis."* And horizontal scaling is **not** a Colmena
+advantage either — any Python agent can be wrapped in the same pattern.
+
+**The real differentiator this investigation surfaced is not throughput at all — it is the
+configuration-driven model.** The production API accepts the agent graph **as data in the
+request body** (`dag_json`), and a generic worker fleet executes whatever graph it is handed.
+In the five Python frameworks the agent is **code** (e.g. `runners/<fw>/runner/tasks/task06_refund.py`);
+in Colmena the same agent is a **document** (`runners/colmena/runner/dags/refund_agent.json`).
+The consequence: **one running server serves many agents, and you add or change an agent by
+handing it a different file — no code change, no redeploy.** This is the architectural point
+worth selling; it is covered in the whitepaper (§6, *Configuration, not code*), framed as the
+operating-model difference it is — not as a benchmarked number, and explicitly **not** as a
+line-count win. The one measured quantity from this demo that supports it is the **low
+per-instance memory footprint**, which is what makes a fleet of many durable workers cheap to
+run.
+
+---
+
+## 6. Files
 
 - Harness: `harness/loadtest/{stub_llm,sampler,driver,aggregate,run_phase1_drive,phase1_verdict,calibrate}.py`, `harness/loadtest/run_phase1.sh`
 - Colmena graph: `harness/loadtest/graphs/loadtest_minimal.json`
