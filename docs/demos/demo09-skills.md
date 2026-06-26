@@ -1,4 +1,4 @@
-# Demo #9 — Skills / Progressive Knowledge Loading
+# Progressive Knowledge Loading (Skills)
 
 **Hypothesis:** as a body of domain knowledge grows, Colmena's native `load_skill`
 loads only the relevant pack on demand — holding context tokens far below dumping
@@ -55,7 +55,7 @@ questions at M=50 (~18× cheaper).** `cost_at_50_bar.png`.
 We expected naive to degrade (lost-in-the-middle) and RAG to mis-retrieve at scale.
 **Neither happened at this scale/model.** gemini-2.5-flash's 1M-token window found the
 needle even inside a 250k-token naive prompt, and RAG retrieved the correct leaf 100% of
-the time at 20/50 packs (`retrieval_vs_navigation.png`). **So the Demo #9 win is cost /
+the time at 20/50 packs (`retrieval_vs_navigation.png`). **So the Progressive Knowledge Loading win is cost /
 token-efficiency, NOT accuracy.** We do not claim an accuracy or miss-rate advantage the
 data doesn't show.
 

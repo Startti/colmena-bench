@@ -1,4 +1,4 @@
-# Demo #8 — Sandboxed code execution over a CSV
+# Sandboxed Code Execution over a CSV
 
 **The honest thesis (dual hero).** Attach a CSV, ask analytical questions, transform
 it — every framework does this the same way: the model writes **pandas** that runs
@@ -18,7 +18,7 @@ advantage and sharp about two places where there is:
 **Honest non-claim:** analytics accuracy and tokens are roughly **at parity** among
 the frameworks that return clean JSON; this is **not** an accuracy or token win.
 
-This extends Demo #6's pattern (capability matrix + reproducible counterfactual),
+This extends Production Hardening as Configuration's pattern (capability matrix + reproducible counterfactual),
 now for code execution instead of secret masking.
 
 - **Model:** `gemini-2.5-flash`, temp 0, through the LiteLLM proxy
@@ -137,8 +137,8 @@ or a hand-rolled exec tool). Same idiom for the model; more wiring for you.
 
 ![analytics accuracy by framework](../../runs/demo08/plots/analytics_parity.png)
 
-Analytics = answer Task 4's 20 questions with model-written pandas (variants S/M/L,
-reusing Task 4's ground truth). Mutation = a small, exactly-verifiable transform
+Analytics = answer the Query-Strategy Trade-off's 20 questions with model-written pandas (variants S/M/L,
+reusing its ground truth). Mutation = a small, exactly-verifiable transform
 (`net_revenue = quantity*unit_price_usd*(1-discount_pct)`, summed by country over
 shipped orders).
 

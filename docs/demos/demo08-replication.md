@@ -1,4 +1,4 @@
-# Demo #8 — Replication
+# Sandboxed Code Execution — Replication
 
 Reproduce the sandboxed-code-execution-over-CSV demo end to end.
 
@@ -11,7 +11,7 @@ Reproduce the sandboxed-code-execution-over-CSV demo end to end.
      PATH="$VIRTUAL_ENV/bin:$PATH" maturin develop --release
    ```
 2. **Per-framework venvs + extra deps.** `scripts/setup_all.sh` installs them,
-   including the Demo #8 additions:
+   including the Sandboxed Code Execution additions:
    - colmena venv: `pandas numpy scipy` (`attachment_run_python` runs in the
      embedded CPython of this venv).
    - llamaindex venv: `llama-index-experimental` (ships `PandasQueryEngine`).
@@ -47,7 +47,7 @@ PYTHONPATH=harness/orchestrator .venv-bench/bin/python harness/orchestrator/demo
 
 ## Modes (env `BENCH_CODEEXEC_MODE`, set by the driver per cell)
 
-- `analytics` — answer Task 4's 20 questions with pandas over the attached CSV
+- `analytics` — answer the Query-Strategy Trade-off's 20 questions with pandas over the attached CSV
   (variants S/M/L; scored against `data/orders_synthetic/ground_truth.json`).
 - `mutation` — `net_revenue = quantity*unit_price_usd*(1-discount_pct)`, summed by
   country over shipped orders; scored exactly by `scenario_codeexec.score_mutation`.

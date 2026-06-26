@@ -1,4 +1,4 @@
-# Demo #10 — `secure_suspend`: Interactive Encrypted Secret Collection
+# Credential Isolation — `secure_suspend`: Interactive Encrypted Secret Collection
 
 **Hypothesis:** collecting K credentials mid-conversation is ONE declarative node in
 Colmena (`secure_suspend`) — encrypted, only opaque `<sv_*>` handles reach the LLM,
@@ -6,7 +6,7 @@ auto-injected into the downstream call — so the secret NEVER touches a prompt.
 idiomatic competitor approach (ask for the secret in the conversation) leaves it in the
 transcript → the LLM sees it → leak.
 
-This is a **capability + counterfactual** demo (like masking / HITL in Demo #6), not a
+This is a **capability + counterfactual** demo (like masking / HITL in Production Hardening as Configuration), not a
 metric sweep. The win is a clean binary: *did the secret reach the model?*
 
 ## Scenario — API onboarding ("connect your account")

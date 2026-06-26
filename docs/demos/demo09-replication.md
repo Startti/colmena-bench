@@ -1,4 +1,4 @@
-# Demo #9 — Replication
+# Progressive Knowledge Loading — Replication
 
 ## What it measures
 Knowledge-navigation cost across a growing corpus of insurance policy packs ("Colmena

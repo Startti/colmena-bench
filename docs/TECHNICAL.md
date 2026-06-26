@@ -138,7 +138,7 @@ bench's Colmena venv by setting `VIRTUAL_ENV` to `runners/colmena/.venv`
 Two execution surfaces are used:
 - `ColmenaLlm.call(...)` — single-shot (Task 1, Task 4-naive).
 - `colmena.run_dag(graph, resume_id, resume_answer, inject_payload,
-  include_extra_info, agent_session_id)` — executes a JSON DAG (Demo 05). Needs
+  include_extra_info, agent_session_id)` — executes a JSON DAG (the Context Tax). Needs
   Postgres (`DATABASE_URL`) and `SECURE_VALUES_KEY` (≥32 chars).
 
 **Engine fixes landed for this bench** (merged to colmena `develop`):
@@ -206,7 +206,7 @@ The Colmena binding must be built from `develop` (now includes #103/#104).
 |---|---|---|
 | **Task 1** — hello world | Per-call scaffolding overhead (tokens for a trivial agent) | done |
 | **Task 4** — CSV analytical | Naive (CSV in context) vs expert (SQL tool) — a *strategy* difference, secondary | partial |
-| **Demo 05** — context tax | Multi-turn cumulative tokens with an attachment + binary tool outputs — **hero** | **done (6 frameworks, live)** |
+| **The Context Tax** | Multi-turn cumulative tokens with an attachment + binary tool outputs — **hero** | **done (6 frameworks, live)** |
 
 Planned hero demos #2 (outbound masking), #3 (durable HITL), #4 (production agent
 in JSON — the real node-vs-code) are specced in the strategy doc.

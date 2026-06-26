@@ -1,4 +1,4 @@
-# Demo #4 — The Production Refund Agent (guaranteed vs hand-rolled)
+# Production Hardening as Configuration — The Production Refund Agent (guaranteed vs hand-rolled)
 
 **The honest thesis.** The same production-hardened refund agent — durable
 cross-process human-in-the-loop (HITL), critic-retry on a policy violation, and

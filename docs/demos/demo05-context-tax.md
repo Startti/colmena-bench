@@ -1,4 +1,4 @@
-# Demo 05 — "The Context Tax" (multi-turn token asymptote)
+# The Context Tax (multi-turn token asymptote)
 
 **The hero demo.** A fixed 10-turn conversation, run live across all 6 frameworks
 through the same proxy and model, measuring **cumulative input tokens per turn**.
@@ -103,7 +103,7 @@ This gap **widens with agent complexity**: a simple chat is where competitors ar
 leanest (ready primitives like `create_react_agent`+`MemorySaver`). Add production
 hardening — HITL + retries + a critic loop + secret masking — and Colmena stays
 declarative JSON while competitor glue grows into the hundreds of lines. That
-amplified node-vs-code comparison is **Demo #4**. For Demo 05, both the token
+amplified node-vs-code comparison is **Production Hardening as Configuration**. For the Context Tax, both the token
 asymptote (≥6×) **and** the leaner maintained-code count hold.
 
 ---

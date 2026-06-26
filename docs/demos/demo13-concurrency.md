@@ -1,4 +1,4 @@
-# Demo 13 — Concurrency & resource load-test (NULL RESULT, recorded honestly)
+# The Concurrency Ceiling — load-test (NULL RESULT, recorded honestly)
 
 **This demo does NOT show a Colmena win, and we keep it to prove the point.** It was
 built to test whether Colmena's Rust/tokio runtime handles many concurrent agent

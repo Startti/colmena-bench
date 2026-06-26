@@ -1,4 +1,4 @@
-# Demo 05 — Replication & Analysis Guide
+# The Context Tax — Replication & Analysis Guide
 
 How to reproduce the "context tax" experiment from scratch, where the data lives,
 and how to run analyses (plots, LLM-judge, your own) **on the saved data without

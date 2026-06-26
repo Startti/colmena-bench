@@ -1,4 +1,4 @@
-# Demo #4 — Replication & Analysis Guide
+# Production Hardening as Configuration — Replication & Analysis Guide
 
 How to reproduce the production refund-agent demo from scratch, where the data
 lives, and how to read the masking audit. Pair with

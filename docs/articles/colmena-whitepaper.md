@@ -12,17 +12,17 @@ Two structural costs dominate the day-to-day experience of running LLM agents in
 
 ### 2.1 The context tax, and the prior art for fighting it
 
-In a multi-turn agent the conversation history, the documents it has read, and the result of every tool call accumulate, and most frameworks re-send that growing context to the model on every turn. Token cost therefore scales with conversation length rather than staying flat. This is well documented by the framework authors themselves: LangChain's context-engineering guide notes that "long-running tasks and accumulating feedback from tool calls mean that agents often utilize a large number of tokens," which can "exceed the size of the context window, balloon cost / latency, or degrade agent performance" ([LangChain 2025](https://www.langchain.com/blog/context-engineering-for-agents)).
+In a multi-turn agent the conversation history, the documents it has read, and the result of every tool call accumulate, and most frameworks re-send that growing context to the model on every turn. Token cost therefore scales with conversation length rather than staying flat. The framework authors document this themselves: LangChain's context-engineering guide notes that long-running, tool-using agents accumulate large token counts that can exceed the context window and inflate cost and latency, and even degrade the agent's performance ([LangChain 2025](https://www.langchain.com/blog/context-engineering-for-agents)).
 
-The degradation is not hypothetical. Liu et al. show that model accuracy "significantly degrades when models must access relevant information in the middle of long contexts" ([Liu et al. 2023](https://arxiv.org/abs/2307.03172)) — an effect now widely called *context rot*: "as the number of tokens in the context window increases, the model's ability to accurately recall information from that context decreases," so context "must be treated as a finite resource with diminishing marginal returns" ([Anthropic 2025](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents); [Chroma 2025](https://www.trychroma.com/research/context-rot)). Past a point, sending more context is not only more expensive — it makes the agent worse.
+The degradation is not hypothetical. Liu et al. find that model accuracy drops sharply when the relevant information sits in the middle of a long context rather than at its edges ([Liu et al. 2023](https://arxiv.org/abs/2307.03172)) — an effect now widely called *context rot*, in which a model's ability to recall any given fact declines as the token count rises, so context is best treated as a finite resource with diminishing returns ([Anthropic 2025](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents); [Chroma 2025](https://www.trychroma.com/research/context-rot)). Past a point, sending more context is not only more expensive — it makes the agent worse.
 
-The field has produced several partial remedies, none of which is the *default* in the mainstream Python frameworks tested here. Provider-side **prompt/context caching** discounts the cost of re-sending an unchanged prefix — Anthropic's prompt caching "significantly reduces processing time and costs for repetitive tasks or prompts with consistent elements" ([Anthropic prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)), and Google offers an equivalent for Gemini ([Google context caching](https://ai.google.dev/gemini-api/docs/caching)) — but it lowers the *price* of a large context, not its *size*. **Retrieval-augmented generation** keeps documents out of the prompt until they are needed ([Lewis et al. 2020](https://arxiv.org/abs/2005.11401)). **Conversation summarization** compresses old turns, and OS-style memory architectures such as **MemGPT** page context in and out of a limited window ([Packer et al. 2023](https://arxiv.org/abs/2310.08560)). For tool-heavy agents, **dynamic tool loading** retrieves only the relevant tool schemas instead of injecting all of them every turn, cutting prompt tokens "by over 50%" in one study ([Gan & Sun 2025](https://arxiv.org/abs/2505.03275)). Colmena's engine applies these same families of technique — ephemeral attachments, history compaction, binary-result scrubbing, lazy tool loading — *by default*; Demos 05 and 07 (§4, §8) measure what that is worth against frameworks that do not.
+The field has produced several partial remedies, none of which is the *default* in the mainstream Python frameworks tested here. Provider-side **prompt/context caching** discounts the cost of re-sending an unchanged prefix — Anthropic's prompt caching substantially reduces the processing time and cost of prompts that repeat a consistent prefix ([Anthropic prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)), and Google offers an equivalent for Gemini ([Google context caching](https://ai.google.dev/gemini-api/docs/caching)) — but it lowers the *price* of a large context, not its *size*. **Retrieval-augmented generation** keeps documents out of the prompt until they are needed ([Lewis et al. 2020](https://arxiv.org/abs/2005.11401)). **Conversation summarization** compresses old turns, and OS-style memory architectures such as **MemGPT** page context in and out of a limited window ([Packer et al. 2023](https://arxiv.org/abs/2310.08560)). For tool-heavy agents, **dynamic tool loading** retrieves only the relevant tool schemas instead of injecting all of them every turn, cutting prompt tokens by more than half in one study ([Gan & Sun 2025](https://arxiv.org/abs/2505.03275)). Colmena's engine applies these same families of technique — ephemeral attachments, history compaction, binary-result scrubbing, lazy tool loading — *by default*; the Context Tax (§4) and Tools at Scale (§8) measure what that is worth against frameworks that do not.
 
 ### 2.2 Agents as code vs. agents as configuration
 
-The second cost is structural rather than per-token. In the mainstream frameworks an **agent is a program**: its control flow, tools, and safety logic live in imperative code that imports the framework, so adding or changing an agent means editing code and redeploying the service — work only an engineer can do. A recent declarative-agent proposal frames the alternative directly: defining agents declaratively "transforms agent development from application programming to configuration, where adding new tools or fine-tuning agent behaviors requires only pipeline specification changes, not code deployment" ([Daunis 2025](https://arxiv.org/abs/2512.19769)). The same motivation drives Oracle's Open Agent Specification, which observes that "the proliferation of agent frameworks has led to fragmentation in how agents are defined, executed, and evaluated" and proposes a representation that lets an agent "be defined once and executed across different runtimes" ([Amini et al. 2025](https://arxiv.org/abs/2510.04173); see also the Auton framework's "strict separation between the Cognitive Blueprint … and the Runtime Engine," [Cao et al. 2026](https://arxiv.org/abs/2602.23720)).
+The second cost is structural rather than per-token. In the mainstream frameworks an **agent is a program**: its control flow, tools, and safety logic live in imperative code that imports the framework, so adding or changing an agent means editing code and redeploying the service — work only an engineer can do. A recent declarative-agent proposal frames the alternative directly: defining agents declaratively turns agent development into configuration, where adding a tool or adjusting an agent's behavior is a change to the pipeline specification rather than a code deployment ([Daunis 2025](https://arxiv.org/abs/2512.19769)). The same motivation drives Oracle's Open Agent Specification, which observes that the proliferation of agent frameworks has fragmented how agents are defined, executed, and evaluated, and proposes a representation that lets an agent be defined once and run across different runtimes ([Amini et al. 2025](https://arxiv.org/abs/2510.04173); see also the Auton framework's strict separation between a declarative agent blueprint and the runtime engine, [Cao et al. 2026](https://arxiv.org/abs/2602.23720)).
 
-This idea is not new, and we do not claim it is. Cloud vendors already accept agent *configuration*: an Amazon Bedrock Agent is defined by instructions plus OpenAPI/function action-group schemas ([AWS Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-how.html)), and a Microsoft 365 Copilot declarative agent is a JSON manifest of "instructions, knowledge, and actions" ([Microsoft 2026](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.5)). Framework-level config exists too — CrewAI "strongly recommend[s]" defining agents in YAML ([CrewAI](https://docs.crewai.com/en/concepts/agents)) — and visual builders such as Langflow serialize a flow to a JSON file a server runs ([Langflow](https://docs.langflow.org/concepts-flows-import)). What separates these approaches is *when* the configuration takes effect: a Bedrock Agent requires a build-time *prepare* step, a Copilot manifest ships inside an installed app package, and CrewAI YAML is still executed by your own Python harness. Colmena's specific position is that its native unit of authorship is a JSON DAG that a generic, already-running server interprets **from the request body** — no prepare, install, or redeploy — so one server serves many agents and a non-engineer can author, version, or roll one back as data. §6 develops this and is explicit about its boundaries: it is an operating-model difference, not a benchmark number, and a configuration layer could be built over any of the competitors — that layer is simply what Colmena already ships.
+This idea is not new, and we do not claim it is. Cloud vendors already accept agent *configuration*: an Amazon Bedrock Agent is defined by instructions plus OpenAPI/function action-group schemas ([AWS Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-how.html)), and a Microsoft 365 Copilot declarative agent is a JSON manifest carrying the agent's instructions, knowledge, and actions ([Microsoft 2026](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.5)). Framework-level config exists too — CrewAI presents YAML as its recommended way to define agents ([CrewAI](https://docs.crewai.com/en/concepts/agents)) — and visual builders such as Langflow serialize a flow to a JSON file a server runs ([Langflow](https://docs.langflow.org/concepts-flows-import)). What separates these approaches is *when* the configuration takes effect: a Bedrock Agent requires a build-time *prepare* step, a Copilot manifest ships inside an installed app package, and CrewAI YAML is still executed by your own Python harness. Colmena's specific position is that its native unit of authorship is a JSON DAG that a generic, already-running server interprets **from the request body** — no prepare, install, or redeploy — so one server serves many agents and a non-engineer can author, version, or roll one back as data. §6 develops this and is explicit about its boundaries: it is an operating-model difference, not a benchmark number, and a configuration layer could be built over any of the competitors — that layer is simply what Colmena already ships.
 
 ### 2.3 Why a provider-authoritative benchmark
 
@@ -46,10 +46,10 @@ Colmena does not win everywhere, and this whitepaper says so explicitly — a de
 
 **Model and temperature.** All frameworks use the alias `gemini-2.5-flash` (resolved at the proxy to `gemini/gemini-2.5-flash`), temperature 0. The per-token price is identical across all frameworks; the measured variable is how much context each framework sends, not what it costs per token.
 
-**Replication.** Sample sizes vary by demo based on the variance of the metric. Demo 05 (context tax) runs N=12 per framework, reported as mean ± std; Demo 10 (secret handling) runs n=3 per cell across 36 cells (6 frameworks × 2 tasks × 3 replicates); Demo 07 (tools at scale) uses 5 seeds per framework for the multi-turn experiment, with the single-turn 200-tool probe (§8.2) at n=2 trials per configuration; and Task 04 (rolling summary) is swept across dataset sizes to characterize the token-scaling curve. Full version pins, environment setup, and per-demo run scripts are in Appendix C and §10.
+**Replication.** Sample sizes vary by experiment based on the variance of the metric. The Context Tax runs N=12 per framework, reported as mean ± std; Credential Isolation runs n=3 per cell across 36 cells (6 frameworks × 2 tasks × 3 replicates); Tools at Scale uses 5 seeds per framework for the multi-turn experiment, with the single-turn 200-tool probe (§8.2) at n=2 trials per configuration; and the Query-Strategy Trade-off is swept across dataset sizes to characterize the token-scaling curve. Full version pins, environment setup, and per-demo run scripts are in Appendix C and §10.
 
 
-## 4. The context tax (Demo 05)
+## 4. The Context Tax
 
 ### 4.1 Scenario
 
@@ -110,7 +110,7 @@ The token asymptote has two distinct causes, both visible in the token compositi
 
 **Mechanism B — binary tool-result scrubber.** Colmena's `dag_tool_executor` applies `scrub_tool_result_output` before any tool result reaches the LLM or is written into history. The ~32 KB base64 chart PNG (~8,000 tokens) is elided at the framework layer. All five Python competitors retain the raw tool message in history by default; after the first `generate_chart` call, that base64 blob re-enters the context on every subsequent turn.
 
-Neither mechanism requires any application-level code from the developer. Both are active by default in Colmena's engine. The imperative Python a developer writes for Demo 05 is 53 lines; the agent itself is a ~71-line declarative JSON DAG.
+Neither mechanism requires any application-level code from the developer. Both are active by default in Colmena's engine. The imperative Python a developer writes for the Context Tax is 53 lines; the agent itself is a ~71-line declarative JSON DAG.
 
 To match Colmena's token behavior, a Python framework developer would need to write custom history-trimming logic, an attachment-caching layer, and a binary-elision pass — none of which are provided out of the box by any of the five competitors tested.
 
@@ -118,11 +118,11 @@ To match Colmena's token behavior, a Python framework developer would need to wr
 
 Colmena's token win comes *despite* more model round-trips, not fewer — each `load_attachment` is an extra LLM call, which counts against Colmena on both latency and call count, yet it still wins by ~10–12× on tokens. That trade-off (and the wall-clock caveat) is quantified in §9.2.
 
-## 5. Secret handling (Demo 10)
+## 5. Credential Isolation
 
 ### 5.1 Scenario
 
-Many real-world agents must collect sensitive credentials mid-conversation — API keys, OAuth tokens, passwords — and forward them to a downstream service. The naive pattern is to ask the user to paste the credential into the chat, which places the plaintext into the model's message history, into any proxy or observability layer, and into every log that touches the conversation. Demo 10 tests whether a framework can collect and use credentials without the plaintext ever entering the LLM transcript.
+Many real-world agents must collect sensitive credentials mid-conversation — API keys, OAuth tokens, passwords — and forward them to a downstream service. The naive pattern is to ask the user to paste the credential into the chat, which places the plaintext into the model's message history, into any proxy or observability layer, and into every log that touches the conversation. This experiment tests whether a framework can collect and use credentials without the plaintext ever entering the LLM transcript.
 
 ### 5.2 Test variants
 
@@ -168,13 +168,13 @@ None of these capabilities require application-level code from the developer; th
 
 **LangGraph nuance.** LangGraph has a genuine durable human-in-the-loop primitive (`interrupt()`) that Colmena's `secure_suspend` conceptually resembles. The distinction is scope: keeping the secret out of the persisted state, encrypting it, auto-injecting it into downstream calls, and re-masking tool echoes are all still hand-rolled in LangGraph. Colmena makes the entire chain the default, not an exercise left to the developer.
 
-## 6. Production hardening as config (Demo 06)
+## 6. Production Hardening as Configuration
 
 ### The claim
 
 Taking a refund-decision agent from prototype to production requires at least four capabilities beyond a working LLM call: a **graph control flow** to express branching logic cleanly, **durable human-in-the-loop (HITL) suspend/resume** so an approval step survives process restarts, a **critic-retry loop** that catches bad outputs before they leave the agent, and **outbound secret masking** so credentials injected into tool calls never appear in logs, transcripts, or LLM contexts.
 
-All six frameworks can implement all four capabilities. The question Demo 06 tests is not *can you build it* but *where does the capability live*: in engine-enforced declarative config that is always on, or in imperative code that a developer writes, tests, ships — and can forget to write.
+All six frameworks can implement all four capabilities. The question this experiment tests is not *can you build it* but *where does the capability live*: in engine-enforced declarative config that is always on, or in imperative code that a developer writes, tests, ships — and can forget to write.
 
 That is the entire claim. This is not a lines-of-code comparison, and it is not "Colmena has a graph and others don't" — LangGraph and Google ADK are graph-first frameworks. The differentiator is the *mode of expression* and what happens when that expression is absent.
 
@@ -191,7 +191,7 @@ LangGraph is the honest near-peer: it provides native graph control flow, durabl
 
 ### Masking counterfactual
 
-Demo 10 (§5) is the dedicated, measured secret-handling result; Demo 06 adds only what is specific to a hardened production agent — the *config-vs-code* counterfactual. It is the sharpest illustration of "safe by construction" versus "safe because the developer remembered": the same agent implemented twice, once with the scrubbing code included (hardened) and once with it omitted (naive).
+Credential Isolation (§5) is the dedicated, measured secret-handling result; this section adds only what is specific to a hardened production agent — the *config-vs-code* counterfactual. It is the sharpest illustration of "safe by construction" versus "safe because the developer remembered": the same agent implemented twice, once with the scrubbing code included (hardened) and once with it omitted (naive).
 
 | Variant | colmena | 5 Python competitors |
 |---|---|---|
@@ -202,7 +202,7 @@ Every hardened implementation passes: the correct refund decision is returned, n
 
 ### Lines of code — not a Colmena win
 
-For Demo 06 specifically, Colmena's hardened implementation is the *longest* of the six (235 lines total; the full per-framework table is in §9.1/A.2). LOC is not a Colmena advantage. The point of *this* section is not character count but that the four capabilities above are expressed as engine-enforced config rather than imperative logic a reviewer must trace.
+For the refund agent specifically, Colmena's hardened implementation is the *longest* of the six (235 lines total; the full per-framework table is in §9.1/A.2). LOC is not a Colmena advantage. The point of *this* section is not character count but that the four capabilities above are expressed as engine-enforced config rather than imperative logic a reviewer must trace.
 
 ### Configuration, not code — one server, many agents
 
@@ -216,7 +216,7 @@ In a library-based framework, by contrast, the agent's logic lives in code, so a
 
 **Honest boundaries on this claim.** (1) This is an architecture and operating-model difference, not a benchmarked metric — there is no proxy number behind it. (2) It is **not** a lines-of-code advantage; declarative config and imperative code are not comparable by length. (3) LangGraph offers a hosted platform (LangGraph Platform) that deploys graphs, but those graphs are defined in Python and shipped as code — a build-and-deploy cycle, not a configuration interpreted at request time. (4) A team could build a JSON-interpreter layer over any Python framework to get the same property — but that interpreter is precisely what Colmena already is. The claim is "Colmena's native unit of authorship is configuration, and it ships the runtime that executes it," not "this is impossible elsewhere."
 
-## 7. Sandboxed code execution (Demo 08)
+## 7. Sandboxed Code Execution
 
 ### Scenario
 
@@ -243,13 +243,13 @@ That said, **crewai's Docker container offers stronger isolation than an in-proc
 
 ### Analytics accuracy — no win here
 
-Where the analytical results were measured, accuracy is roughly at parity. Reported as the **per-framework mean across measured variants**: colmena 0.975 (M=0.95, L=1.0; the S variant was not measured in this run), llamaindex 0.97, langchain 0.95. The lower per-framework means for langgraph, google_adk, and crewai (0.55–0.68) trace to transient empty model completions on individual variants — crewai in particular swings from 0.95 (S) to 0.15 (M) — not to any framework capability difference. There is no accuracy win to claim in Demo 08; the full cross-demo accuracy picture is in §9.
+Where the analytical results were measured, accuracy is roughly at parity. Reported as the **per-framework mean across measured variants**: colmena 0.975 (M=0.95, L=1.0; the S variant was not measured in this run), llamaindex 0.97, langchain 0.95. The lower per-framework means for langgraph, google_adk, and crewai (0.55–0.68) trace to transient empty model completions on individual variants — crewai in particular swings from 0.95 (S) to 0.15 (M) — not to any framework capability difference. There is no accuracy win to claim here; the full cross-experiment accuracy picture is in §9.
 
-## 8. Tools at scale (Demo 07)
+## 8. Tools at Scale
 
 ### 8.1 Scenario
 
-Real enterprise agents often expose large tool catalogs — dozens to hundreds of callable functions covering different data sources, APIs, and actions. Each Python framework tested here sends the full JSON schema for every tool in the catalog on every single LLM turn. As the catalog grows and the conversation extends across multiple turns, that cost accumulates quadratically: more tools × more turns = an ever-larger context on every request. Colmena's `lazy_tool_loading` changes the default: the engine sends the model a compact catalog (names and one-line summaries) and fetches a tool's full schema only when the model signals intent to call it. A second, independent mechanism — conversation-memory compaction — trims the growing message history by replacing earlier turns with a compressed summary. Demo 07 isolates the contribution of each mechanism.
+Real enterprise agents often expose large tool catalogs — dozens to hundreds of callable functions covering different data sources, APIs, and actions. Each Python framework tested here sends the full JSON schema for every tool in the catalog on every single LLM turn. As the catalog grows and the conversation extends across multiple turns, that cost accumulates quadratically: more tools × more turns = an ever-larger context on every request. Colmena's `lazy_tool_loading` changes the default: the engine sends the model a compact catalog (names and one-line summaries) and fetches a tool's full schema only when the model signals intent to call it. A second, independent mechanism — conversation-memory compaction — trims the growing message history by replacing earlier turns with a compressed summary. This experiment isolates the contribution of each mechanism.
 
 ### 8.2 Single-turn isolation: lazy loading alone
 
@@ -303,21 +303,21 @@ This section documents every result where Colmena shows no advantage, every demo
 
 *Maintained-code comparison: Colmena is not categorically shorter.*
 
-In Demo 05, the maintained Python wrapper is 53 lines, but the agent is also described as a ~71-line declarative JSON DAG — the real "code" cost includes both. In Demo 06 the production agent is 120 lines of code plus 115 lines of declarative config (235 lines total) against competitor totals of 93–171 lines. Colmena's 235-line total is the highest of all six; counting only imperative code, its 120 lines trail only LangGraph's 171 and exceed the other four Python frameworks.
+In the Context Tax, the maintained Python wrapper is 53 lines, but the agent is also described as a ~71-line declarative JSON DAG — the real "code" cost includes both. In Production Hardening as Configuration the production agent is 120 lines of code plus 115 lines of declarative config (235 lines total) against competitor totals of 93–171 lines. Colmena's 235-line total is the highest of all six; counting only imperative code, its 120 lines trail only LangGraph's 171 and exceed the other four Python frameworks.
 
 Colmena is **not** categorically fewer lines. The honest framing is "least *imperative* code you maintain, plus guarantees that the engine enforces" — but on trivial agents, even that framing softens. A single-step agent with no memory requirements, no HITL, and no secret handling can be written more concisely in any of the Python frameworks than in Colmena's DAG format. The LOC comparison becomes meaningful only when the capabilities in §5 and §6 are required; at that point the question shifts from "how many lines?" to "which lines are enforced?" Do not use this whitepaper to claim a raw line-count win.
 
 ### 9.2 Not faster, not more parallel
 
-![LLM-call count by framework in Demo 05](assets/d05_calls.png)
+![LLM-call count by framework in the Context Tax](assets/d05_calls.png)
 
 *LLM-call count: Colmena makes more round-trips, not fewer.*
 
-Colmena makes approximately **18 LLM calls** over the 10-turn Demo 05 session versus **13 for competitors**, because each `load_attachment` invocation is a separate model round-trip. Colmena is not the fastest on wall-clock time; the additional calls add latency, and the bench harness cannot report reliable wall-clock comparisons for Colmena because its runs are serialized for token attribution (see §3).
+Colmena makes approximately **18 LLM calls** over the 10-turn Context Tax session versus **13 for competitors**, because each `load_attachment` invocation is a separate model round-trip. Colmena is not the fastest on wall-clock time; the additional calls add latency, and the bench harness cannot report reliable wall-clock comparisons for Colmena because its runs are serialized for token attribution (see §3).
 
-Beyond Demo 05: Colmena's execution engine is a **sequential worklist**. Even tasks that are nominally marked as parallelizable are awaited in a loop — there is no concurrent fan-out. The Rust implementation buys low per-node overhead and efficient memory usage, not concurrency or throughput. If a use case requires raw parallel fan-out — many simultaneous tool calls, a scatter-gather over dozens of APIs, a map-reduce over independent subtasks — Colmena is the wrong tool. Python frameworks with native async and proper thread-pool dispatch will outperform it on that dimension.
+Beyond the Context Tax: Colmena's execution engine is a **sequential worklist**. Even tasks that are nominally marked as parallelizable are awaited in a loop — there is no concurrent fan-out. The Rust implementation buys low per-node overhead and efficient memory usage, not concurrency or throughput. If a use case requires raw parallel fan-out — many simultaneous tool calls, a scatter-gather over dozens of APIs, a map-reduce over independent subtasks — Colmena is the wrong tool. Python frameworks with native async and proper thread-pool dispatch will outperform it on that dimension.
 
-We measured this directly (Demo 13, `docs/demos/demo13-concurrency.md`). Under a fixed-latency LLM mock, Colmena's single-process embedded `serve` mode and a warm async LangGraph server were driven at rising concurrency. Colmena's throughput **flatlined at ~2.6 requests/sec from 4 concurrent clients onward** while its p95 latency grew linearly (1.3 s → 19 s) — serialized execution within one process. The single-worker async LangGraph server scaled **linearly to ~50 requests/sec (~20× higher)** with flat latency. The one axis Colmena won was **absolute memory footprint** — a Colmena instance ran in ~28–65 MB versus ~122–132 MB for the Python server (~4× smaller at idle, narrowing to ~2× at peak load as Colmena's RSS climbs under the request queue) — but that footprint cannot be converted into per-process throughput while the engine serializes, and Colmena's *marginal* RAM-per-session is actually higher.
+We measured this directly (the Concurrency Ceiling, `docs/demos/demo13-concurrency.md`). Under a fixed-latency LLM mock, Colmena's single-process embedded `serve` mode and a warm async LangGraph server were driven at rising concurrency. Colmena's throughput **flatlined at ~2.6 requests/sec from 4 concurrent clients onward** while its p95 latency grew linearly (1.3 s → 19 s) — serialized execution within one process. The single-worker async LangGraph server scaled **linearly to ~50 requests/sec (~20× higher)** with flat latency. The one axis Colmena won was **absolute memory footprint** — a Colmena instance ran in ~28–65 MB versus ~122–132 MB for the Python server (~4× smaller at idle, narrowing to ~2× at peak load as Colmena's RSS climbs under the request queue) — but that footprint cannot be converted into per-process throughput while the engine serializes, and Colmena's *marginal* RAM-per-session is actually higher.
 
 Two honest clarifications. First, the test measured the **embedded single-process `serve` binary**, which is not how Colmena scales in production: the production deployment (§6, *Configuration, not code*) is a generic API that enqueues jobs and a **horizontally-scaled worker fleet** that pulls them — concurrency comes from worker count, the queue absorbs spikes, and each worker running one durable graph at a time is the expected (and standard) shape for a durable-execution engine. So "Colmena cannot serve concurrent load" is **not** the right conclusion; "Colmena does not win the per-process throughput axis" is. Second, that horizontal pattern is not itself a Colmena advantage — any Python agent can be wrapped the same way. The durable, low-footprint worker is where Colmena's small per-instance memory actually pays off (many cheap workers), but the genuine differentiator in this area is the **configuration-driven model** of §6, *Configuration, not code*, not raw throughput, which we do not claim.
 
@@ -325,31 +325,31 @@ Two honest clarifications. First, the test measured the **embedded single-proces
 
 Every framework in this benchmark calls the same model (`gemini-2.5-flash`) through the same proxy at the same per-token price. There is no Colmena pricing tier, no batching discount, and no model substitution in play. All cost differences reported in §4 and §8 are entirely a function of how much context each framework sends — Colmena wins by sending less, never by paying less per token. A team that already manages context size carefully in a Python framework will not see a pricing-line improvement from switching.
 
-### 9.4 The context-economy trade-off (Task 04)
+### 9.4 The Query-Strategy Trade-off
 
 ![Expert vs naive SQL strategy: input tokens flat vs exploding as dataset grows](assets/t04_tokens_asymptote.png)
 
 *Expert/SQL strategy keeps tokens flat as the dataset grows while naive/raw-CSV explodes — a strategy win, not a Colmena-native win.*
 
-![Accuracy by framework on Task 04, largest dataset variant](assets/t04_accuracy.png)
+![Accuracy by framework on the Query-Strategy Trade-off, largest dataset variant](assets/t04_accuracy.png)
 
 *Accuracy by framework at the largest dataset size: Colmena expert reaches ~96.7%; competitors cluster near 100%.*
 
-Task 04 is primarily a **strategy** result: querying a CSV via a SQL tool ("expert") beats stuffing raw rows into the prompt ("naive") by approximately 5–9× on tokens and 4–7× on accuracy. Expert input tokens stay roughly flat as the dataset grows (Colmena ~76k→79k across S/M/L) while the naive approach explodes (~34k→330k); across frameworks expert input ranges ~36k–79k. Any framework using the expert/SQL strategy gets most of this benefit.
+The Query-Strategy Trade-off is primarily a **strategy** result: querying a CSV via a SQL tool ("expert") beats stuffing raw rows into the prompt ("naive") by approximately 5–9× on tokens and 4–7× on accuracy. Expert input tokens stay roughly flat as the dataset grows (Colmena ~76k→79k across S/M/L) while the naive approach explodes (~34k→330k); across frameworks expert input ranges ~36k–79k. Any framework using the expert/SQL strategy gets most of this benefit.
 
-The honest trade-off: **Colmena's expert accuracy is 93–97% (S=96.7%, M=93.3%, L=96.7%; the chart shows the largest variant ≈96.7%) versus competitors' ~100%.** The ~3–7 percentage-point residual gap is real and reproducible. Its cause is the same rolling-summary context compaction that produces the Demo 05 token win: the compaction pass can truncate a large mid-conversation tool result table before the final answer is assembled. The develop@14beaba9 rebuild raised this from an earlier 88–92% floor, so the gap has narrowed, but it has not closed.
+The honest trade-off: **Colmena's expert accuracy is 93–97% (S=96.7%, M=93.3%, L=96.7%; the chart shows the largest variant ≈96.7%) versus competitors' ~100%.** The ~3–7 percentage-point residual gap is real and reproducible. Its cause is the same rolling-summary context compaction that produces the Context Tax token win: the compaction pass can truncate a large mid-conversation tool result table before the final answer is assembled. The develop@14beaba9 rebuild raised this from an earlier 88–92% floor, so the gap has narrowed, but it has not closed.
 
-The mechanism is tunable (`KEEP_RECENT` and `recall_history` parameters govern how aggressively older tool results are compressed), and it is a known, documented trade-off, not a surprise. Teams that need 99–100% analytical recall on large tabular results should test their specific workload against these knobs before treating the Task 04 token numbers as a free lunch.
+The mechanism is tunable (`KEEP_RECENT` and `recall_history` parameters govern how aggressively older tool results are compressed), and it is a known, documented trade-off, not a surprise. Teams that need 99–100% analytical recall on large tabular results should test their specific workload against these knobs before treating the Query-Strategy Trade-off token numbers as a free lunch.
 
 ### 9.5 Where the result is parity, not a win
 
-![Tool-selection accuracy parity in Demo 07](assets/d07_accuracy.png)
+![Tool-selection accuracy parity in Tools at Scale](assets/d07_accuracy.png)
 
-*Tool-selection accuracy is 1.00 across all frameworks in Demo 07 — the win is cost only.*
+*Tool-selection accuracy is 1.00 across all frameworks in Tools at Scale — the win is cost only.*
 
-In Demo 07, every configuration — Colmena-lazy, Colmena-eager, and all five Python competitors — achieves **1.00 tool-selection accuracy** at the final session turn and on the 200-tool single-turn probe. The Demo 07 result is a cost win, not an accuracy win; claiming otherwise would be false.
+In Tools at Scale, every configuration — Colmena-lazy, Colmena-eager, and all five Python competitors — achieves **1.00 tool-selection accuracy** at the final session turn and on the 200-tool single-turn probe. The Tools at Scale result is a cost win, not an accuracy win; claiming otherwise would be false.
 
-In Demo 08 (sandboxed code execution), analytical accuracy is also roughly at parity where measured (the per-framework numbers are in §7); the lower LangGraph/Google ADK/CrewAI means there trace to transient empty completions, not a capability difference. Colmena has no accuracy edge in Demo 08 either.
+In Sandboxed Code Execution, analytical accuracy is also roughly at parity where measured (the per-framework numbers are in §7); the lower LangGraph/Google ADK/CrewAI means there trace to transient empty completions, not a capability difference. Colmena has no accuracy edge in Sandboxed Code Execution either.
 
 ### 9.6 Two demos we dropped
 
@@ -359,9 +359,9 @@ Two candidate demos were designed, built to completion, and then dropped because
 
 **(2) Deterministic-router demo.** The agent applied a stated business policy to route incoming requests across several categories, including override cases. At temperature 0 with the policy stated plainly in the system prompt, a naive single-call LLM applied the routing policy correctly on **100% of the override cases** across every framework tested, and ≥95.8% overall (Colmena, CrewAI, and Google ADK at 100%; LangChain and LangGraph 47/48, LlamaIndex 23/24 — each missing the same single non-override ticket). Colmena's declarative rule engine showed no measurable advantage: the policy was simple enough that the LLM internalized it without a structured rule evaluator, and Colmena's own 100% did not separate it from the naive baseline on the override cases that motivated the demo. Naming these dropped demos is part of the methodology. A benchmark that only shows winners is a marketing document; a methodology that drops non-wins is science.
 
-### 9.7 A note on the skills demo (Demo 09)
+### 9.7 A note on Progressive Knowledge Loading
 
-A progressive-knowledge-loading demo (`load_skill`) is approximately 21× cheaper on tokens than stuffing the full knowledge corpus into the system prompt on every turn. However, it ties a properly implemented RAG/vector-retrieval pipeline on both token efficiency and accuracy — the two approaches converge when retrieval quality is good. The only remaining edge for `load_skill` is operational simplicity: no vector store to deploy, index, or maintain. That is a real engineering convenience, but it is not a measured metric win, so Demo 09 is not featured in this whitepaper's core claims.
+Progressive Knowledge Loading (`load_skill`) is approximately 21× cheaper on tokens than stuffing the full knowledge corpus into the system prompt on every turn. However, it ties a properly implemented RAG/vector-retrieval pipeline on both token efficiency and accuracy — the two approaches converge when retrieval quality is good. The only remaining edge for `load_skill` is operational simplicity: no vector store to deploy, index, or maintain. That is a real engineering convenience, but it is not a measured metric win, so Progressive Knowledge Loading is not featured in this whitepaper's core claims.
 
 ## 10. Reproduction
 
@@ -379,12 +379,12 @@ The proxy binds to `localhost:4000`, authenticates with the master key configure
 
 **Per-demo run scripts.** Each demo has a dedicated run script:
 
-- Demo 05 (context tax): `scripts/run_demo05.sh`
-- Demo 06 (production hardening): `scripts/run_demo06.sh`
-- Demo 07 (tools at scale): `scripts/run_demo07.sh`
-- Demo 08 (sandboxed execution): `scripts/run_demo08.sh`
-- Demo 10 (secret handling): run scripts are co-located in `runners/demo10/`
-- Task 04 (rolling summary / token asymptote): the sweep runner is documented in `docs/demos/demo04-replication.md`
+- The Context Tax: `scripts/run_demo05.sh`
+- Production Hardening as Configuration: `scripts/run_demo06.sh`
+- Tools at Scale: `scripts/run_demo07.sh`
+- Sandboxed Code Execution: `scripts/run_demo08.sh`
+- Credential Isolation: run scripts are co-located in `runners/demo10/`
+- The Query-Strategy Trade-off: the sweep runner is documented in `docs/demos/demo04-replication.md`
 
 **Per-demo replication guides.** Each demo has a detailed replication guide under `docs/demos/demoNN-replication.md`, covering exact commands, expected outputs, evaluation scripts, and known variance sources (e.g., the Colmena serial-sweep requirement described in §3).
 
@@ -396,7 +396,7 @@ All numbers are from the proxy spans (authoritative source). Token counts are **
 
 ---
 
-### A.1 Demo 05 — Context tax (10-turn document Q&A, N=12 runs per framework)
+### A.1 The Context Tax (10-turn document Q&A, N=12 runs per framework)
 
 The full token/cost table is in §4.2 and is not reprinted here. The only appendix-level addition is the **quality pass-rate: 1.00 for all six frameworks** — this is the harness ground-truth-substring guardrail: every framework's answers contained the required facts on the scored turns, so the order-of-magnitude token savings carry no accuracy cost. The guardrail checks ground-truth substrings on three turns (turn 0 → "positive", turn 1 → "North America", turn 7 → "Supply chain"); all six frameworks pass all three. A separate, finer-grained LLM-judge metric (not the headline) scores 0.97–1.00 across the six (CrewAI/LangGraph 1.00, Colmena 0.988, Google ADK 0.985, LlamaIndex 0.981, LangChain 0.971). One honest completeness caveat: the LlamaIndex run returned empty text on turn 3 (the QoQ-growth doc question) and turn 4 (the trend follow-up) — an agent quirk (empty final message, exited 0, no crash) that does not affect token measurement but does make its answer completeness lower than the other competitors on this run. Colmena's only empty turns are exactly the three chart turns (2, 5, 8), which emit a chart rather than prose by design. The pass-rate claim is the substring guardrail, not a claim of judge-level perfection.
 
@@ -404,7 +404,7 @@ Approximately 18 Colmena LLM calls vs 13 for competitors (each `load_attachment`
 
 ---
 
-### A.2 Demo 06 — Production hardening (refund agent, LOC)
+### A.2 Production Hardening as Configuration (refund agent, LOC)
 
 | Framework | Code lines | Config lines | Total | All-4-capabilities pass |
 |---|--:|--:|--:|--:|
@@ -419,7 +419,7 @@ LOC is **not** a Colmena win; the win is the capability mode (see §6). Masking 
 
 ---
 
-### A.3 Demo 07 — Tools at scale
+### A.3 Tools at Scale
 
 **Multi-turn (30-tool catalog, 10 turns, 5 seeds):**
 
@@ -439,7 +439,7 @@ Tool-selection accuracy: 1.00 for all frameworks at the final turn.
 
 ---
 
-### A.4 Demo 08 — Sandboxed code execution (canary probe)
+### A.4 Sandboxed Code Execution (canary probe)
 
 | Framework | Canary contained? | Analytics accuracy (where measured) |
 |---|---|--:|
@@ -450,11 +450,11 @@ Tool-selection accuracy: 1.00 for all frameworks at the final turn.
 | LangChain | **No** — raw `PythonAstREPLTool` | 0.95 |
 | LangGraph | **No** — raw `exec` | — |
 
-No accuracy win for Colmena in Demo 08; lower numbers for LangGraph/Google ADK/CrewAI trace to transient empty completions, not capability differences.
+No accuracy win for Colmena here; lower numbers for LangGraph/Google ADK/CrewAI trace to transient empty completions, not capability differences.
 
 ---
 
-### A.5 Demo 10 — Secret handling (n=3 per cell, 36 cells total, 0 errors)
+### A.5 Credential Isolation (n=3 per cell, 36 cells total, 0 errors)
 
 "Leak" = plaintext secret appears anywhere in the LLM-visible transcript. Lower is better.
 
@@ -471,7 +471,7 @@ No accuracy win for Colmena in Demo 08; lower numbers for LangGraph/Google ADK/C
 
 ---
 
-### A.6 Task 04 — Rolling summary / SQL vs naive CSV
+### A.6 The Query-Strategy Trade-off (SQL vs naive CSV)
 
 | Strategy | Input tokens at size L | Accuracy (S / M / L) |
 |---|--:|---|
@@ -487,7 +487,7 @@ Each entry quotes the actual prompt/system text from the named source file. Long
 
 ---
 
-### B.1 Demo 05 — Context tax
+### B.1 The Context Tax
 
 **Colmena** — system message from `runners/_bench_common/bench_common/scenario05.py` (shared constant imported by `runners/colmena/runner/tasks/task05.py`):
 
@@ -535,7 +535,7 @@ messages.append(HumanMessage(content=turn["message"]))
 
 ---
 
-### B.2 Demo 06 — Production hardening (refund agent)
+### B.2 Production Hardening as Configuration (refund agent)
 
 **Colmena** — `runners/colmena/runner/dags/refund_agent.json`, key node system messages:
 
@@ -590,7 +590,7 @@ def run_payment(order_id: str) -> str:
 
 ---
 
-### B.3 Demo 08 — Sandboxed code execution
+### B.3 Sandboxed Code Execution
 
 **Colmena** — `runners/colmena/runner/dags/codeexec_agent.json`, assistant node system message:
 
@@ -646,7 +646,7 @@ LangChain uses `create_pandas_dataframe_agent(..., allow_dangerous_code=True)` �
 
 ---
 
-### B.4 Demo 10 — Secret handling
+### B.4 Credential Isolation
 
 **Colmena** — `runners/colmena/runner/dags/secrets_agent.json`, assistant node system message:
 
@@ -706,7 +706,7 @@ Both Colmena and LangChain received the same `ONBOARDING_PROMPT` (from `bench_co
 
 ---
 
-### B.5 Task 04 — Naive vs Expert prompt builders
+### B.5 The Query-Strategy Trade-off (naive vs expert prompts)
 
 Prompt construction is via `bench_common.answers.build_questions_block` (shared by all frameworks):
 
@@ -778,7 +778,7 @@ See §10 for step-by-step reproduction commands. Per-demo guides are under `docs
 
 ### C.5 References
 
-The works cited in the executive summary (§1) and introduction (§2). All URLs were retrieved and the quoted text confirmed at the time of writing.
+The works cited in the executive summary (§1) and introduction (§2). Claims attributed to these sources are paraphrased; all URLs were retrieved and the underlying statements confirmed at the time of writing.
 
 **The context tax and degradation of long context**
 

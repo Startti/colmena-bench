@@ -1,4 +1,4 @@
-# Demo #10 — Replication
+# Credential Isolation — Replication
 
 ## What it measures
 Whether a collected secret reaches the LLM. Three signals per cell (framework × variant ∈

@@ -1,4 +1,4 @@
-# Task 4 — CSV analytical Q&A (naive vs expert strategy)
+# The Query-Strategy Trade-off — CSV analytical Q&A (naive vs expert strategy)
 
 **A strategy demo, not a Colmena hero.** All 6 frameworks answer the same 20
 analytical questions over a synthetic `orders` dataset (variants S=500, M=5k,
@@ -65,12 +65,12 @@ The 5 Python frameworks land at ~100% on the expert task; on the current
 **develop@14beaba9** build Colmena lands at **93–97%** (S=96.7%, M=93.3%, L=96.7%).
 We investigated this thoroughly. **It is not a bug, not the bench handler, and not a
 prompt gap** — it is a *characterized, deliberate Colmena context-economy behavior*, the
-same one that wins Demo 05.
+same one that wins the Context Tax.
 
 > **Build note.** An earlier build using a fixed 180-char-per-line rolling summary scored
 > **88–92%** here. The develop@14beaba9 rebuild replaced that with an at-load
 > semantic-summary compaction, which **raised expert accuracy to 93–97%** while keeping the
-> same flat-token profile that wins Demo 05. The residual ~3–7-point gap to competitors'
+> same flat-token profile that wins the Context Tax. The residual ~3–7-point gap to competitors'
 > ~100% is smaller than before but real. The detailed mechanism below characterizes the
 > earlier 180-char build; the current build mitigates — but does not fully close — the same
 > truncation effect on large mid-conversation tool tables.
@@ -108,11 +108,11 @@ precision (the truncated line looks plausible), so it doesn't.
 
 ## 4. Why this clarification matters for the pitch
 
-**This is the same mechanism that wins Demo 05.** Colmena's flat-token "context tax"
+**This is the same mechanism that wins the Context Tax.** Colmena's flat-token "context tax"
 advantage (~10–12× cheaper on long conversations) comes from exactly this aggressive
-context compaction. Task 4 expert exposes the *other side of the same coin*:
+context compaction. The Query-Strategy Trade-off expert arm exposes the *other side of the same coin*:
 
-| | Demo 05 (Colmena wins) | Task 4 expert (Colmena 93–97%) |
+| | The Context Tax (Colmena wins) | The Query-Strategy Trade-off expert (Colmena 93–97%) |
 |---|---|---|
 | Mechanism | rolling summary + ephemeral attachments | **the same rolling summary** |
 | Effect | flat tokens, ~12× cheaper | large mid-conversation tool tables get truncated |

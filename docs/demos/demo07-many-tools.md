@@ -1,4 +1,4 @@
-# Demo #7 — Many tools across a conversation (lazy tool loading)
+# Tools at Scale — Many tools across a conversation (lazy tool loading)
 
 **The honest thesis (v2, multi-turn — the PRIMARY result).** A realistic agent
 holds ~30 tools and is used over a *conversation*, not a single shot. Every turn,

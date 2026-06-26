@@ -1,7 +1,7 @@
 # orders_synthetic
 
 Deterministic synthetic e-commerce orders dataset used by the killer demo
-(Task 4) and several other benchmarks.
+(the Query-Strategy Trade-off) and several other benchmarks.
 
 ## Sizes
 
@@ -59,7 +59,7 @@ See `schema.json` for the JSON Schema. Quick reference:
 
 ## Why this dataset
 
-Task 4 ("CSV killer demo") asks an agent 20 analytical questions over this
+The Query-Strategy Trade-off ("CSV killer demo") asks an agent 20 analytical questions over this
 table at sizes S→XL. The expected outcome:
 
 - **Naive implementations** (the default "load CSV into context" path that

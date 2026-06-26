@@ -1,4 +1,4 @@
-# Demo #7 — Replication & Analysis Guide
+# Tools at Scale — Replication & Analysis Guide
 
 How to reproduce the many-tools lazy-loading demo from scratch, where the data
 lives, and how the tokens are measured. Pair with

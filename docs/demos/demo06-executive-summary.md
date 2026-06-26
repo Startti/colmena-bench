@@ -1,4 +1,4 @@
-# Demo #4 — Resumen ejecutivo
+# Production Hardening as Configuration — Resumen ejecutivo
 
 **Agente de producción (reembolsos) con endurecimiento real — HITL durable + auto-corrección + protección de secretos — construido en los 6 frameworks y medido de forma pareja.**
 

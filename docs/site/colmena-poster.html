@@ -122,12 +122,12 @@
       <div class="block">
         <h2><span class="n">3</span> What we measured</h2>
         <div class="kvs">
-          <div class="row"><span>Context cost over 10 turns</span><span class="muted">Demo 05</span></div>
-          <div class="row"><span>Many tools at scale</span><span class="muted">Demo 07</span></div>
-          <div class="row"><span>Mid-conversation secret handling</span><span class="muted">Demo 10</span></div>
-          <div class="row"><span>Production hardening as config</span><span class="muted">Demo 06</span></div>
-          <div class="row"><span>Sandboxed code execution</span><span class="muted">Demo 08</span></div>
-          <div class="row"><span>Strategy + a context trade-off</span><span class="muted">Task 04</span></div>
+          <div class="row"><span>The Context Tax</span><span class="muted">context cost over 10 turns</span></div>
+          <div class="row"><span>Tools at Scale</span><span class="muted">many tools, lazy loading</span></div>
+          <div class="row"><span>Credential Isolation</span><span class="muted">mid-conversation secrets</span></div>
+          <div class="row"><span>Production Hardening as Configuration</span><span class="muted">safety as config</span></div>
+          <div class="row"><span>Sandboxed Code Execution</span><span class="muted">model-written code</span></div>
+          <div class="row"><span>The Query-Strategy Trade-off</span><span class="muted">SQL vs raw CSV</span></div>
         </div>
       </div>
     </div>
@@ -279,10 +279,10 @@
     <div>
       <h4>Where Colmena does not win (honest)</h4>
       <ul>
-        <li>Not faster, not parallel — a sequential worklist; ~18 vs 13 LLM calls on Demo 05.</li>
+        <li>Not faster, not parallel — a sequential worklist; ~18 vs 13 LLM calls on the Context Tax.</li>
         <li>No per-token price advantage — same model, same price; the win is context volume.</li>
         <li>On trivial agents, the code-size advantage disappears.</li>
-        <li>Task 04: the same compaction that wins Demo 05 costs ~3–7 pts of accuracy on large
+        <li>The Query-Strategy Trade-off: the same compaction that wins the Context Tax costs ~3–7 pts of accuracy on large
         mid-conversation tables (Colmena expert 93–97% vs ~100%); tunable.</li>
         <li>Two demos dropped for showing no advantage (API-explorer, deterministic router).</li>
       </ul>
