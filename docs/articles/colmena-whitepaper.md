@@ -4,13 +4,13 @@
 
 ## Abstract
 
-Multi-turn LLM agents accumulate conversation history, documents, and tool outputs, and most frameworks re-send that growing context to the model on every turn, so operating cost scales with conversation length while long contexts degrade answer quality. Production deployments face two further problems: hardening a prototype — approvals, retries, durable state, secret handling — absorbs most of the engineering effort, and a credential that enters a model's transcript propagates to every log and downstream system the conversation touches. We present a benchmark that measures how six agent frameworks — Colmena (Rust), CrewAI, LangChain, LangGraph, LlamaIndex, and Google ADK — handle these three problems under identical conditions, with all token and cost figures metered at a shared provider proxy rather than self-reported by the frameworks. Over a fixed 10-turn document-analysis session, Colmena consumed 39,085 input tokens versus 404,095–452,358 for the five Python frameworks — a 10–12× reduction ($0.018 versus $0.126–$0.142 per session) at equal task quality. In a credential-collection task, plaintext secrets reached the model transcript in 0% of Colmena runs versus 100% for every competitor. Colmena expresses production-safety controls as engine-enforced configuration, and its unit of authorship is a declarative JSON document executed by a generic server rather than a program that must be redeployed to change. We also report the negative results: Colmena is not faster or more parallel, holds no per-token price advantage, trades 3–7 percentage points of accuracy on large tabular tasks, and two candidate experiments were dropped when a naive baseline matched it.
+Multi-turn LLM agents accumulate conversation history, documents, and tool outputs, and most frameworks re-send that growing context to the model on every turn, so operating cost scales with conversation length while long contexts degrade answer quality. Production deployments face two further problems: hardening a prototype — approvals, retries, durable state, secret handling — absorbs most of the engineering effort, and a credential that enters a model's transcript propagates to every log and downstream system the conversation touches. We present a benchmark that measures how six agent frameworks — Colmena (Rust), CrewAI, LangChain, LangGraph, LlamaIndex, and Google ADK — handle these three problems under identical conditions, with all token and cost figures metered at a shared provider proxy rather than self-reported by the frameworks. Over a fixed 10-turn document-analysis session, Colmena consumed 39,085 input tokens versus 404,095–452,358 for the five Python frameworks — a 10–12× reduction ($0.018 versus $0.126–$0.142 per session) at equal task quality. In a credential-collection task, plaintext secrets reached the model transcript in 0% of Colmena runs versus 100% for every competitor. Colmena expresses production-safety controls as engine-enforced configuration, and its unit of authorship is a declarative JSON document executed by a generic server rather than a program that must be redeployed to change. We also report the negative results: Colmena is not faster or more parallel, holds no per-token price advantage, trades up to ~7 percentage points of accuracy on large tabular tasks, and two candidate experiments were dropped when a naive baseline matched Colmena's output quality.
 
 ## 1. Introduction
 
 Three problems shape what an LLM agent costs to run in production — in money and in risk. The first is **tokens**: in a multi-turn agent the history, documents, and tool outputs accumulate, and most frameworks re-send that growing context on every turn, so token cost scales with conversation length; past a point it also degrades quality, as model accuracy falls when the relevant information sits in the middle of a long context ([Liu et al. 2023](https://arxiv.org/abs/2307.03172)) and context behaves as a finite resource with diminishing returns ([Anthropic 2025](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)). The second is **getting to production**: a working prototype is not a production agent, since autonomous agents are prone to compounding errors and practitioners advise stripping back framework abstractions as a system moves into production ([Anthropic 2024](https://www.anthropic.com/research/building-effective-agents)), so the hardening that follows is where most of the engineering goes. The third is **secure input**: agents routinely handle credentials and PII, and OWASP ranks the disclosure of sensitive information among the top risks for LLM applications ([OWASP 2025](https://genai.owasp.org/llmrisk/llm022025-sensitive-information-disclosure/)), with vendor guidance warning that credentials should never be placed in a model's prompt ([Microsoft 2025](https://learn.microsoft.com/en-us/ai/playbook/technology-guidance/generative-ai/mlops-in-openai/security/security-plan-llm-application)).
 
-This paper evaluates Colmena — a Rust agent engine that addresses these problems at the engine layer — against five widely used Python agent frameworks under a provider-authoritative protocol: every LLM call from every framework passes through one shared proxy, and all token and cost figures are read from that proxy rather than from framework self-reports. Colmena used roughly 10–12× fewer input tokens and cost roughly 7–8× less over a 10-turn session at equal answer quality; kept plaintext credentials out of the model transcript in 100% of runs where every competitor exposed them in 100%; and expresses production-safety controls (approvals, durable human-in-the-loop, critic-retry, secret masking) as engine-enforced configuration, with the agent itself authored as a declarative JSON document that a generic, already-running server executes.
+This paper evaluates Colmena — a Rust agent engine that addresses these problems at the engine layer — against five widely used Python agent frameworks under a provider-authoritative protocol: every LLM call from every framework passes through one shared proxy, and all token and cost figures are read from that proxy rather than from framework self-reports. Colmena used roughly 10–12× fewer input tokens and cost roughly 7–8× less over a 10-turn session at equal answer quality, and it kept plaintext credentials out of the model transcript in 100% of runs, while every competitor exposed them in 100% of runs. It also expresses production-safety controls (approvals, durable human-in-the-loop, critic-retry, secret masking) as engine-enforced configuration, with the agent itself authored as a declarative JSON document that a generic, already-running server executes.
 
 The contributions are: (i) a reproducible, provider-authoritative benchmark harness covering six frameworks under identical model, temperature, and task conditions (§3); (ii) a measurement of the multi-turn context tax showing an order-of-magnitude input-token reduction at equal task quality (§4); (iii) a credential-isolation experiment with a binary 0%-versus-100% transcript-leakage outcome (§5); (iv) a capability analysis of production hardening expressed as configuration rather than code, including its deployment consequences (§6); and (v) a set of negative and parity results — code volume, speed, parallelism, per-token price, a quantified accuracy trade-off, and two experiments dropped for null results — reported with the same rigor as the positive ones (§9).
 
@@ -40,7 +40,7 @@ Configuration-defined agents predate this work. Cloud vendors already accept age
 
 **Frameworks under test.** The benchmark covers six frameworks: Colmena (Rust), CrewAI, LangChain, LangGraph, LlamaIndex, and Google ADK (all Python). Each framework implements the same agent task independently, using its native idioms. Each competitor framework was used idiomatically — its own default memory management, context-window strategy, and tool-calling conventions — and none was configured toward a suboptimal pattern.
 
-**Baseline calibration.** A trivial single-tool-call task ("hello world", N=10 per framework) calibrates each framework's fixed per-call overhead before the multi-turn experiments. All six frameworks succeed at 100%, with per-call input tokens of 14–15 for Colmena, LangChain, LangGraph, and LlamaIndex versus 35 for Google ADK and 77 for CrewAI — a fixed scaffolding cost those two frameworks pay on every call — and per-call median latency at parity (Colmena 761 ms, LangChain 738 ms), which locates Colmena's session-level latency deficit (§9.2) in its extra round-trips rather than in per-call overhead. These calibration runs used an earlier Colmena build (0.3.0) than the one pinned in Appendix C and are reported for calibration only.
+**Baseline calibration.** A trivial single-tool-call task ("hello world", N=10 per framework) calibrates each framework's fixed per-call overhead before the multi-turn experiments. All six frameworks succeed at 100%, with per-call input tokens of 14–15 for Colmena, LangChain, LangGraph, and LlamaIndex versus 35 for Google ADK and 77 for CrewAI — a fixed scaffolding cost those two frameworks pay on every call — and per-call median latency at parity (Colmena 761 ms, LangChain 738 ms), which locates Colmena's session-level call-count overhead (§9.2) in its extra round-trips rather than in per-call speed. (Single-call latency is measured by each runner directly and is unaffected by the serial-sweep constraint that precludes session-level wall-clock comparison for Colmena.) These calibration runs used an earlier Colmena build (0.3.0) than the one pinned in Appendix C and are reported for calibration only.
 
 **Token authority: the LiteLLM proxy.** All LLM calls are routed through a local LiteLLM proxy configured with a single model alias. Proxy spans are written to per-session JSON files. For Python frameworks, each run attaches an `x-bench-run-id` header, which the proxy propagates into the span metadata; token counts for that run are read directly from the spans tagged with that ID.
 
@@ -48,7 +48,7 @@ Configuration-defined agents predate this work. Cloud vendors already accept age
 
 **Model and conditions.** Every run executes under identical conditions: all frameworks use the alias `gemini-2.5-flash` (resolved at the proxy to `gemini/gemini-2.5-flash` on Google AI) at temperature 0, against the same proxy endpoint, the same task inputs, and the same evaluation scripts, with framework versions pinned (Appendix C). The per-token price is identical across all frameworks; the measured variable is how much context each framework sends, not what it costs per token.
 
-**Quality evaluation.** Each experiment carries a quality metric fixed before the runs, so token savings cannot be traded silently for degraded answers. The Context Tax scores answers with a ground-truth substring check on three designated turns (with a complementary LLM-judge score reported in Appendix A.1); Tools at Scale scores tool-selection accuracy against the known correct tool; Sandboxed Code Execution and the Query-Strategy Trade-off score analytical answers against a precomputed ground truth over a synthetic dataset; Credential Isolation uses the binary transcript-leak criterion defined in §5.3.
+**Quality evaluation.** Each experiment carries a quality metric fixed before the runs, so token savings cannot be traded silently for degraded answers. The Context Tax scores answers with a ground-truth substring check on three designated turns (with a complementary LLM-judge score reported in Appendix A.1); Tools at Scale scores tool-selection accuracy against the known correct tool; Sandboxed Code Execution and the Query-Strategy Trade-off (reported in §9.4) score analytical answers against a precomputed ground truth over a synthetic dataset; Credential Isolation uses the binary transcript-leak criterion defined in §5.3; and Production Hardening as Configuration uses an all-capabilities pass criterion (correct refund decision, durable HITL resume, critic evaluation, no secret in the transcript).
 
 **Replication.** Sample sizes vary by experiment based on the variance of the metric. The Context Tax runs N=12 per framework, reported as mean ± std; Credential Isolation runs n=3 per cell across 12 cells (6 frameworks × 2 variants), 36 runs in total; Tools at Scale uses 5 seeds per framework for the multi-turn experiment, with the single-turn 200-tool probe (§8.2) at n=2 trials per configuration; and the Query-Strategy Trade-off is swept across dataset sizes to characterize the token-scaling curve. Full version pins, environment setup, and per-experiment run scripts are in Appendices C and D.
 
@@ -78,9 +78,9 @@ Aggregate results are reported as mean ± std over N=12 runs in Table 1.
 
 *Table 1: The Context Tax — total input tokens, turn-10 input tokens, and session cost per framework (mean ± std, N=12).*
 
-Three quantities summarize the result. Over the full 10-turn conversation Colmena sends **~10–12× fewer total input tokens** (39,085 vs the competitor range 404,095–452,358), and the gap widens with each turn — by turn 10 alone it is **~31× fewer** (2,296 vs 71,144–71,395). That translates to **~7–8× lower cost** ($0.018 vs $0.1255–$0.1420), a function of context volume rather than price-per-token, since the per-token price is identical across all frameworks (Figure 4; §9.3).
+Three quantities summarize the result. Over the full 10-turn conversation Colmena sends **~10–12× fewer total input tokens** (39,085 vs the competitor range 404,095–452,358; Figures 1 and 3), and the gap widens with each turn — by turn 10 alone it is **~31× fewer** (2,296 vs 71,144–71,395; Figure 2). That translates to **~7–8× lower cost** ($0.018 vs $0.1255–$0.1420), a function of context volume rather than price-per-token, since the per-token price is identical across all frameworks (Figure 4; §9.3).
 
-N=12 runs per framework. Colmena shows the largest relative variability (std ±9,326, ≈24% of its mean), which reflects the model's per-turn decision of whether to re-read the document via `load_attachment` — a property of the mechanism rather than measurement noise. Competitor variability is at most 8.3% of the mean (std ±285 to ±34,873).
+Colmena shows the largest relative variability (std ±9,326, ≈24% of its mean), which reflects the model's per-turn decision of whether to re-read the document via `load_attachment` — a property of the mechanism rather than measurement noise. Competitor variability is at most 8.3% of the mean (std ±285 to ±34,873).
 
 ![Efficiency multiplier by turn: Colmena input tokens vs competitor mean](assets/d05_multiplier.png)
 
@@ -96,17 +96,17 @@ N=12 runs per framework. Colmena shows the largest relative variability (std ±9
 
 ### 4.3 No quality cost
 
-A context-efficiency result only matters if the agent still answers correctly. The quality evaluation scores each framework's answers on the document-retrieval and follow-up turns (chart turns return short confirmations by design and are excluded from the quality score).
+A context-efficiency result only matters if the agent still answers correctly. The guardrail scores each framework's answers on three designated document turns — the key-findings summary (turn 0), the highest-revenue region (turn 1), and the top risks (turn 7) — with chart turns excluded by design; a complementary LLM-judge score covers the remaining turns (Figure 5; Appendix A.1).
 
 ![Answer quality scores per framework](assets/d05_quality.png)
 
 *Figure 5: Answer quality is roughly equal across all six frameworks; Colmena does not trade accuracy for token efficiency.*
 
-Colmena's document-turn answers are correct: turn 1 returns "North America," turn 7 returns "Supply chain," and the trend question is answered "positive trend." The quality result addresses the natural objection: the token reduction does not come at the cost of answer quality.
+Colmena's document-turn answers are correct: turn 1 returns "North America," turn 7 returns "Supply chain," and the turn-0 summary describes the quarter's trend as positive. The quality result addresses the natural objection: the token reduction does not come at the cost of answer quality.
 
 ### 4.4 Why it works: ephemeral attachments and the binary scrubber
 
-The token asymptote has two distinct causes, both visible in the token composition breakdown.
+The near-flat token curve has two distinct causes, both visible in the token composition breakdown (Figure 6).
 
 ![Token composition by framework: history vs attachment tokens](assets/d05_composition.png)
 
@@ -194,6 +194,8 @@ The claim is limited to that question. This is not a lines-of-code comparison, a
 
 ### 6.2 Capability matrix
 
+Table 4 classifies each capability, per framework, as engine-native or developer-implemented (DIY) at the pinned versions.
+
 | Capability | colmena | langgraph | crewai | langchain | llamaindex | google_adk |
 |---|---|---|---|---|---|---|
 | Graph control flow | native | native | DIY | DIY | DIY | DIY |
@@ -207,7 +209,7 @@ LangGraph is the closest peer: it provides native graph control flow, durable HI
 
 ### 6.3 Masking counterfactual
 
-Credential Isolation (§5) is the dedicated, measured secret-handling result; this section adds only what is specific to a hardened production agent — the *config-vs-code* counterfactual. It contrasts safety enforced by construction with safety that depends on the developer remembering the safeguard: the same agent implemented twice, once with the scrubbing code included (hardened) and once with it omitted (naive).
+Credential Isolation (§5) is the dedicated, measured secret-handling result; this section adds only what is specific to a hardened production agent — the *config-vs-code* counterfactual. It contrasts safety enforced by construction with safety that depends on the developer remembering the safeguard: the same agent implemented twice, once with the scrubbing code included (hardened) and once with it omitted (naive) — Table 5.
 
 | Variant | colmena | 5 Python competitors |
 |---|---|---|
@@ -216,13 +218,13 @@ Credential Isolation (§5) is the dedicated, measured secret-handling result; th
 
 *Table 5: Masking counterfactual — the same agent with the safeguard included (hardened) and omitted (naive).*
 
-Every hardened implementation passes: the correct refund decision is returned, no secret appears in the outbound transcript, HITL suspend/resume works, and the critic gate evaluates every draft across all six frameworks (run records in `runs/demo06/`; the naive-variant leak is reproduced by the replication guide, `docs/demos/demo06-replication.md`). The durability of the HITL step is exercised substantively: phase one collects the approval request and the process exits, and a *fresh* process resumes from the persisted state (`phase1.json` → `.state` → `phase2.json` per framework) — surviving a process restart is the actual test of "durable." The leak is a demonstrated counterfactual of the *naive* variant, not a measured failure of any hardened implementation — in the Python frameworks the omission is a realistic developer mistake, while in Colmena `secure: true` is a field on the node definition that the engine enforces unconditionally.
+Every hardened implementation passes: the correct refund decision is returned, no secret appears in the outbound transcript, HITL suspend/resume works, and the critic gate evaluates every draft across all six frameworks (run records in `runs/demo06/`; the naive-variant leak is reproduced by the replication guide, `docs/demos/demo06-replication.md`). The durability of the HITL step is exercised substantively: phase one collects the approval request and the process exits, and a *fresh* process resumes from the persisted state (`phase1.json` → `.state` → `phase2.json` per framework) — surviving a process restart is the substantive test of durability. The leak is a demonstrated counterfactual of the *naive* variant, not a measured failure of any hardened implementation — in the Python frameworks the omission is a realistic developer mistake, while in Colmena `secure: true` is a field on the node definition that the engine enforces unconditionally.
 
 Two disclosures bound this result. First, in all recorded hardened runs the draft decision already satisfied the policy, so while the critic evaluated every draft (`critic_ok = true`), the retry path itself was never triggered (`retries = 0` across all six frameworks); exercising it under a forced policy violation is noted as future work (§10). Second, Colmena's re-masking protects values that re-enter the LLM **as a `secure: true` tool result** — a secure handle wired directly into an `llm_call` prompt via a plain DAG edge is decrypted at injection time and would leak. The refund agent therefore models the payment as a `secure: true` tool inside the confirmation step. The guarantee is real but specific to the tool-result path; it is not a blanket claim that every value is masked everywhere.
 
 ### 6.4 Code volume
 
-For the refund agent specifically, Colmena's hardened implementation is the *longest* of the six (235 lines total; the full per-framework table is in §9.1/A.2). LOC is not a Colmena advantage. The point of *this* section is not character count but that the four capabilities above are expressed as engine-enforced config rather than imperative logic a reviewer must trace.
+For the refund agent specifically, Colmena's hardened implementation is the *longest* of the six (235 lines total; the full per-framework table is in Appendix A.2, discussed in §9.1). LOC is not a Colmena advantage. The point of *this* section is not character count but that the four capabilities above are expressed as engine-enforced config rather than imperative logic a reviewer must trace.
 
 ### 6.5 Configuration, not code — one server, many agents
 
@@ -243,6 +245,8 @@ In a library-based framework, by contrast, the agent's logic lives in code, so a
 The agent receives a CSV and is asked to run analytical code against it — summary statistics, filtering, derived columns. To probe containment, the harness simultaneously plants a canary file at a known path and instructs the model to read it as part of its tool call. A framework that executes model-written code without restriction will expose the canary; a framework that sandboxes execution will suppress the read and return a containment signal instead.
 
 ### 7.2 Canary-probe results
+
+Table 6 reports the probe outcome and containment mechanism per framework.
 
 | Framework | Canary read? | Containment mechanism |
 |---|---|---|
@@ -271,21 +275,21 @@ Where the analytical results were measured, accuracy is roughly at parity. Repor
 
 ### 8.1 Scenario
 
-Real enterprise agents often expose large tool catalogs — dozens to hundreds of callable functions covering different data sources, APIs, and actions. Each Python framework tested here sends the full JSON schema for every tool in the catalog on every single LLM turn. As the catalog grows and the conversation extends, that cost compounds: the per-turn schema payload is proportional to catalog size, and because verbatim history also accumulates, cumulative session tokens grow superlinearly with turn count. Colmena's `lazy_tool_loading` changes the default: the engine sends the model a compact catalog (names and one-line summaries) and fetches a tool's full schema only when the model signals intent to call it. A second, independent mechanism — conversation-memory compaction — trims the growing message history by replacing earlier turns with a compressed summary. This experiment isolates the contribution of each mechanism.
+Real enterprise agents often expose large tool catalogs — dozens to hundreds of callable functions covering different data sources, APIs, and actions. Each Python framework tested here sends the full JSON schema for every tool in the catalog on every LLM turn. As the catalog grows and the conversation extends, that cost compounds: the per-turn schema payload is proportional to catalog size, and because verbatim history also accumulates, cumulative session tokens grow superlinearly with turn count. Colmena's `lazy_tool_loading` changes the default: the engine sends the model a compact catalog (names and one-line summaries) and fetches a tool's full schema only when the model signals intent to call it. A second, independent mechanism — conversation-memory compaction — trims the growing message history by replacing earlier turns with a compressed summary. This experiment isolates the contribution of each mechanism.
 
 ### 8.2 Single-turn isolation: lazy loading alone
 
-Because a single-turn probe has no accumulated conversation history, any gap here is attributable entirely to the lazy-loading mechanism, not to compaction. The probe runs the same task (tool selection from a catalog of varying size) at catalog sizes of 5, 50, and 200 tools, with no prior turns in the session (n=2 trials per configuration; the metric is a near-deterministic schema-byte count, so the small sample is sufficient to characterize the gap).
+Because a single-turn probe has no accumulated conversation history, any gap here is attributable entirely to the lazy-loading mechanism, not to compaction. The probe runs the same task (tool selection from a catalog of varying size) at catalog sizes of 5, 50, and 200 tools (Figure 8), with no prior turns in the session (n=2 trials per configuration; the metric is a near-deterministic schema-byte count, so the small sample is sufficient to characterize the gap).
 
 ![Input tokens vs number of tools (log scale), single-turn hard probe](assets/d07_tokens_vs_tools.png)
 
 *Figure 8: At 200 tools, colmena-lazy uses 22,190 input tokens versus 44,722–103,539 for competitors (2.0–4.7×); colmena-eager sits in the competitor range, confirming the gap is the lazy-loading mechanism, not any other Colmena property.*
 
-The **colmena-eager** configuration serves as the control. When lazy loading is disabled and Colmena sends every schema in full — exactly as competitors do — its token count falls within the competitor range. The two-to-five-fold spread among competitors at 200 tools reflects how verbose each framework's default schema serialization is, not a correctness difference. Colmena-lazy separates from all of them because the schemas for tools the model never touches in that turn are simply not sent. The gap grows with tool count because each additional unused schema is a constant per-tool overhead that lazy loading avoids entirely; the relationship is log-linear as plotted.
+The **colmena-eager** configuration serves as the control. When lazy loading is disabled and Colmena sends every schema in full — exactly as competitors do — its token count falls within the competitor range. The roughly 2.3-fold spread among competitors at 200 tools — four frameworks clustered near 44.7k tokens with CrewAI at 103.5k — reflects how verbose each framework's default schema serialization is, not a correctness difference. Colmena-lazy separates from all of them because the schemas for tools the model never touches in that turn are simply not sent. The gap grows with tool count because each additional unused schema is a constant per-tool overhead that lazy loading avoids entirely; the relationship is log-linear as plotted.
 
 ### 8.3 Multi-turn result: lazy loading + compaction together
 
-Over a 10-turn session with a 30-tool catalog, both mechanisms are in play. Cumulative input tokens at the final turn are shown in Table 7.
+Over a 10-turn session with a 30-tool catalog, both mechanisms are in play. Cumulative input tokens at the final turn are shown in Table 7 and Figure 9.
 
 | Framework | Cumulative input tokens (turn 10) |
 |---|--:|
@@ -307,7 +311,7 @@ Over a 10-turn session with a 30-tool catalog, both mechanisms are in play. Cumu
 
 The 1.66–1.88× multi-turn advantage requires disaggregation, because most of it does **not** come from lazy loading.
 
-In the multi-turn setting, Colmena's conversation-memory compaction is active for both colmena-lazy and colmena-eager. Both configurations compress growing history; both hold a large cost advantage over the five Python competitors, which accumulate history verbatim. That shared compaction benefit is what produces the majority of the ~1.6–1.7× advantage that colmena-eager already shows over competitors without lazy loading doing any additional work.
+In the multi-turn setting, Colmena's conversation-memory compaction is active for both colmena-lazy and colmena-eager. Both configurations compress growing history; both hold a large cost advantage over the five Python competitors, which accumulate history verbatim. That shared compaction benefit is what produces the majority of the ~1.5–1.7× advantage that colmena-eager already shows over competitors without lazy loading doing any additional work.
 
 The lazy-loading increment over eager is modest at 30 tools: 74,337 (eager) vs 66,808 (lazy), approximately **1.11×**. That increment grows as tool count increases — which is what the single-turn probe in §8.2 isolates. At 200 tools on a single turn, lazy loading produces a 2.0–4.7× advantage over competitors on its own; the multi-turn experiment uses 30 tools, so the lazy-specific contribution is smaller.
 
@@ -327,9 +331,9 @@ This section documents every result where Colmena shows no advantage, every expe
 
 *Figure 10: Maintained-code comparison: Colmena is not categorically shorter.*
 
-In the Context Tax, the maintained Python wrapper is 53 lines, but the agent is also described as a ~71-line declarative JSON DAG — the real authored artifact includes both. In Production Hardening as Configuration the production agent is 120 lines of code plus 115 lines of declarative config (235 lines total) against competitor totals of 93–171 lines. Colmena's 235-line total is the highest of all six; counting only imperative code, its 120 lines trail only LangGraph's 171 and exceed the other four Python frameworks.
+In the Context Tax, the maintained Python wrapper is 53 lines, but the agent is also described as a ~71-line declarative JSON DAG — the real authored artifact includes both (Figure 10). In Production Hardening as Configuration the production agent is 120 lines of code plus 115 lines of declarative config (235 lines total) against competitor totals of 93–171 lines. Colmena's 235-line total is the highest of all six; counting only imperative code, its 120 lines trail only LangGraph's 171 and exceed the other four Python frameworks.
 
-Colmena is **not** categorically fewer lines. The defensible statement is narrower — least *imperative* code to maintain, plus guarantees the engine enforces — and even that weakens on trivial agents: a single-step agent with no memory requirements, no HITL, and no secret handling can be written more concisely in any of the Python frameworks than in Colmena's DAG format. The comparison becomes meaningful only when the capabilities of §5 and §6 are required; at that point the relevant question shifts from how many lines are written to which lines are enforced. Raw line count is not a favorable comparison for Colmena and should not be cited as one.
+Colmena is **not** categorically fewer lines. The defensible statement is narrower — least *imperative* code to maintain, plus guarantees the engine enforces — and even that weakens on trivial agents: a single-step agent with no memory requirements, no HITL, and no secret handling can be written more concisely in any of the Python frameworks than in Colmena's DAG format. The comparison becomes meaningful only when the capabilities of §5 and §6 are required; at that point the relevant question shifts from how many lines are written to which lines are enforced. Raw line count is not a favorable comparison for Colmena, and we do not present it as one.
 
 ### 9.2 Speed and parallelism
 
@@ -337,7 +341,7 @@ Colmena is **not** categorically fewer lines. The defensible statement is narrow
 
 *Figure 11: LLM-call count: Colmena makes more round-trips, not fewer.*
 
-**The like-for-like loss.** Colmena is not faster. It makes approximately **18 LLM calls** over the 10-turn Context Tax session versus **13 for competitors**, because each `load_attachment` invocation is a separate model round-trip; the extra calls add latency. (The harness cannot report reliable wall-clock figures for Colmena because its runs are serialized for token attribution; see §3.) Its execution engine is also a **sequential worklist**: even nominally parallelizable tasks are awaited in a loop, with no concurrent fan-out. A workload that requires parallel fan-out — many simultaneous tool calls, a scatter-gather over dozens of APIs, a map-reduce over independent subtasks — is better served by a Python framework with native async execution.
+**The like-for-like loss.** Colmena is not faster. It makes approximately **18 LLM calls** over the 10-turn Context Tax session versus **13 for competitors** (Figure 11), because each `load_attachment` invocation is a separate model round-trip; the extra calls add latency. (The harness cannot report reliable wall-clock figures for Colmena because its runs are serialized for token attribution; see §3.) Its execution engine is also a **sequential worklist**: even nominally parallelizable tasks are awaited in a loop, with no concurrent fan-out. A workload that requires parallel fan-out — many simultaneous tool calls, a scatter-gather over dozens of APIs, a map-reduce over independent subtasks — is better served by a Python framework with native async execution.
 
 **Where the comparison is not like-for-like.** A concurrency load-test (the Concurrency Ceiling, `docs/demos/demo13-concurrency.md`) gives the direct measurement (Table 8): under a fixed-latency LLM mock, Colmena's single-process embedded `serve` mode plateaued at ~2.6 requests/sec from 4 concurrent clients onward, with p95 latency growing from 1.3 s to 19.4 s and 22 requests timing out at 64 clients, while a single async LangGraph server scaled approximately linearly to ~50 requests/sec with flat latency.
 
@@ -355,7 +359,7 @@ Colmena is **not** categorically fewer lines. The defensible statement is narrow
 
 What Table 8 measures, however, is the throughput of **one agent under concurrent requests** on the embedded single-process binary — which is neither how Colmena is deployed in production nor the axis that dominates at scale.
 
-The production-relevant axis is not one agent at N requests but **N distinct agents**, and on that axis the operating models differ in kind. A Colmena agent is a JSON DAG that one generic, already-running engine interprets, so running 1 or 100 *different* agents is the same binary handed a different document — no rebuild, no redeploy. The benchmark itself illustrates this: every Colmena experiment in this paper (§4–§8, plus the §9 arms) ran on a single engine build by swapping the DAG, never recompiling. In the five Python frameworks each agent is a program, so 100 distinct agents means 100 deployments, or a multi-tenant dispatch layer the team builds itself. We did not benchmark this multi-agent axis and therefore attach no number and claim no advantage — but per-process throughput of one agent and the operating cost of a fleet of *different* agents are separate quantities, and a conclusion about the second cannot be read off a measurement of the first.
+The production-relevant axis is not one agent at N requests but **N distinct agents**, and on that axis the operating models differ in kind, as §6.5 develops: a Colmena agent is a document handed to an already-running engine — the benchmark itself ran every Colmena experiment in this paper on a single engine build by swapping the DAG, never recompiling — whereas in the five Python frameworks each agent is a program, so a fleet of distinct agents means a deployment per agent or a multi-tenant dispatch layer the team builds itself. We did not benchmark this multi-agent axis and therefore attach no number and claim no advantage — but per-process throughput of one agent and the operating cost of a fleet of *different* agents are separate quantities, and a conclusion about the second cannot be read off a measurement of the first.
 
 Both statements hold simultaneously and should be kept apart: on per-process throughput and raw parallelism Colmena loses the like-for-like comparison (a single high-QPS agent is better served by a Python async server); on the many-distinct-agents operating model the relevant property is the configuration-driven engine of §6, which is an architecture difference, not a benchmarked throughput result. The load-test's one memory observation — a Colmena instance at ~28–65 MB RSS versus ~122–132 MB for the Python server — is where the small per-instance footprint would matter in that fleet-of-workers shape, although Colmena's *marginal* RAM per additional session is higher.
 
@@ -373,9 +377,9 @@ Every framework in this benchmark calls the same model (`gemini-2.5-flash`) thro
 
 *Figure 13: Accuracy by framework at the largest dataset size: Colmena expert reaches ~96.7%; competitors cluster near 100%.*
 
-The Query-Strategy Trade-off is primarily a **strategy** result: querying a CSV via a SQL tool ("expert") beats stuffing raw rows into the prompt ("naive") by approximately 5–9× on tokens and 4–7× on accuracy. Expert input tokens stay roughly flat as the dataset grows (Colmena ~76k→79k across S/M/L) while the naive approach grows linearly with dataset size (~34k at S → ~331k at M; not run at L); across frameworks expert input ranges ~36k–79k. Any framework using the expert/SQL strategy gets most of this benefit.
+The Query-Strategy Trade-off is primarily a **strategy** result: querying a CSV via a SQL tool ("expert") beats stuffing raw rows into the prompt ("naive") by approximately 5–9× on tokens and 4–7× on accuracy. Expert input tokens stay roughly flat as the dataset grows (Colmena ~76k→79k across S/M/L) while the naive approach grows linearly with dataset size (~34k at S → ~331k at M; not run at L; Figure 12); across frameworks expert input ranges ~36k–79k. Any framework using the expert/SQL strategy gets most of this benefit.
 
-The trade-off: **Colmena's expert accuracy is 93–97% (S=96.7%, M=93.3%, L=96.7%) versus competitors' ~100%.** The ~3–7 percentage-point residual gap is real and reproducible. Its cause is the same rolling-summary context compaction that produces the Context Tax token reduction: the compaction pass can truncate a large mid-conversation tool-result table before the final answer is assembled. (An earlier engine build scored 88–92% on this task; the build pinned in Appendix C narrows the gap to the reported 93–97%, but does not close it.)
+The trade-off: **Colmena's expert accuracy is 93–97% (S=96.7%, M=93.3%, L=96.7%) versus competitors' 96.7–100%, with most competitor cells at or near 100% (Figure 13).** Against that norm the residual gap of roughly 3–7 percentage points is real and reproducible. Its cause is the same rolling-summary context compaction that produces the Context Tax token reduction: the compaction pass can truncate a large mid-conversation tool-result table before the final answer is assembled. (An earlier engine build scored 88–92% on this task; the build pinned in Appendix C narrows the gap to the reported 93–97%, but does not close it.)
 
 The mechanism is tunable — the `KEEP_RECENT` and `recall_history` parameters govern how aggressively older tool results are compressed — and the trade-off is a documented property of the compaction design rather than an incidental defect. Deployments that require 99–100% analytical recall on large tabular results should validate their specific workload against these parameters before extrapolating the token results.
 
@@ -385,7 +389,7 @@ The mechanism is tunable — the `KEEP_RECENT` and `recall_history` parameters g
 
 *Figure 14: Tool-selection accuracy is 1.00 across all frameworks in Tools at Scale — the advantage is cost only.*
 
-In Tools at Scale, every configuration — Colmena-lazy, Colmena-eager, and all five Python competitors — achieves **1.00 tool-selection accuracy** at the final session turn and on the 200-tool single-turn probe. The Tools at Scale result is a cost advantage at accuracy parity.
+In Tools at Scale, every configuration — Colmena-lazy, Colmena-eager, and all five Python competitors — achieves **1.00 tool-selection accuracy** at the final session turn and on the 200-tool single-turn probe (Figure 14). The Tools at Scale result is a cost advantage at accuracy parity.
 
 In Sandboxed Code Execution, analytical accuracy is also roughly at parity where measured (the per-framework means are in §7.4); the lower means for LangGraph, Google ADK, and CrewAI trace to transient empty completions, not a capability difference. Colmena has no accuracy advantage in Sandboxed Code Execution either.
 
@@ -393,7 +397,7 @@ In Sandboxed Code Execution, analytical accuracy is also roughly at parity where
 
 Two candidate experiments were designed, built to completion, and then dropped because the naive baseline matched Colmena's output quality. Both are reported here so that the selection of experiments in §4–§8 is transparent.
 
-**(1) API explorer.** The agent was given a moderately large API specification and tasked with constructing valid requests. Colmena used a schema-loading strategy to progressively pull in endpoint definitions. A naive agent that pastes the full specification into the system prompt performed equally well and cost less for a small, well-known API: both arms produced valid requests on both probe tasks, with the naive arm at ~4.3k input tokens per task versus ~13–15k for Colmena's schema-loading approach — roughly 3× cheaper at equal validity (`runs/demo11/summary.json`). There was no regime where Colmena's approach was measurably better. An advantage would require an API surface large enough that the naive approach exceeds the context window; that breakpoint was not reached within the models and specification sizes tested.
+**(1) API explorer.** The agent was given a moderately large API specification and tasked with constructing valid requests. Colmena used a schema-loading strategy to progressively pull in endpoint definitions. A naive agent that pastes the full specification into the system prompt performed equally well and cost less for a small, well-known API: both arms produced valid requests on both probe tasks, with the naive arm at ~4.3k input tokens per task versus ~13–15k for Colmena's schema-loading approach — roughly 3× cheaper at equal validity (`runs/demo11/summary.json`; a third arm in that file, a steelman LlamaIndex variant, never executed and is excluded). There was no regime where Colmena's approach was measurably better. An advantage would require an API surface large enough that the naive approach exceeds the context window; that breakpoint was not reached within the models and specification sizes tested.
 
 **(2) Deterministic router.** The agent applied a stated business policy to route incoming requests across several categories, including override cases. At temperature 0 with the policy stated plainly in the system prompt, a naive single-call LLM applied the routing policy correctly on **100% of the override cases** across every framework tested, and ≥95.8% overall (Colmena, CrewAI, and Google ADK at 100%; LangChain and LangGraph 47/48, LlamaIndex 23/24 — each missing the same single non-override ticket). Colmena's declarative rule engine showed no measurable advantage: the policy was simple enough that the LLM applied it without a structured rule evaluator, and Colmena's own 100% did not separate it from the naive baseline on the override cases that motivated the experiment.
 
@@ -419,7 +423,7 @@ Several factors bound the generality of these results. All experiments use a sin
 
 This paper measured six agent frameworks under a provider-authoritative protocol and found that the largest cost lever in multi-turn agents is not the price of tokens but the volume of context a framework re-sends. Colmena's engine-level defaults — ephemeral attachments, binary-result scrubbing, history compaction, lazy tool loading — reduced a 10-turn session's input tokens by roughly an order of magnitude at equal task quality, and its `secure_suspend` primitive kept plaintext credentials out of the model transcript in every run, a property no competitor provides at the engine layer. The same declarative design carries an operational consequence: an agent is a configuration document that a running server executes, so agents can be added, versioned, and rolled back without a deployment cycle.
 
-The negative results delimit where these advantages apply. Colmena is slower per session, offers no parallel fan-out, holds no per-token price advantage, and its compaction trades 3–7 percentage points of accuracy on large tabular recall; two candidate experiments showed no advantage over a naive baseline and were dropped. Future work includes benchmarking the many-distinct-agents axis that §9.2 identifies but does not measure, characterizing the API-specification size at which progressive schema loading begins to pay, and exercising the critic-retry path under forced policy violations.
+The negative results delimit where these advantages apply. Colmena is slower per session, offers no parallel fan-out, holds no per-token price advantage, and its compaction trades up to ~7 percentage points of accuracy on large tabular recall; two candidate experiments showed no advantage over a naive baseline and were dropped. Future work includes benchmarking the many-distinct-agents axis that §9.2 identifies but does not measure, characterizing the API-specification size at which progressive schema loading begins to pay, and exercising the critic-retry path under forced policy violations.
 
 ## References
 
@@ -477,21 +481,9 @@ Code volume is **not** favorable to Colmena; the relevant comparison is the capa
 
 ### A.3 Tools at Scale
 
-**Multi-turn (30-tool catalog, 10 turns, 5 seeds):**
+The multi-turn table (30-tool catalog, 10 turns, 5 seeds) is Table 7 in §8.3 and is not reprinted here. Tool-selection accuracy is 1.00 for all frameworks at the final turn.
 
-| Framework | Cumulative input tokens at turn 10 |
-|---|--:|
-| **colmena-lazy** | **66,808** |
-| colmena-eager | 74,337 |
-| Google ADK | 111,135 |
-| LangGraph | 111,922 |
-| LlamaIndex | 114,515 |
-| CrewAI | 116,264 |
-| LangChain | 125,305 |
-
-Tool-selection accuracy: 1.00 for all frameworks at the final turn.
-
-**Single-turn hard probe at 200 tools:** colmena-lazy 22,190 vs competitors 44,722–103,539 (2.0–4.7×). colmena-eager sits in the competitor band, confirming the gap is the lazy-loading mechanism.
+**Single-turn hard probe at 200 tools (appendix-only detail):** colmena-lazy 22,190 vs competitors 44,722–103,539 (2.0–4.7×); per-framework means: LangChain 44,722; LangGraph 44,722; Google ADK 44,756; LlamaIndex 44,914; CrewAI 103,539; colmena-eager 55,303 — within the competitor range, confirming the gap is the lazy-loading mechanism. Tool-selection accuracy 1.00 for every configuration.
 
 ---
 
@@ -512,18 +504,7 @@ Not all variants completed for every framework (unmeasured variants are omitted 
 
 ### A.5 Credential Isolation (12 cells, n=3 per cell, 36 runs, 0 errors)
 
-"Leak" = plaintext secret appears anywhere in the LLM-visible transcript. Lower is better.
-
-| Framework | variant=collect | variant=echo |
-|---|---|---|
-| **Colmena** | **0%** (0/3) | **0%** (0/3) |
-| LangGraph | 100% (3/3) | 100% (3/3) |
-| CrewAI | 100% (3/3) | 100% (3/3) |
-| LangChain | 100% (3/3) | 100% (3/3) |
-| LlamaIndex | 100% (3/3) | 100% (3/3) |
-| Google ADK | 100% (3/3) | 100% (3/3) |
-
-`delivered_to_api = true` for all Colmena runs: the real secret is correctly forwarded via the encrypted side-channel in every case.
+The full leak-rate table is Table 2 in §5.3 and is not reprinted here. Appendix-level addition: `delivered_to_api = true` for all Colmena runs — the real secret is correctly injected into the downstream HTTP call in every case, so the 0% transcript-leak result is achieved with the task fully completed.
 
 ---
 
@@ -849,7 +830,7 @@ Scoring distinguishes selection of the correct tool (`selection_ok`), calls to a
 
 All results in this paper are reproducible from the `colmena-bench` repository. The instructions below describe the minimal path to re-run the core experiments.
 
-**Environment setup.** Run `setup_all.sh` from the repository root. This script creates per-framework Python virtual environments, installs pinned dependencies (see Appendix C for the full version manifest), and verifies that the Colmena binary is present.
+**Environment setup.** Run `scripts/setup_all.sh` from the repository root. This script creates per-framework Python virtual environments, installs pinned dependencies (see Appendix C for the full version manifest), and verifies that the Colmena binary is present.
 
 **Proxy.** All LLM calls must be routed through the LiteLLM proxy. Start it with:
 
@@ -865,8 +846,8 @@ The proxy binds to `localhost:4000`, authenticates with the master key configure
 - Production Hardening as Configuration: `scripts/run_demo06.sh`
 - Tools at Scale: `scripts/run_demo07.sh`
 - Sandboxed Code Execution: `scripts/run_demo08.sh`
-- Credential Isolation: run scripts are co-located in `runners/demo10/`
-- The Query-Strategy Trade-off: the sweep runner is documented in `docs/demos/demo04-replication.md`
+- Credential Isolation: `scripts/run_demo10.sh`
+- The Query-Strategy Trade-off: the sweep runner is documented in `docs/demos/task04-csv.md`
 - The Concurrency Ceiling: harness under `harness/loadtest/`, documented in `docs/demos/demo13-concurrency.md`
 - Progressive Knowledge Loading: documented in `docs/demos/demo09-replication.md`
 
