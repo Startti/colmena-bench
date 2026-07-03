@@ -46,7 +46,7 @@ Colmena does not win everywhere, and this whitepaper says so explicitly — a de
 
 **Model and temperature.** All frameworks use the alias `gemini-2.5-flash` (resolved at the proxy to `gemini/gemini-2.5-flash`), temperature 0. The per-token price is identical across all frameworks; the measured variable is how much context each framework sends, not what it costs per token.
 
-**Replication.** Sample sizes vary by experiment based on the variance of the metric. The Context Tax runs N=12 per framework, reported as mean ± std; Credential Isolation runs n=3 per cell across 36 cells (6 frameworks × 2 tasks × 3 replicates); Tools at Scale uses 5 seeds per framework for the multi-turn experiment, with the single-turn 200-tool probe (§8.2) at n=2 trials per configuration; and the Query-Strategy Trade-off is swept across dataset sizes to characterize the token-scaling curve. Full version pins, environment setup, and per-demo run scripts are in Appendix C and §10.
+**Replication.** Sample sizes vary by experiment based on the variance of the metric. The Context Tax runs N=12 per framework, reported as mean ± std; Credential Isolation runs n=3 per cell across 12 cells (6 frameworks × 2 variants), 36 runs in total; Tools at Scale uses 5 seeds per framework for the multi-turn experiment, with the single-turn 200-tool probe (§8.2) at n=2 trials per configuration; and the Query-Strategy Trade-off is swept across dataset sizes to characterize the token-scaling curve. Full version pins, environment setup, and per-demo run scripts are in Appendix C and §10.
 
 
 ## 4. The Context Tax
@@ -74,7 +74,7 @@ The headline numbers, reported as mean ± std over **N=12 runs**:
 
 Three numbers anchor the claim. Over the full 10-turn conversation Colmena sends **~10–12× fewer total input tokens** (39,085 vs the competitor range 404,095–452,358), and the gap widens with each turn — by turn 10 alone it is **~31× fewer** (2,296 vs 71,144–71,395). That translates to **~7–8× lower cost** ($0.018 vs $0.1255–$0.1420), a function of context volume rather than price-per-token, since the per-token price is identical across all frameworks (see the cost chart below and §9.3).
 
-These are not one-lucky-run numbers. N=12 runs per framework; Colmena's wider standard deviation (±9,326) reflects the model's per-turn decision of whether to re-read the document via `load_attachment` — an honest artifact of the mechanism, disclosed here. Competitors are near-deterministic (±285–±34,873).
+N=12 runs per framework. Colmena shows the largest relative variability (std ±9,326, ≈24% of its mean), which reflects the model's per-turn decision of whether to re-read the document via `load_attachment` — a property of the mechanism rather than measurement noise. Competitor variability is at most 8.3% of the mean (std ±285 to ±34,873).
 
 ![Efficiency multiplier by turn: Colmena input tokens vs competitor mean](assets/d05_multiplier.png)
 
@@ -145,7 +145,7 @@ The benchmark runs two complementary variants to probe both collection and echo 
 | llamaindex | 100% (3/3)      | 100% (3/3)   |
 | google_adk | 100% (3/3)      | 100% (3/3)   |
 
-Results span 36 cells (6 frameworks × 2 variants × 3 seeds) with 0 errors. The outcome is binary — either the plaintext appears in the transcript or it does not — and is unambiguous across all runs.
+Results span 36 runs across 12 cells (6 frameworks × 2 variants, n=3 per cell) with 0 errors. The outcome is binary — either the plaintext appears in the transcript or it does not — and is unambiguous across all runs.
 
 ### 5.4 Why it is not luck — capability comparison
 
@@ -162,7 +162,7 @@ None of these capabilities require application-level code from the developer; th
 
 ### 5.5 Honesty notes
 
-**Scale.** This is a capability/counterfactual benchmark at modest scale (n=3 per cell, 36 cells total). It is not a large statistical sweep. Because the result is a hard binary — plaintext present or absent — scale does not change the conclusion, but readers should treat it as a proof-of-capability demonstration rather than a high-powered significance study.
+**Scale.** This is a capability/counterfactual benchmark at modest scale (12 cells, n=3 per cell, 36 runs total). It is not a large statistical sweep. Because the result is a hard binary — plaintext present or absent — scale does not change the conclusion, but readers should treat it as a proof-of-capability demonstration rather than a high-powered significance study.
 
 **Fairness guard — Colmena still delivers.** `delivered_to_api = true` for all Colmena runs: the real secret is correctly injected into the downstream HTTP call in every case. Colmena achieves zero leakage not by refusing to function but by routing the plaintext through an encrypted side-channel. Competitors are not penalized for "not working"; they work correctly, they simply expose the secret in the LLM transcript in the process. That is the fair comparison.
 
@@ -237,7 +237,7 @@ The agent receives a CSV and is asked to run analytical code against it — summ
 
 Colmena is not the only framework that contained the probe — three competitors also did, by different means. The useful signal here is narrower: **two widely-used frameworks (LangChain and LangGraph) execute model-written code with no sandbox by default**. That is a real, reproducible risk for any team that hands an LLM a code-execution tool and ships without thinking carefully about what runs on that surface.
 
-Colmena's specific contribution is that containment is **declarative and in-process**: one native tool configured with a `restricted` mode, no Docker daemon to manage, no separate kernel service to provision or pay for. There is no wiring step that can be skipped under deadline pressure, and the policy is visible in the YAML rather than buried in a code path.
+Colmena's specific contribution is that containment is **declarative and in-process**: one native tool configured with a `restricted` mode, no Docker daemon to manage, no separate kernel service to provision or pay for. There is no wiring step that can be skipped under deadline pressure, and the policy is visible in the agent's JSON configuration rather than buried in a code path.
 
 That said, **crewai's Docker container offers stronger isolation than an in-process AST allowlist** — a sufficiently clever AST bypass that slips past the allowlist would still be contained at the OS boundary by Docker. Colmena's edge is "safe by default with nothing to wire," not "the strongest possible sandbox." Teams with high-assurance requirements should evaluate whether Docker-level isolation is warranted regardless of which orchestration framework they choose.
 
@@ -295,7 +295,7 @@ Tool-selection accuracy is 1.00 at the final session turn across all six framewo
 
 ## 9. What Colmena does NOT win
 
-This section documents every result where Colmena shows no advantage, every demo we built and then dropped, and every trade-off that accompanies a genuine win. The claims in §4 and §5 are credible precisely because this section exists.
+This section documents every result where Colmena shows no advantage, every demo we built and then dropped, and every trade-off that accompanies a genuine win. Two kinds of entry appear below, and we keep them separate: **genuine losses on a fair, like-for-like comparison** — lines of code, wall-clock speed, per-token price — and a few places where the comparison itself is **not apples-to-apples**, which we flag rather than spin (the clearest is concurrency, §9.2, where the honest single-agent number says nothing about the question that actually matters at scale). The claims in §4 and §5 are credible precisely because this section exists.
 
 ### 9.1 Lines of code is not a win
 
@@ -313,13 +313,13 @@ Colmena is **not** categorically fewer lines. The honest framing is "least *impe
 
 *LLM-call count: Colmena makes more round-trips, not fewer.*
 
-Colmena makes approximately **18 LLM calls** over the 10-turn Context Tax session versus **13 for competitors**, because each `load_attachment` invocation is a separate model round-trip. Colmena is not the fastest on wall-clock time; the additional calls add latency, and the bench harness cannot report reliable wall-clock comparisons for Colmena because its runs are serialized for token attribution (see §3).
+**The genuine loss (a fair fight).** On speed, Colmena does not win. It makes approximately **18 LLM calls** over the 10-turn Context Tax session versus **13 for competitors**, because each `load_attachment` invocation is a separate model round-trip — so it is not the fastest on wall-clock time, and the extra calls add latency. (The harness cannot report reliable wall-clock for Colmena because its runs are serialized for token attribution; see §3.) Its execution engine is also a **sequential worklist**: even nominally parallelizable tasks are awaited in a loop, with no concurrent fan-out. If a use case needs raw parallel fan-out — many simultaneous tool calls, a scatter-gather over dozens of APIs, a map-reduce over independent subtasks — Colmena is the wrong tool, and a Python framework with native async will beat it. We state that plainly.
 
-Beyond the Context Tax: Colmena's execution engine is a **sequential worklist**. Even tasks that are nominally marked as parallelizable are awaited in a loop — there is no concurrent fan-out. The Rust implementation buys low per-node overhead and efficient memory usage, not concurrency or throughput. If a use case requires raw parallel fan-out — many simultaneous tool calls, a scatter-gather over dozens of APIs, a map-reduce over independent subtasks — Colmena is the wrong tool. Python frameworks with native async and proper thread-pool dispatch will outperform it on that dimension.
+**Where the comparison stops being apples-to-apples.** We also ran a concurrency load-test (the Concurrency Ceiling, `docs/demos/demo13-concurrency.md`) and report it without softening: under a fixed-latency LLM mock, Colmena's single-process embedded `serve` mode **flatlined at ~2.6 requests/sec from 4 concurrent clients onward** (p95 latency 1.3 s → 19 s) while a single async LangGraph server scaled **linearly to ~50 requests/sec** with flat latency. But read what that measures: the throughput of **one agent under concurrent requests**, on the embedded single-process binary — which is neither how Colmena is deployed in production nor the question that matters most at scale.
 
-We measured this directly (the Concurrency Ceiling, `docs/demos/demo13-concurrency.md`). Under a fixed-latency LLM mock, Colmena's single-process embedded `serve` mode and a warm async LangGraph server were driven at rising concurrency. Colmena's throughput **flatlined at ~2.6 requests/sec from 4 concurrent clients onward** while its p95 latency grew linearly (1.3 s → 19 s) — serialized execution within one process. The single-worker async LangGraph server scaled **linearly to ~50 requests/sec (~20× higher)** with flat latency. The one axis Colmena won was **absolute memory footprint** — a Colmena instance ran in ~28–65 MB versus ~122–132 MB for the Python server (~4× smaller at idle, narrowing to ~2× at peak load as Colmena's RSS climbs under the request queue) — but that footprint cannot be converted into per-process throughput while the engine serializes, and Colmena's *marginal* RAM-per-session is actually higher.
+The production-relevant axis is not "one agent at N requests" but "**N *distinct* agents**," and there the operating models diverge — not in Colmena's disfavor. A Colmena agent is a JSON DAG that one generic, already-running engine interprets, so running 1 or 100 *different* agents is the same binary handed a different document: no rebuild, no redeploy. This benchmark is itself the demonstration — all eight Colmena experiments (the Context Tax, Credential Isolation, Production Hardening as Configuration, Tools at Scale, and the rest) ran on a single engine by swapping the DAG, never recompiling. In the five Python frameworks each agent **is a program**, so 100 distinct agents means 100 deployments, or a multi-tenant layer the team builds itself. We did **not** benchmark this multi-agent axis, so we put no number on it and claim no win — but conflating one agent's per-process throughput with the cost of running a fleet of *different* agents is comparing apples to pears.
 
-Two honest clarifications. First, the test measured the **embedded single-process `serve` binary**, which is not how Colmena scales in production: the production deployment (§6, *Configuration, not code*) is a generic API that enqueues jobs and a **horizontally-scaled worker fleet** that pulls them — concurrency comes from worker count, the queue absorbs spikes, and each worker running one durable graph at a time is the expected (and standard) shape for a durable-execution engine. So "Colmena cannot serve concurrent load" is **not** the right conclusion; "Colmena does not win the per-process throughput axis" is. Second, that horizontal pattern is not itself a Colmena advantage — any Python agent can be wrapped the same way. The durable, low-footprint worker is where Colmena's small per-instance memory actually pays off (many cheap workers), but the genuine differentiator in this area is the **configuration-driven model** of §6, *Configuration, not code*, not raw throughput, which we do not claim.
+So two things are true at once, and we keep them apart: on per-process throughput and raw parallelism Colmena loses a fair fight (for a single high-QPS agent, use a Python async server); on the *many-distinct-agents* operating model the relevant property is the configuration-driven engine of §6, which we describe as an architecture difference, not a benchmarked throughput win. The load-test's one memory note — a Colmena instance in ~28–65 MB versus ~122–132 MB for the Python server — is where the small per-instance footprint would pay off in that fleet-of-workers shape, though Colmena's *marginal* RAM-per-session is actually higher.
 
 ### 9.3 No per-token price advantage
 
@@ -335,7 +335,7 @@ Every framework in this benchmark calls the same model (`gemini-2.5-flash`) thro
 
 *Accuracy by framework at the largest dataset size: Colmena expert reaches ~96.7%; competitors cluster near 100%.*
 
-The Query-Strategy Trade-off is primarily a **strategy** result: querying a CSV via a SQL tool ("expert") beats stuffing raw rows into the prompt ("naive") by approximately 5–9× on tokens and 4–7× on accuracy. Expert input tokens stay roughly flat as the dataset grows (Colmena ~76k→79k across S/M/L) while the naive approach explodes (~34k→330k); across frameworks expert input ranges ~36k–79k. Any framework using the expert/SQL strategy gets most of this benefit.
+The Query-Strategy Trade-off is primarily a **strategy** result: querying a CSV via a SQL tool ("expert") beats stuffing raw rows into the prompt ("naive") by approximately 5–9× on tokens and 4–7× on accuracy. Expert input tokens stay roughly flat as the dataset grows (Colmena ~76k→79k across S/M/L) while the naive approach grows linearly with dataset size (~34k at S → ~331k at M; not run at L); across frameworks expert input ranges ~36k–79k. Any framework using the expert/SQL strategy gets most of this benefit.
 
 The honest trade-off: **Colmena's expert accuracy is 93–97% (S=96.7%, M=93.3%, L=96.7%; the chart shows the largest variant ≈96.7%) versus competitors' ~100%.** The ~3–7 percentage-point residual gap is real and reproducible. Its cause is the same rolling-summary context compaction that produces the Context Tax token win: the compaction pass can truncate a large mid-conversation tool result table before the final answer is assembled. The develop@14beaba9 rebuild raised this from an earlier 88–92% floor, so the gap has narrowed, but it has not closed.
 
@@ -361,7 +361,7 @@ Two candidate demos were designed, built to completion, and then dropped because
 
 ### 9.7 A note on Progressive Knowledge Loading
 
-Progressive Knowledge Loading (`load_skill`) is approximately 21× cheaper on tokens than stuffing the full knowledge corpus into the system prompt on every turn. However, it ties a properly implemented RAG/vector-retrieval pipeline on both token efficiency and accuracy — the two approaches converge when retrieval quality is good. The only remaining edge for `load_skill` is operational simplicity: no vector store to deploy, index, or maintain. That is a real engineering convenience, but it is not a measured metric win, so Progressive Knowledge Loading is not featured in this whitepaper's core claims.
+Progressive Knowledge Loading (`load_skill`) is approximately 21× cheaper on tokens than stuffing the full knowledge corpus into the system prompt on every turn. However, a properly implemented RAG/vector-retrieval pipeline matches it on accuracy and is *more* token-efficient at larger catalog sizes: RAG's per-question context stays roughly flat as the catalog grows, while `load_skill`'s grows with the size of the loaded pack (measured: ~2.3k vs ~11.6k input tokens per question at the 50-pack size). The only remaining edge for `load_skill` is operational simplicity: no vector store to deploy, index, or maintain. That is a real engineering convenience, but it is not a measured metric win, so Progressive Knowledge Loading is not featured in this whitepaper's core claims.
 
 ## 10. Reproduction
 
@@ -375,7 +375,7 @@ All results in this whitepaper are reproducible from the `colmena-bench` reposit
 proxy/start_proxy.sh
 ```
 
-The proxy binds to `localhost:4000`, authenticates with the master key configured in `proxy/config.yaml`, and writes per-session span files to `proxy/spans/`. The spans are the authoritative source for all token and cost numbers in this paper.
+The proxy binds to `localhost:4000`, authenticates with the master key configured in `proxy/litellm_config.yaml`, and writes per-session span files to `proxy/spans/`. The spans are the authoritative source for all token and cost numbers in this paper.
 
 **Per-demo run scripts.** Each demo has a dedicated run script:
 
@@ -441,20 +441,20 @@ Tool-selection accuracy: 1.00 for all frameworks at the final turn.
 
 ### A.4 Sandboxed Code Execution (canary probe)
 
-| Framework | Canary contained? | Analytics accuracy (where measured) |
+| Framework | Canary contained? | Analytics accuracy, mean (variants measured) |
 |---|---|--:|
-| **Colmena** | **Yes** — restricted in-process AST sandbox | 0.975 |
-| LlamaIndex | Yes — library `safe_eval` | 0.97 |
-| CrewAI | Yes — Docker container | — |
-| Google ADK | Yes — server-side kernel | — |
-| LangChain | **No** — raw `PythonAstREPLTool` | 0.95 |
-| LangGraph | **No** — raw `exec` | — |
+| **Colmena** | **Yes** — restricted in-process AST sandbox | 0.975 (M=0.95, L=1.0) |
+| LlamaIndex | Yes — library `safe_eval` | 0.97 (S=0.95, M=0.95, L=1.0) |
+| CrewAI | Yes — Docker container | 0.55 (S=0.95, M=0.15) |
+| Google ADK | Yes — server-side kernel | 0.68 (S=0.90, M=0.55, L=0.60) |
+| LangChain | **No** — raw `PythonAstREPLTool` | 0.95 (S=0.95, L=0.95) |
+| LangGraph | **No** — raw `exec` | 0.57 (S=0.55, M=0.55, L=0.60) |
 
-No accuracy win for Colmena here; lower numbers for LangGraph/Google ADK/CrewAI trace to transient empty completions, not capability differences.
+Not all variants completed for every framework (unmeasured variants are omitted from each mean). Colmena shows no accuracy advantage here; the lower means for LangGraph, Google ADK, and CrewAI trace to transient empty model completions on individual variants (e.g., CrewAI S=0.95 vs M=0.15), not to a capability difference (§7).
 
 ---
 
-### A.5 Credential Isolation (n=3 per cell, 36 cells total, 0 errors)
+### A.5 Credential Isolation (12 cells, n=3 per cell, 36 runs, 0 errors)
 
 "Leak" = plaintext secret appears anywhere in the LLM-visible transcript. Lower is better.
 
@@ -473,11 +473,13 @@ No accuracy win for Colmena here; lower numbers for LangGraph/Google ADK/CrewAI 
 
 ### A.6 The Query-Strategy Trade-off (SQL vs naive CSV)
 
-| Strategy | Input tokens at size L | Accuracy (S / M / L) |
-|---|--:|---|
-| Expert (SQL tool, Colmena) | ~36k–79k by framework; ~flat across S/M/L (Colmena ~76–79k) | 96.7% / 93.3% / 96.7% |
-| Naive (raw CSV in prompt) | Explodes ~linearly with dataset size (~34k→330k) | ~0–25% (S 22–25%, M 0–20%) |
-| Expert (Python competitors) | ~36k–79k by framework; ~flat across S/M/L (Colmena ~76–79k) | ~100% |
+| Arm | Input tokens (S → M → L) | Accuracy (S / M / L) |
+|---|---|---|
+| Expert — Colmena (SQL tool) | ~76k → 78k → 79k (≈flat) | 96.7% / 93.3% / 96.7% |
+| Expert — Python competitors (SQL tool) | ≈flat per framework: LangChain/LangGraph ~36–37k; Google ADK ~37–38k; LlamaIndex ~70–74k; CrewAI ~73k | 96.7–100% (≈100%) |
+| Naive — all frameworks (raw CSV in prompt) | ~34k (S) → ~331k (M); not run at L | 22.5–25% (S) / 0–20% (M) / not run |
+
+The naive arm was not run at size L: the M-size prompt already reaches ~331k input tokens per run, and the L-size raw CSV would exceed practical prompt limits — the S→M growth characterizes the linear scaling.
 
 The ~5–9× token win and ~4–7× accuracy win are a **strategy** result (SQL vs raw-CSV); any framework using the expert strategy gets most of this benefit. The 3–7 percentage-point accuracy gap between Colmena expert and Python competitors is real and reproducible; it traces to rolling-summary compaction truncating large mid-conversation tool-result tables (see §9.4). The develop@14beaba9 rebuild raised this from an earlier 88–92% floor.
 
