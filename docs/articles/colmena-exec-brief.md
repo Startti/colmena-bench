@@ -33,8 +33,8 @@ Token counts and costs were captured by an independent proxy sitting between eve
 
 ## Honest limitations
 
-Colmena is not faster or more parallel than these frameworks, and on trivial single-step agents the savings shrink — the wins are context cost and built-in security, not raw speed.
+Colmena is not faster than these frameworks, and it does not run one agent at high parallel throughput — that is a deliberate design choice, not an accident: Colmena scales by running *many different agents* on one engine (each agent is just a configuration file the server executes), rather than one agent as fast as possible. If your need is a single agent at maximum requests-per-second, a Python async server is the better tool. On trivial single-step agents the savings also shrink — the wins are context cost, built-in security, and fleet operability, not raw speed.
 
 ## Next step
 
-See the [full technical whitepaper](colmena-whitepaper.md) for methodology, per-demo detail, and reproduction steps. Reach out to schedule a live walkthrough against your own workload.
+See the [full technical whitepaper](colmena-whitepaper.md) for methodology, per-experiment detail, and reproduction steps. Reach out to schedule a live walkthrough against your own workload.

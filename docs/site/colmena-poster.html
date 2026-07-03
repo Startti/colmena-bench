@@ -73,13 +73,13 @@
 
   <div class="top">
     <div class="eyebrow">Provider-authoritative agent-framework benchmark</div>
-    <h1>Colmena vs. the Field: measuring context cost, security, and production safety across six agent frameworks</h1>
+    <h1>A Provider-Authoritative Benchmark of LLM Agent Frameworks: Context Cost, Credential Isolation, and Agents as Configuration</h1>
     <div class="auth">Colmena Engineering · benchmark suite <span style="opacity:.7">colmena-bench</span></div>
     <div class="abstract">We compare Colmena (Rust) against CrewAI, LangChain, LangGraph,
       LlamaIndex, and Google ADK on identical tasks, metering every token at a shared LiteLLM
       proxy. Colmena uses 10–12× fewer input tokens on multi-turn work, leaks credentials to
       the model in 0% of runs (vs 100% for every competitor), and ships production-safety
-      controls as declarative config. We report the wins — and the honest non-wins — under one
+      controls as declarative config. We report the advantages — and the trade-offs — under one
       reproducible harness.</div>
     <div class="chips">
       <span class="chip">6 frameworks</span>
@@ -189,9 +189,9 @@
           <div class="row"><span>200-tool single-shot probe</span><span><b class="ok">22,190</b> vs 45k–104k</span></div>
           <div class="row"><span>Tool-selection accuracy</span><span>1.00 across all</span></div>
         </div>
-        <p class="cap" style="margin-top:5mm">Honest caveat: most of the multi-turn win is
+        <p class="cap" style="margin-top:5mm">Attribution: most of the multi-turn gain is
         conversation-memory compaction (helps lazy and eager alike); lazy loading is the clean
-        differentiator as tool count grows. The win is cost, not accuracy.</p>
+        differentiator as tool count grows. The advantage is cost, not accuracy.</p>
       </div>
     </div>
 
@@ -239,9 +239,9 @@
           <div>Critic / retry</div><div class="native">native</div><div class="native">native</div>
           <div style="border-bottom:none">Outbound masking</div><div class="native" style="border-bottom:none">native</div><div class="leak" style="border-bottom:none">hand-rolled</div>
         </div>
-        <p class="cap" style="margin-top:5mm">LangGraph is the honest near-peer; masking is the
+        <p class="cap" style="margin-top:5mm">LangGraph is the closest peer; masking is the
         lone capability no competitor has natively (the other four frameworks hand-roll all four).
-        Maintained code is comparable (120+115 vs 93–171 lines) — LOC is not the win.</p>
+        Maintained code is comparable (120+115 vs 93–171 lines) — LOC is not the advantage.</p>
       </div>
 
       <div class="block">
@@ -277,23 +277,24 @@
 
   <div class="foot">
     <div>
-      <h4>Where Colmena does not win (honest)</h4>
+      <h4>Trade-offs and limitations</h4>
       <ul>
-        <li>Not faster, not parallel — a sequential worklist; ~18 vs 13 LLM calls on the Context Tax.</li>
-        <li>No per-token price advantage — same model, same price; the win is context volume.</li>
+        <li>Not faster per session, no in-process parallelism — by design Colmena scales as many
+        distinct agents on one engine, not one agent at high throughput; ~18 vs 13 LLM calls on the Context Tax.</li>
+        <li>No per-token price advantage — same model, same price; the advantage is context volume.</li>
         <li>On trivial agents, the code-size advantage disappears.</li>
-        <li>The Query-Strategy Trade-off: the same compaction that wins the Context Tax costs ~3–7 pts of accuracy on large
-        mid-conversation tables (Colmena expert 93–97% vs ~100%); tunable.</li>
-        <li>Two demos dropped for showing no advantage (API-explorer, deterministic router).</li>
+        <li>The Query-Strategy Trade-off: the same compaction that drives the Context Tax result costs up to ~7 pts
+        of accuracy on large mid-conversation tables (Colmena expert 93–97% vs 97–100%); tunable.</li>
+        <li>Two experiments dropped for showing no advantage (API explorer, deterministic router).</li>
       </ul>
     </div>
     <div>
       <h4>Reproduction</h4>
       <p>Bring up the proxy (<code>proxy/start_proxy.sh</code>), build envs
-      (<code>setup_all.sh</code>), run <code>scripts/run_demo0{5,6,7,8}.sh</code>. Each demo
+      (<code>scripts/setup_all.sh</code>), run <code>scripts/run_demo0{5,6,7,8}.sh</code>. Each experiment
       ships a replication guide. All figures trace to the run JSON artifacts under
       <code>runs/</code>.</p>
-      <p><span class="badge">honest by design</span> limitations published alongside wins.</p>
+      <p><span class="badge">honest by design</span> limitations published alongside results.</p>
     </div>
     <div>
       <h4>Setup &amp; versions</h4>

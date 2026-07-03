@@ -251,9 +251,12 @@ g.add_edge("lookup", "reply")
     <div class="t"><b>Identical conditions</b><span class="muted">Same model, same temperature, same inputs and scripts; framework versions pinned.</span></div>
     <div class="t"><b>Fair competitors</b><span class="muted">Each rival used in its normal, recommended way — no handicaps.</span></div>
   </div>
-  <div class="note" style="margin-top:20px"><b>Where Colmena does not win:</b> it is not faster
-  or more parallel, and on trivial single-step agents the savings shrink. The wins are context
-  cost and built-in security — not raw speed. We publish the limitations alongside the wins.</div>
+  <div class="note" style="margin-top:20px"><b>Trade-offs, stated plainly:</b> Colmena is not
+  faster, and it does not run one agent at high parallel throughput — by design it scales as
+  <i>many different agents on one engine</i> (each agent is a configuration file), not one agent
+  at maximum speed. On trivial single-step agents the savings shrink. The wins are context cost,
+  built-in security, and fleet operability — not raw speed. We publish the limitations alongside
+  the results.</div>
   <div class="cta">
     <a class="btn primary" href="../articles/colmena-whitepaper.md">Read the technical whitepaper</a>
     <a class="btn ghost" href="colmena-poster.html">View the research poster</a>
