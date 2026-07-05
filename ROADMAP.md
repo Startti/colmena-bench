@@ -304,7 +304,15 @@ Last updated: 2026-07-04.
       a designated-turn detail (same tension as §9.4). Kept the 14beaba9 headline (more
       conservative tokens + clean 12/12) + added v0.9.0 confirmation notes to whitepaper §4.2
       and `demo05-context-tax.md`. v0.9.0 agg preserved in session scratch.
-    - ⏳ **task04** (uses `run_sql` python_script, NOT attachment_run_python — test separately).
+    - ✅ **task04** (Query-Strategy) — uses `run_sql` (`python_script` SQLite SELECT), untouched by
+      the v0.9.0 `data_run_python` consolidation. Spot-check on v0.9.0: expert M = **20/20** (above
+      published 0.933) — works and improves (same direction as the 88-92%→93-97% trend; v0.9.0
+      memory improvements narrow the compaction-recall gap). Kept published + v0.9.0 note in §9.4.
+  **G-2 re-validation COMPLETE.** Two real v0.9.0 regressions found + resolved: demo08
+  (`attachment_run_python` deprecated → migrated to `data_run_python`, re-measured 0.95) and demo07
+  (per-turn describe guard shifts multi-turn low-tool-count lazy; single-turn recomposes 2.39×).
+  Everything else reproduces or improves on v0.9.0. Framing: `14beaba9` primary (conservative
+  headline) + v0.9.0 re-validation notes; demo08 fully on v0.9.0 (it had broken).
 - [ ] **G-3. Regenerate the PDF** (`scripts/build_whitepaper_pdf.py` → Chrome headless; do
   NOT combine `--headless=new` with `--virtual-time-budget` / `--run-all-compositor-stages`).
 - [ ] **G-4. Final consistency audit** of the whitepaper after all edits (deterministic
