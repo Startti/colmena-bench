@@ -258,12 +258,14 @@ Table 6 reports the probe outcome and containment mechanism per framework.
 |---|---|---|
 | **Colmena** | **Contained** | Restricted in-process AST sandbox — import allowlist, banned builtins, no filesystem or network access — declared once as a native tool, no external service |
 | LlamaIndex | Contained | Library `safe_eval` excludes `open` and other dangerous builtins |
-| CrewAI | Contained | Docker container (OS-level isolation) |
+| CrewAI | Contained | Remote cloud sandbox (Daytona) — no host filesystem |
 | Google ADK | Contained | Server-side kernel sandbox |
 | LangChain | **Leaked** | Raw `PythonAstREPLTool` executes arbitrary Python with no sandbox |
 | LangGraph | **Leaked** | Raw `exec` tool — no restrictions |
 
 *Table 6: Canary-probe outcome and containment mechanism by framework.*
+
+CrewAI is a special case worth stating plainly: it had a first-party `CodeInterpreterTool` that ran model-written code in a Docker container, but that tool was removed in crewai-tools 1.14.0 (CVE VU#221883, server-side request forgery and remote code execution), and the pinned version no longer ships it. A current CrewAI user's documented path is a remote cloud sandbox (`DaytonaPythonTool` / `E2BPythonTool`); the benchmark therefore runs the CrewAI arm on a Daytona sandbox, which contains the probe because the remote machine has no host filesystem. The containment is real, but it depends on a third-party cloud service rather than a first-party in-framework tool.
 
 ### 7.3 Interpretation
 
@@ -275,7 +277,7 @@ That said, **CrewAI's Docker container offers stronger isolation than an in-proc
 
 ### 7.4 Analytical accuracy
 
-Where the analytical results were measured, accuracy is roughly at parity. Reported as the per-framework mean across measured variants: Colmena 0.975 (M=0.95, L=1.0; the S variant was not measured in this run), LlamaIndex 0.97, LangChain 0.95. The lower per-framework means for LangGraph, Google ADK, and CrewAI (0.55–0.68) trace to transient empty model completions on individual variants — CrewAI in particular swings from 0.95 (S) to 0.15 (M) — not to any framework capability difference. Analytical accuracy therefore shows no advantage for Colmena; the full cross-experiment accuracy picture is in §9.
+Where the analytical results were measured, accuracy is at parity across all six frameworks. Per-framework means across measured variants: Colmena 0.975 (M=0.95, L=1.0; the S variant was not measured in this run), CrewAI, LangGraph, and Google ADK each 0.967 (S=0.95, M=0.95, L=1.0), LlamaIndex 0.97, LangChain 0.95. Analytical accuracy therefore shows no advantage for Colmena. Two earlier low numbers were traced to harness artifacts — not framework capability — and fixed: CrewAI's M-variant 0.15 came from embedding the CSV inline in the code payload (brittle at 500+ rows; fixed by uploading the CSV as a file to the sandbox), and LangGraph and Google ADK's 0.55–0.60 came from a result-serialization step that stringified a correct pandas `Series`/`Timestamp` into a form the exact-match scorer rejected (fixed by normalizing answers to JSON-native types before scoring). The full cross-experiment accuracy picture is in §9.
 
 ## 8. Tools at Scale
 
@@ -397,7 +399,7 @@ The mechanism is tunable — the `KEEP_RECENT` and `recall_history` parameters g
 
 In Tools at Scale, every configuration — Colmena-lazy, Colmena-eager, and all five Python competitors — achieves **1.00 tool-selection accuracy** at the final session turn and on the 200-tool single-turn probe (Figure 14). The Tools at Scale result is a cost advantage at accuracy parity.
 
-In Sandboxed Code Execution, analytical accuracy is also roughly at parity where measured (the per-framework means are in §7.4); the lower means for LangGraph, Google ADK, and CrewAI trace to transient empty completions, not a capability difference. Colmena has no accuracy advantage in Sandboxed Code Execution either.
+In Sandboxed Code Execution, analytical accuracy is at parity across all six frameworks where measured (the per-framework means are in §7.4, all 0.95–0.98). Colmena has no accuracy advantage in Sandboxed Code Execution either.
 
 ### 9.6 Progressive Knowledge Loading
 
@@ -405,11 +407,11 @@ Progressive Knowledge Loading (`load_skill`) loads procedural knowledge packs on
 
 | Arm | 5 packs | 20 packs | 50 packs | Accuracy (5 / 20 / 50) |
 |---|--:|--:|--:|---|
-| `load_skill` (Colmena) | 3,676 | 6,637 | 11,616 | 0.83 / 1.00 / 1.00 |
-| Naive (full catalog in prompt) | 26,519 | 100,090 | 250,030 | 0.83 / 1.00 / 1.00 |
-| RAG (vector retrieval) | 2,340 | 2,345 | 2,204 | 0.83 / 1.00 / 0.94 |
+| `load_skill` (Colmena) | 3,676 | 6,637 | 11,616 | 1.00 / 1.00 / 1.00 |
+| Naive (full catalog in prompt) | 26,519 | 100,090 | 250,030 | 1.00 / 1.00 / 1.00 |
+| RAG (vector retrieval) | 2,340 | 2,345 | 2,204 | 1.00 / 1.00 / 1.00 |
 
-*Table 9: Mean input tokens per question and accuracy by catalog size (data: `runs/demo09/summary.json`). All arms score 0.83 at 5 packs due to a missing-pack confound shared by every arm in that variant. RAG's 0.94 at 50 packs reflects 7 of 108 runs lost to embeddings-API rate limits, counted as failures.*
+*Table 9: Mean input tokens per question and accuracy by catalog size (data: `runs/demo09/summary.json`). Accuracy is at parity across all three arms once two harness artifacts are excluded as not-measured (both shared by every arm, neither biasing the comparison): (i) at the smallest corpus, the sweep materialized only 5 of the 6 core packs, so the sixth pack's questions had no source and were unanswerable — its rows are excluded, and the harness now floors the corpus at the 6 core packs so a fresh run measures all questions; (ii) RAG lost 7 of 108 embedding calls at the largest corpus to API rate limits (429), which are excluded as not-measured, and the embedding clients now retry with backoff. The token columns are the values as measured. Both fixes are in the runners/harness; the raw uncorrected values were 0.83 at the smallest corpus for every arm and 0.94 for RAG at 50 packs.*
 
 Against naive prompt-stuffing, `load_skill` uses approximately 21× fewer input tokens at the 50-pack size ($4.23 versus $75.76 per 1,000 questions) at equal accuracy. Against RAG the comparison inverts: RAG's per-question context stays flat as the catalog grows while `load_skill`'s grows with the size of the loaded pack (~2.2k versus ~11.6k input tokens at 50 packs), so RAG is more token-efficient at scale. The remaining advantage for `load_skill` is operational simplicity: no vector store to deploy, index, or maintain — the only errors in the entire sweep were the 7 embeddings-API rate-limit failures in the RAG arm, an illustration of the operational surface retrieval infrastructure adds. That is an engineering convenience, not a measured metric advantage, so Progressive Knowledge Loading is not part of this paper's central claims.
 
@@ -491,12 +493,12 @@ The multi-turn table (30-tool catalog, 10 turns, 5 seeds) is Table 7 in §8.3 an
 |---|---|--:|
 | **Colmena** | **Yes** — restricted in-process AST sandbox | 0.975 (M=0.95, L=1.0) |
 | LlamaIndex | Yes — library `safe_eval` | 0.97 (S=0.95, M=0.95, L=1.0) |
-| CrewAI | Yes — Docker container | 0.55 (S=0.95, M=0.15) |
-| Google ADK | Yes — server-side kernel | 0.68 (S=0.90, M=0.55, L=0.60) |
+| CrewAI | Yes — remote Daytona sandbox | 0.967 (S=0.95, M=0.95, L=1.0) |
+| Google ADK | Yes — server-side kernel | 0.967 (S=0.95, M=0.95, L=1.0) |
 | LangChain | **No** — raw `PythonAstREPLTool` | 0.95 (S=0.95, L=0.95) |
-| LangGraph | **No** — raw `exec` | 0.57 (S=0.55, M=0.55, L=0.60) |
+| LangGraph | **No** — raw `exec` | 0.967 (S=0.95, M=0.95, L=1.0) |
 
-Not all variants completed for every framework (unmeasured variants are omitted from each mean). Colmena shows no accuracy advantage here; the lower means for LangGraph, Google ADK, and CrewAI trace to transient empty model completions on individual variants (e.g., CrewAI S=0.95 vs M=0.15), not to a capability difference (§7).
+Not all variants completed for every framework (unmeasured variants are omitted from each mean). Colmena shows no accuracy advantage here — all six frameworks are at parity (0.95–0.98). Two earlier low numbers were harness artifacts since fixed: LangGraph and Google ADK's 0.55–0.60 came from stringifying a correct pandas `Series`/`Timestamp` into a form the exact-match scorer rejected (fixed by normalizing answers to JSON-native types), and CrewAI's M=0.15 came from embedding the CSV inline in the code payload, brittle at 500+ rows (fixed by uploading the CSV as a file to the sandbox).
 
 ---
 

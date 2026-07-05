@@ -598,15 +598,15 @@ def materialize_corpus(out_dir: str, pack_count: int, seed: int) -> str:
     root.mkdir(parents=True)
     (root / ".colmena_corpus").write_text("demo09 corpus\n")
 
+    # The core packs are the ANSWERABLE set — every question targets one of them.
+    # Always materialize ALL of them, or a question whose pack is absent becomes
+    # unanswerable for every arm (a shared harness confound, not a capability
+    # result). pack_count therefore has an effective floor of len(core packs);
+    # anything below it yields exactly the core packs with no distractors.
     core_items = list(CORE_PACKS.items())
-    if pack_count <= len(core_items):
-        for name, pack in core_items[:pack_count]:
-            _write_files(root / name, render_pack(pack))
-        return out_dir
-
     for name, pack in core_items:
         _write_files(root / name, render_pack(pack))
-    n_distract = pack_count - len(core_items)
+    n_distract = max(0, pack_count - len(core_items))
     for name in _distractor_names(n_distract, seed):
         pack = _build_policy_pack(name, _distractor_perils(name))
         _write_files(root / name, render_pack(pack))

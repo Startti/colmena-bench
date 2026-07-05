@@ -59,10 +59,13 @@ the time at 20/50 packs (`retrieval_vs_navigation.png`). **So the Progressive Kn
 token-efficiency, NOT accuracy.** We do not claim an accuracy or miss-rate advantage the
 data doesn't show.
 
-\* The M=5 point is mildly confounded: with `pack_count=5 < 6` core packs, one targeted
-policy (`colmena-mascotas`) is absent from the corpus, so its 3 questions are
-structurally unanswerable (colmena skill-load 85% and RAG hit 83% at M=5 reflect this).
-M=20 and M=50 contain all 6 core packs and are clean.
+\* The old M=5 point was confounded: with `pack_count=5 < 6` core packs, one targeted
+policy (`colmena-mascotas`) was absent from the corpus, so its 3 questions were
+structurally unanswerable for every arm (dragging every arm to ~0.83 at M=5). Fixed two
+ways: `scenario_skills.materialize_corpus` now always writes all 6 core packs (the
+answerable set) regardless of `pack_count`, and the sweep floor is raised to 6
+(`PACK_COUNTS = [6, 20, 50]`). Excluding the unanswerable `colmena-mascotas` rows from the
+old M=5 data restores all arms to 1.00; a fresh run at M=6 measures all questions directly.
 
 ---
 
@@ -102,7 +105,8 @@ not "Colmena is cheaper than a cached RAG on embeddings."
   is zero retrieval infrastructure + declarative config + tree navigation, not the metrics.
 - **7 errors (0.5%)**: all `langchain` rag@50 cells — OpenAI embeddings **429 rate-limit**
   (LangChain re-embeds the full 50-pack corpus direct-to-OpenAI each call). Excluded from
-  metrics; not scored as wrong.
+  metrics; not scored as wrong (excluding them, RAG@50 is 101/101 = 1.00). The embedding
+  clients now pass `max_retries=8` so a fresh run backs off instead of failing these cells.
 - **Embeddings** run **direct-to-OpenAI** (the LiteLLM proxy `/embeddings` route requires
   a DB — a litellm limitation), so embed tokens are **estimated** (corpus chars ÷ 4);
   completion tokens remain proxy-authoritative.

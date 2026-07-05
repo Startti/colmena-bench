@@ -16,14 +16,20 @@ Reproduce the sandboxed-code-execution-over-CSV demo end to end.
      embedded CPython of this venv).
    - llamaindex venv: `llama-index-experimental` (ships `PandasQueryEngine`).
    - langchain venv: `langchain-experimental` (ships `create_pandas_dataframe_agent`).
-   - crewai venv: `docker` SDK (the `CodeInterpreterTool` runs in a container).
+   - crewai venv: `daytona` SDK (remote sandbox — CrewAI's first-party Docker
+     `CodeInterpreterTool` was removed in crewai-tools 1.14.0 for CVE VU#221883) plus the
+     `docker` SDK for the optional local fallback.
    ```bash
    cd /Users/danielgarcia/startti/colmena-bench && bash scripts/setup_all.sh
    ```
-3. **Docker** (optional, for crewai). Without a running Docker daemon, crewai is
-   recorded as `skipped`/`n/a` — every other framework still runs.
+3. **CrewAI sandbox backend** (env `BENCH_CREWAI_SANDBOX`, default `daytona`):
+   - `daytona` — needs `DAYTONA_API_KEY` in `.env` (free tier: $200 credits, no credit
+     card, from app.daytona.io). This is CrewAI's current documented code-exec path.
+   - `docker` — local fallback for replicators without a Daytona key; needs a running
+     Docker daemon. Without either backend available, crewai is recorded as `skipped`.
 4. **`.env`** with `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
-   `LITELLM_MASTER_KEY`, `COLMENA_DATABASE_URL`, `SECURE_VALUES_KEY`.
+   `LITELLM_MASTER_KEY`, `COLMENA_DATABASE_URL`, `SECURE_VALUES_KEY`, and
+   `DAYTONA_API_KEY` (for the crewai arm).
 
 ## Run
 

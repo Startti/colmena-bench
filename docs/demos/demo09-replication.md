@@ -69,5 +69,8 @@ retrieval_vs_navigation, cost_at_50_bar, capability_matrix}.png`.
 ## Known caveats (see demo09-skills.md)
 - Win is **cost/tokens (21.5× vs naive at 50 packs)**, not accuracy (all arms ≈100% at
   20/50); vs RAG comparable on metrics, Colmena simpler on infra.
-- M=5 has only 5 of 6 core packs (a targeted policy is absent) → that point is confounded.
-- ~0.5% cells error on OpenAI embeddings 429 rate-limit (langchain rag@50); excluded.
+- The old M=5 point had only 5 of 6 core packs (a targeted policy absent) → confounded for
+  every arm. Fixed: `materialize_corpus` always writes all 6 core packs and the sweep floor
+  is now 6 (`PACK_COUNTS = [6, 20, 50]`); excluding the unanswerable rows restores 1.00.
+- ~0.5% cells error on OpenAI embeddings 429 rate-limit (langchain rag@50); excluded as
+  not-measured. Embedding clients now use `max_retries=8` to back off instead of failing.

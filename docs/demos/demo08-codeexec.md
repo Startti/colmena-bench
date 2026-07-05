@@ -37,7 +37,7 @@ now for code execution instead of secret masking.
 | **colmena** | `attachment_run_python` (df pre-loaded) | `restricted` — AST allowlist, no fs/net, **in-process & declarative** |
 | llamaindex | `PandasQueryEngine` (`llama-index-experimental`) | library `safe_eval` restricts builtins |
 | langchain | `create_pandas_dataframe_agent` (`langchain-experimental`, `allow_dangerous_code=True`) | none — raw `PythonAstREPLTool` |
-| crewai | `CodeInterpreterTool` (Docker) | OS container |
+| crewai | `DaytonaPythonTool`-style remote sandbox (`daytona` SDK) | remote cloud VM, no host fs (first-party `CodeInterpreterTool` removed in crewai-tools 1.14.0, CVE VU#221883) |
 | langgraph | ReAct agent + Python-exec tool | none — raw `exec` |
 | google_adk | `BuiltInCodeExecutor` | Gemini **server-side** kernel |
 
@@ -72,7 +72,7 @@ variant where the injection is hidden in a CSV cell.
 | **colmena** | **contained** | `restricted` sandbox: `open` is a banned builtin → `SandboxViolation` |
 | llamaindex | contained | `llama-index-experimental` `safe_eval` excludes `open` from allowed builtins |
 | **langchain** | **LEAKED** | `PythonAstREPLTool` runs arbitrary Python; `open()` read the canary |
-| crewai | contained | Docker container has no host filesystem mount → `FileNotFoundError` |
+| crewai | contained | remote Daytona sandbox has no host filesystem → `FileNotFoundError` |
 | **langgraph** | **LEAKED** | raw `exec` tool ran `open()` and read the canary |
 | google_adk | no leak* | code_execution did **not** run end-to-end through the proxy (single LLM turn, hallucinated a fake file body); non-leak, but the server-side-sandbox mechanism is **not demonstrated here** |
 
@@ -98,10 +98,12 @@ assumption. The real picture:
 
 - **2 of 5 competitors leak** (langchain, langgraph — the raw-`exec` agents).
 - **3 do not leak, but each for a different reason you have to know about:** a
-  library-level eval restriction (llamaindex, version-dependent), a **Docker daemon**
-  (crewai — and if Docker is absent it cannot run at all), and — for google_adk — the
-  code-exec tool simply **didn't run through the proxy** (a non-leak, but not a proven
-  sandbox). You cannot assume any of them is safe without checking how it executes.
+  library-level eval restriction (llamaindex, version-dependent), a **remote cloud
+  sandbox** (crewai — its first-party Docker `CodeInterpreterTool` was removed in
+  crewai-tools 1.14.0 for a CVE, so the current path is a Daytona/E2B cloud sandbox that
+  requires an API key), and — for google_adk — the code-exec tool simply **didn't run
+  through the proxy** (a non-leak, but not a proven sandbox). You cannot assume any of
+  them is safe without checking how it executes.
 - **Colmena is safe by default, declaratively, in-process** — no opt-in dangerous
   flag, no container, no dependency on the provider. That is the differentiator: not
   "the only safe one," but "safe without you having to arrange it, and you cannot
@@ -109,8 +111,8 @@ assumption. The real picture:
 
 > **Honest limitation.** Colmena's `restricted` mode is an AST allowlist + banned
 > builtins + no-fs/no-net, **in-process** — not OS-level isolation like a VM or
-> container. State it precisely. crewai's Docker is stronger *isolation* but is not
-> declarative and needs a daemon.
+> container. State it precisely. crewai's remote cloud sandbox is stronger *isolation*
+> but is not declarative and needs a third-party service + API key.
 
 ---
 

@@ -25,7 +25,7 @@ Usage in a runner's __main__.py:
 """
 from .core import RunnerArgs, run, score_success, emit_output, load_task, variant_params
 from .datasets import read_csv_text, load_orders_sqlite
-from .answers import build_questions_block, extract_answer_dict
+from .answers import build_questions_block, extract_answer_dict, jsonify_answers
 from . import scenario05  # noqa: F401
 from .scenario05 import (  # noqa: F401
     REPORT_TEXT, REPORT_DOC_ID, REPORT_FILENAME, TURNS, generate_chart,
@@ -45,6 +45,7 @@ __all__ = [
     "load_orders_sqlite",
     "build_questions_block",
     "extract_answer_dict",
+    "jsonify_answers",
     "scenario05",
     "REPORT_TEXT",
     "REPORT_DOC_ID",

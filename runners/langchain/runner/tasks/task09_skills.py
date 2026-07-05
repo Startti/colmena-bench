@@ -39,6 +39,7 @@ def _run_rag(llm: Any, args: RunnerArgs, skills_dir: str, question) -> tuple[str
         model=os.environ.get("BENCH_EMBED_MODEL", "text-embedding-3-small"),
         api_key=os.environ["OPENAI_API_KEY"],
         base_url="https://api.openai.com/v1",   # explicit: override .env OPENAI_BASE_URL (=proxy)
+        max_retries=8,   # embeddings API 429s under the 50-pack sweep; back off instead of failing the run
     )
     docs = [
         Document(page_content=c["text"], metadata={"pack": c["pack"], "relpath": c["relpath"]})

@@ -51,7 +51,7 @@ from google.adk.code_executors import BuiltInCodeExecutor
 from google.adk.runners import InMemoryRunner
 from google.genai import types
 
-from bench_common import RunnerArgs, build_questions_block
+from bench_common import RunnerArgs, build_questions_block, jsonify_answers
 from bench_common import scenario_codeexec as sc
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -113,6 +113,9 @@ def _analytics_via_codegen(llm: Any, args: RunnerArgs, df: Any, pd_mod: Any) -> 
         answers = g.get("answers_dict", {})
         if not isinstance(answers, dict):
             answers = {"_raw": str(answers)}
+        # Normalize pandas/numpy objects to JSON-native so the exact-match scorer
+        # sees clean dicts/dates, not repr strings (Series/Timestamp artifact).
+        answers = jsonify_answers(answers)
     except Exception as exc:  # noqa: BLE001
         answers = {"_exec_error": str(exc), "_code": code[:500]}
 

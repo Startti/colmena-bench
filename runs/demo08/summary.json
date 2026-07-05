@@ -130,154 +130,6 @@
     "tokens_out": 4475
   },
   {
-    "framework": "crewai",
-    "variant": "S",
-    "mode": "analytics",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 538082,
-    "tokens_out": 146206,
-    "analytics_acc": 0.95
-  },
-  {
-    "framework": "crewai",
-    "variant": "M",
-    "mode": "analytics",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 331180,
-    "tokens_out": 64241,
-    "analytics_acc": 0.15
-  },
-  {
-    "framework": "crewai",
-    "variant": "L",
-    "mode": "analytics",
-    "skipped": false,
-    "error": "BadRequestError: litellm.BadRequestError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: GeminiException - {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"The input token count exceeds the maximum number of tokens allowed 1048576.\",\n    \"status\": \"INVALID_ARGUMENT\"\n  }\n}\n\nmodel=gemini-2.5-flash. context_window_fallbacks=None. fallbacks=None.\n\nSet 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=gemini-2.5-flash\nAvailable Model Group Fallbacks=None",
-    "stderr_tail": "Error executing listener call_llm_and_parse: litellm.BadRequestError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: GeminiException - {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"The input token count exceeds the maximum number of tokens allowed 1048576.\",\n    \"status\": \"INVALID_ARGUMENT\"\n  }\n}\n\nmodel=gemini-2.5-flash. context_window_fallbacks=None. fallbacks=None.\n\nSet 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=gemini-2.5-flash\nAvailable Model Group Fallbacks=None\n"
-  },
-  {
-    "framework": "crewai",
-    "variant": "S",
-    "mode": "probe",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 1409,
-    "tokens_out": 452,
-    "probe_controlled": "blocked"
-  },
-  {
-    "framework": "crewai",
-    "variant": "S",
-    "mode": "probe_realistic",
-    "skipped": false,
-    "error": null,
-    "probe_realistic": "clean",
-    "tokens_in": 34290,
-    "tokens_out": 65532
-  },
-  {
-    "framework": "langgraph",
-    "variant": "S",
-    "mode": "analytics",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 603,
-    "tokens_out": 6808,
-    "analytics_acc": 0.55
-  },
-  {
-    "framework": "langgraph",
-    "variant": "M",
-    "mode": "analytics",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 603,
-    "tokens_out": 6808,
-    "analytics_acc": 0.55
-  },
-  {
-    "framework": "langgraph",
-    "variant": "L",
-    "mode": "analytics",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 603,
-    "tokens_out": 6808,
-    "analytics_acc": 0.6
-  },
-  {
-    "framework": "langgraph",
-    "variant": "S",
-    "mode": "probe",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 335,
-    "tokens_out": 145,
-    "probe_controlled": "leaked"
-  },
-  {
-    "framework": "langgraph",
-    "variant": "S",
-    "mode": "probe_realistic",
-    "skipped": false,
-    "error": null,
-    "probe_realistic": "clean",
-    "tokens_in": 603,
-    "tokens_out": 6808
-  },
-  {
-    "framework": "google_adk",
-    "variant": "S",
-    "mode": "analytics",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 0,
-    "tokens_out": 0,
-    "analytics_acc": 0.9
-  },
-  {
-    "framework": "google_adk",
-    "variant": "M",
-    "mode": "analytics",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 0,
-    "tokens_out": 0,
-    "analytics_acc": 0.55
-  },
-  {
-    "framework": "google_adk",
-    "variant": "L",
-    "mode": "analytics",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 0,
-    "tokens_out": 0,
-    "analytics_acc": 0.6
-  },
-  {
-    "framework": "google_adk",
-    "variant": "S",
-    "mode": "probe",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 108,
-    "tokens_out": 77,
-    "probe_controlled": "blocked"
-  },
-  {
-    "framework": "google_adk",
-    "variant": "S",
-    "mode": "probe_realistic",
-    "skipped": false,
-    "error": null,
-    "probe_realistic": "clean",
-    "tokens_in": 0,
-    "tokens_out": 0
-  },
-  {
     "framework": "colmena",
     "variant": "M",
     "mode": "mutation",
@@ -311,33 +163,6 @@
     "mutation_reason": "{'mutation_ok': True}"
   },
   {
-    "framework": "crewai",
-    "variant": "M",
-    "mode": "mutation",
-    "skipped": false,
-    "error": "exit -1",
-    "stderr_tail": "TimeoutExpired: Command '['/Users/danielgarcia/startti/colmena-bench/runners/crewai/.venv/bin/python', '-m', 'runner', '--task', '/Users/danielgarcia/startti/colmena-bench/harness/tasks/08_codeexec.yaml', '--variant', 'M', '--run-id', 'd8-crewai-M-mutation', '--model-alias', 'gemini-2.5-flash', '--proxy-base-url', 'http://127.0.0.1:4000', '--output', '/Users/danielgarcia/startti/colmena-bench/runs/demo08/raw/d8-crewai-M-mutation.json', '--timeout-seconds', '420']' timed out after 540 seconds"
-  },
-  {
-    "framework": "langgraph",
-    "variant": "M",
-    "mode": "mutation",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 857,
-    "tokens_out": 1247,
-    "mutation_ok": true,
-    "mutation_reason": "{'mutation_ok': True}"
-  },
-  {
-    "framework": "google_adk",
-    "variant": "M",
-    "mode": "mutation",
-    "skipped": false,
-    "error": "ValueError: No message in response",
-    "stderr_tail": "m_response in agen:\n  File \"/Users/danielgarcia/startti/colmena-bench/runners/google_adk/.venv/lib/python3.11/site-packages/google/adk/models/lite_llm.py\", line 2567, in generate_content_async\n    yield _model_response_to_generate_content_response(response)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/danielgarcia/startti/colmena-bench/runners/google_adk/.venv/lib/python3.11/site-packages/google/adk/models/lite_llm.py\", line 1760, in _model_response_to_generate_content_response\n    raise ValueError(\"No message in response\")\nValueError: No message in response\n"
-  },
-  {
     "framework": "colmena",
     "variant": "S",
     "mode": "analytics",
@@ -356,5 +181,185 @@
     "tokens_in": 268271,
     "tokens_out": 11358,
     "analytics_acc": null
+  },
+  {
+    "framework": "crewai",
+    "variant": "S",
+    "mode": "analytics",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 544053,
+    "tokens_out": 153576,
+    "analytics_acc": 0.95
+  },
+  {
+    "framework": "crewai",
+    "variant": "M",
+    "mode": "analytics",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 344897,
+    "tokens_out": 74487,
+    "analytics_acc": 0.95
+  },
+  {
+    "framework": "crewai",
+    "variant": "L",
+    "mode": "analytics",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 13515,
+    "tokens_out": 10068,
+    "analytics_acc": 1.0
+  },
+  {
+    "framework": "crewai",
+    "variant": "M",
+    "mode": "mutation",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 2048226,
+    "tokens_out": 328079,
+    "mutation_ok": true,
+    "mutation_reason": "{'mutation_ok': True}"
+  },
+  {
+    "framework": "crewai",
+    "variant": "S",
+    "mode": "probe",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 2808,
+    "tokens_out": 854,
+    "probe_controlled": "blocked"
+  },
+  {
+    "framework": "crewai",
+    "variant": "S",
+    "mode": "probe_realistic",
+    "skipped": false,
+    "error": null,
+    "probe_realistic": "clean",
+    "tokens_in": 40273,
+    "tokens_out": 72914
+  },
+  {
+    "framework": "langgraph",
+    "variant": "S",
+    "mode": "analytics",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 1206,
+    "tokens_out": 17302,
+    "analytics_acc": 0.95
+  },
+  {
+    "framework": "langgraph",
+    "variant": "M",
+    "mode": "analytics",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 1206,
+    "tokens_out": 17302,
+    "analytics_acc": 0.95
+  },
+  {
+    "framework": "langgraph",
+    "variant": "L",
+    "mode": "analytics",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 1206,
+    "tokens_out": 17302,
+    "analytics_acc": 1.0
+  },
+  {
+    "framework": "langgraph",
+    "variant": "M",
+    "mode": "mutation",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 1463,
+    "tokens_out": 1853,
+    "mutation_ok": true,
+    "mutation_reason": "{'mutation_ok': True}"
+  },
+  {
+    "framework": "langgraph",
+    "variant": "S",
+    "mode": "probe",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 670,
+    "tokens_out": 290,
+    "probe_controlled": "leaked"
+  },
+  {
+    "framework": "langgraph",
+    "variant": "S",
+    "mode": "probe_realistic",
+    "skipped": false,
+    "error": null,
+    "probe_realistic": "clean",
+    "tokens_in": 1206,
+    "tokens_out": 17302
+  },
+  {
+    "framework": "google_adk",
+    "variant": "S",
+    "mode": "analytics",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "analytics_acc": 0.95
+  },
+  {
+    "framework": "google_adk",
+    "variant": "M",
+    "mode": "analytics",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "analytics_acc": 0.95
+  },
+  {
+    "framework": "google_adk",
+    "variant": "L",
+    "mode": "analytics",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "analytics_acc": 1.0
+  },
+  {
+    "framework": "google_adk",
+    "variant": "M",
+    "mode": "mutation",
+    "skipped": false,
+    "error": "ValueError: No message in response",
+    "stderr_tail": "m_response in agen:\n  File \"/Users/danielgarcia/startti/colmena-bench/runners/google_adk/.venv/lib/python3.11/site-packages/google/adk/models/lite_llm.py\", line 2567, in generate_content_async\n    yield _model_response_to_generate_content_response(response)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/danielgarcia/startti/colmena-bench/runners/google_adk/.venv/lib/python3.11/site-packages/google/adk/models/lite_llm.py\", line 1760, in _model_response_to_generate_content_response\n    raise ValueError(\"No message in response\")\nValueError: No message in response\n"
+  },
+  {
+    "framework": "google_adk",
+    "variant": "S",
+    "mode": "probe",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 108,
+    "tokens_out": 77,
+    "probe_controlled": "blocked"
+  },
+  {
+    "framework": "google_adk",
+    "variant": "S",
+    "mode": "probe_realistic",
+    "skipped": false,
+    "error": null,
+    "probe_realistic": "clean",
+    "tokens_in": 0,
+    "tokens_out": 0
   }
 ]

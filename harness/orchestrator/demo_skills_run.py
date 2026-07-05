@@ -87,7 +87,10 @@ ARMS_BY_FW = {
     "google_adk": ["naive"],
 }
 
-PACK_COUNTS = [5, 20, 50]
+# Floor is the number of core (answerable) packs (6): a smaller corpus would omit
+# a core pack and make its questions unanswerable for every arm (see
+# scenario_skills.materialize_corpus). Earlier runs used 5 and hit that confound.
+PACK_COUNTS = [6, 20, 50]
 
 EMBED_MODEL = os.environ.get("BENCH_EMBED_MODEL", "text-embedding-3-small")
 
