@@ -96,7 +96,13 @@ end-to-end. Reported as measured; the differentiation lives in the controlled pr
 This is **not** "Colmena safe, everyone else unsafe." The bench disproved that
 assumption. The real picture:
 
-- **2 of 5 competitors leak** (langchain, langgraph — the raw-`exec` agents).
+- **2 of 5 competitors leak** (langchain, langgraph — the raw-`exec` agents). This is
+  the *default, idiomatic* path, not a hard limit: LangChain published a first-party
+  `langchain-sandbox` package (`PyodideSandboxTool`, Python-in-Pyodide/WASM via Deno)
+  usable from LangGraph too — an explicit opt-in the developer must know to install and
+  select. It was archived in January 2026 (maintainers now point to sandbox/provider
+  code-exec APIs), which only reinforces that the tool a developer reaches for first
+  (`PythonAstREPLTool` / raw `exec`) carries no sandbox.
 - **3 do not leak, but each for a different reason you have to know about:** a
   library-level eval restriction (llamaindex, version-dependent), a **remote cloud
   sandbox** (crewai — its first-party Docker `CodeInterpreterTool` was removed in

@@ -81,6 +81,14 @@ capability, it's that for each one **you write and maintain the safety logic
 yourself**, and the engine does not guarantee it. Colmena expresses all four
 declaratively and the engine enforces them.
 
+> **Disclosure — "DIY" ≠ "no interception point."** The masking `DIY` cells mean
+> the developer must *write* the outbound scrub, not that the framework gives them
+> nowhere to put it. Google ADK exposes an `after_tool_callback`, LangChain provides
+> callback handlers (e.g. `on_tool_end`) and agent-middleware hooks, and LlamaIndex
+> offers callback/instrumentation handlers — each a native seam where redaction can
+> live. Colmena's distinction is that the scrub is an engine default that **cannot be
+> forgotten**, not that the others lack a place to put one.
+
 ### The round-2 finding — LangGraph is the honest near-peer
 
 LangGraph stands apart from the other Python frameworks and is the **honest

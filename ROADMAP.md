@@ -184,19 +184,25 @@ Last updated: 2026-07-04.
 
 ## Group D — Disclosure footnotes (claim holds; pre-empt reviewer objections)
 
-- [ ] **D-1. demo06 masking:** the "only Colmena has native masking" claim HOLDS
-  (CrewAI/LangChain PII redaction is trace-level, not live LLM context). But footnote that
-  ADK (`after_tool_callback`), LangChain (callbacks), LlamaIndex have native *hooks* where
-  the DIY scrub lives — so "DIY" means "you write the redaction," not "no interception point."
-  Files: §6 / `docs/demos/demo06-refund-agent.md`.
-- [ ] **D-2. demo08:** disclose that `langchain-sandbox`'s `PyodideSandboxTool` is a
-  compatible opt-in → claim is "the default/idiomatic path leaks," not "cannot be made safe."
-  Files: §7 / `docs/demos/demo08-codeexec.md`.
-- [ ] **D-3. task04:** disclose no framework uses its native SQL agent (LangChain
-  `create_sql_agent`, LlamaIndex `NLSQLTableQueryEngine`, CrewAI `NL2SQLTool`); the choice is
-  uniform, doesn't bias, and a native fix would *raise* competitors (harsher for Colmena).
-  Optional latent fix: the 200-row cap in `run_sql` (`bench_common/datasets.py:47`) can
-  silently truncate list-type answers.
+- [x] **D-1. demo06 masking. DONE.** Added a third disclosure to whitepaper §6.3: "DIY"
+  names where the redaction lives, not a missing interception point — ADK `after_tool_callback`,
+  LangChain callback handlers (`on_tool_end`) + agent-middleware hooks, LlamaIndex
+  callback/instrumentation handlers are all native seams; Colmena's distinction is the scrub is
+  an engine default that can't be forgotten. Mirrored a blockquote into
+  `docs/demos/demo06-refund-agent.md` §2.
+- [x] **D-2. demo08. DONE.** Whitepaper §7.3 discloses LangChain's first-party
+  `langchain-sandbox` / `PyodideSandboxTool` (Pyodide+Deno, usable from LangGraph) as an
+  opt-in safe path → the measured leak is the *default idiomatic* REPL/`exec` path, not "cannot
+  be made safe". Verified via WebFetch: repo real BUT **archived Jan 2026** (maintainers now
+  recommend sandbox/provider code-exec APIs) — disclosed that too (strengthens the point). Added
+  to References; mirrored into `docs/demos/demo08-codeexec.md`.
+- [x] **D-3. task04. DONE.** Whitepaper §9.4 discloses no framework uses its native NL-to-SQL
+  agent (LangChain `create_sql_agent`, LlamaIndex `NLSQLTableQueryEngine`, CrewAI `NL2SQLTool`);
+  uniform hand-provided `run_sql`, so no bias — and since competitors sit near 100%, native SQL
+  agents could only *widen* the gap vs Colmena's 93–97% (conservative for Colmena). Verified the
+  200-row cap (`datasets.py:47`) — it appends a "showing 200 of N" marker (not fully silent) and
+  is shared across frameworks; disclosed as a shared caveat, left as-is (no code change). Mirrored
+  into `docs/demos/task04-csv.md` §2.
 
 ---
 

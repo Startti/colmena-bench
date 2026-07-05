@@ -57,6 +57,16 @@ loops a tool). Notably, **Colmena already has the most detailed framework-level 
 message of the six** (LangChain/LangGraph have none) — so Colmena is, if anything,
 mildly *advantaged* on prompting, not disadvantaged.
 
+> **Disclosure — uniform SQL tool, not native NL-to-SQL agents.** No framework uses its
+> native natural-language-to-SQL component (LangChain `create_sql_agent`, LlamaIndex
+> `NLSQLTableQueryEngine`, CrewAI `NL2SQLTool`); all six share the same hand-provided
+> `run_sql` tool. The choice is uniform so it doesn't bias the comparison — and since the
+> competitors already sit near 100%, adopting native SQL agents could only hold or *raise*
+> their accuracy, **widening** the gap against Colmena's 93–97%. The shared tool is the
+> conservative choice for Colmena, not a favorable one. The 200-row cap is likewise shared,
+> so it affects all frameworks equally (it appends a "showing 200 of N" marker rather than
+> failing silently).
+
 ---
 
 ## 3. Clarification — why Colmena expert scores 93–97%, not ~100%
