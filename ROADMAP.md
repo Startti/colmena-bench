@@ -257,8 +257,10 @@ Last updated: 2026-07-04.
 
 ## Group G — Merge, re-validate, finalize
 
-- [ ] **G-1. Merge `cleanup/drop-demo11-demo12` to main** once the group above is reviewed
-  (currently parked in backlog).
+- [x] **G-1. Merge `cleanup/drop-demo11-demo12` to main. DONE.** Fast-forwarded main to
+  `0a3fb02` (6 commits: drop demo11/12, A+B fairness, C steelman arms, D disclosures, F cleanup,
+  test fix). Verified 130 offline tests pass on the merged result (fixed one stale B-3 test);
+  deleted the branch. Local repo only (no remote configured).
 - [ ] **G-2. Rebuild Colmena at tag `colmena_dag_engine-v0.9.0`** (commit `b901a966`, tip of
   develop, 174 commits past the current pin `14beaba9`) and **recompute all Colmena arms**.
   Treat re-runs as a re-measurement that UPDATES the paper, not a strict verification —
