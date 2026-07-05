@@ -298,8 +298,13 @@ Last updated: 2026-07-04.
       14beaba9 numbers + added v0.9.0 confirmation/guard notes to whitepaper §8.2 + §8.4 and
       `demo07-many-tools.md` §3. Suspect re-run data discarded (committed data git-restored).
       This also resolves the earlier C-2a flag (the demo07 "drift" was the 40-tool generator cap).
-    - ⏳ **demo05** (flagship, colmena-only N=12 script ready in scratch), **task04**
-      (uses `run_sql` python_script, NOT attachment_run_python — test separately).
+    - ✅ **demo05** (flagship Context Tax) — re-measured colmena-only N=12 on v0.9.0: total
+      **31,365 ± 7,393** (published 39,085), turn-10 **2,135** — MORE efficient, win widens
+      ~10-12× → ~13-14×. One trade-off: quality 11/12 (vs 12/12), one run's compaction clipped
+      a designated-turn detail (same tension as §9.4). Kept the 14beaba9 headline (more
+      conservative tokens + clean 12/12) + added v0.9.0 confirmation notes to whitepaper §4.2
+      and `demo05-context-tax.md`. v0.9.0 agg preserved in session scratch.
+    - ⏳ **task04** (uses `run_sql` python_script, NOT attachment_run_python — test separately).
 - [ ] **G-3. Regenerate the PDF** (`scripts/build_whitepaper_pdf.py` → Chrome headless; do
   NOT combine `--headless=new` with `--virtual-time-budget` / `--run-all-compositor-stages`).
 - [ ] **G-4. Final consistency audit** of the whitepaper after all edits (deterministic

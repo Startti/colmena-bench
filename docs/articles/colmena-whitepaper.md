@@ -88,6 +88,8 @@ Three quantities summarize the result. Over the full 10-turn conversation Colmen
 
 Colmena shows the largest relative variability (std ±9,326, ≈24% of its mean), which reflects the model's per-turn decision of whether to re-read the document via `load_attachment` — a property of the mechanism rather than measurement noise. Competitor variability is at most 8.3% of the mean (std ±285 to ±34,873).
 
+**Build note (`v0.9.0`).** The Colmena figures above are from the pinned `14beaba9` build (§3). Re-measured on `v0.9.0` at the same N=12, Colmena is *more* efficient, not less: **31,365 ± 7,393** total input tokens (turn-10 **2,135**), widening the total-token advantage from ~10–12× to ~13–14× and leaving the direction of every conclusion unchanged. The one trade-off is a marginally more aggressive history compaction: the ground-truth quality check passed on 11 of 12 runs rather than 12 of 12 (one run clipped a designated-turn detail — the same compaction/recall tension quantified in §9.4). We therefore report the `14beaba9` figures as the headline (they are the more conservative token result *and* the clean 12/12 quality result), with `v0.9.0` confirming the effect holds and strengthens.
+
 ![Efficiency multiplier by turn: Colmena input tokens vs competitor mean](assets/d05_multiplier.png)
 
 *Figure 2: The efficiency multiplier grows with each turn as competitor histories accumulate; by turn 10 Colmena uses roughly 31× fewer tokens than the next-best competitor.*

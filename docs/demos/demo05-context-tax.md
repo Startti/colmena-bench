@@ -61,6 +61,13 @@ while the competitors are stable ~385k–452k. The gap is consistently **≥6×*
 Per-turn cumulative curve: see `plots/2_line_cumulative.png` (Colmena flat with a
 ±std band; the five competitors climb). Per-turn CSV: `agg_n12_per_turn.csv`.
 
+> **Build note (`v0.9.0`).** These Colmena numbers are from `14beaba9`. Re-measured on
+> `v0.9.0` at the same N=12, Colmena is *more* efficient: **31,365 ± 7,393** total (turn-10
+> **2,135**), widening the win to ~13–14×. One trade-off: quality passed 11/12 runs (vs
+> 12/12) — one run's compaction clipped a designated-turn detail. We keep the `14beaba9`
+> headline (more conservative tokens + clean 12/12); `v0.9.0` confirms the effect holds and
+> strengthens.
+
 ---
 
 ## 4. Results — lines of code (node vs code)
