@@ -28,7 +28,12 @@ from demo05_buckets import bucket_spans_by_turn  # noqa: E402
 from demo05_loc import count_loc  # noqa: E402
 from orchestrator.full_run import venv_python, _read_spans, _proxy_key, usd_per_run, PRICING  # noqa: E402
 
-HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk"}
+HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk",
+                  "google_adk_artifacts"}
+
+# Steelman/tuned arms that run an existing framework's runner under a non-default
+# variant. Maps arm name -> (runner framework, --variant value).
+_ARM_MAP = {"google_adk_artifacts": ("google_adk", "artifacts")}
 
 LOC_TARGETS = {
     "colmena": ["runners/colmena/runner/tasks/task05.py"],
@@ -42,7 +47,8 @@ LOC_TARGETS = {
 
 def _run_one(fw: str, task_path: Path, model_alias: str, proxy_base_url: str,
              out_dir: Path, run_id: str, timeout: int) -> dict | None:
-    py = venv_python(fw)
+    runner_fw, variant = _ARM_MAP.get(fw, (fw, "default"))
+    py = venv_python(runner_fw)
     if not py.exists():
         print(f"  [skip] {fw}: no venv")
         return None
@@ -54,10 +60,10 @@ def _run_one(fw: str, task_path: Path, model_alias: str, proxy_base_url: str,
         "BENCH_RUN_ID": run_id,
         "LITELLM_PROXY_BASE_URL": proxy_base_url,
         "LITELLM_PROXY_API_KEY": _proxy_key(),
-        "PYTHONPATH": f"{REPO_ROOT/'runners'/fw}:{REPO_ROOT/'runners'/'_bench_common'}",
+        "PYTHONPATH": f"{REPO_ROOT/'runners'/runner_fw}:{REPO_ROOT/'runners'/'_bench_common'}",
     })
     proc = subprocess.run(
-        [str(py), "-m", "runner", "--task", str(task_path), "--variant", "default",
+        [str(py), "-m", "runner", "--task", str(task_path), "--variant", variant,
          "--run-id", run_id, "--model-alias", model_alias,
          "--proxy-base-url", proxy_base_url, "--output", str(out_path),
          "--timeout-seconds", str(timeout)],

@@ -108,6 +108,60 @@
     "error": null
   },
   {
+    "framework": "google_adk",
+    "variant": "collect",
+    "seed": 0,
+    "secret_leaked": true,
+    "delivered_to_api": true,
+    "round_trips": 1,
+    "error": null
+  },
+  {
+    "framework": "google_adk",
+    "variant": "collect",
+    "seed": 1,
+    "secret_leaked": true,
+    "delivered_to_api": true,
+    "round_trips": 1,
+    "error": null
+  },
+  {
+    "framework": "google_adk",
+    "variant": "collect",
+    "seed": 2,
+    "secret_leaked": true,
+    "delivered_to_api": true,
+    "round_trips": 1,
+    "error": null
+  },
+  {
+    "framework": "google_adk",
+    "variant": "echo",
+    "seed": 0,
+    "secret_leaked": true,
+    "delivered_to_api": true,
+    "round_trips": 1,
+    "error": null
+  },
+  {
+    "framework": "google_adk",
+    "variant": "echo",
+    "seed": 1,
+    "secret_leaked": true,
+    "delivered_to_api": true,
+    "round_trips": 1,
+    "error": null
+  },
+  {
+    "framework": "google_adk",
+    "variant": "echo",
+    "seed": 2,
+    "secret_leaked": true,
+    "delivered_to_api": true,
+    "round_trips": 1,
+    "error": null
+  },
+  {
     "framework": "langchain",
     "variant": "collect",
     "seed": 0,
@@ -216,6 +270,60 @@
     "error": null
   },
   {
+    "framework": "langgraph_interrupt_isolated",
+    "variant": "collect",
+    "seed": 0,
+    "secret_leaked": false,
+    "delivered_to_api": true,
+    "round_trips": 1,
+    "error": null
+  },
+  {
+    "framework": "langgraph_interrupt_isolated",
+    "variant": "collect",
+    "seed": 1,
+    "secret_leaked": false,
+    "delivered_to_api": true,
+    "round_trips": 1,
+    "error": null
+  },
+  {
+    "framework": "langgraph_interrupt_isolated",
+    "variant": "collect",
+    "seed": 2,
+    "secret_leaked": false,
+    "delivered_to_api": true,
+    "round_trips": 1,
+    "error": null
+  },
+  {
+    "framework": "langgraph_interrupt_isolated",
+    "variant": "echo",
+    "seed": 0,
+    "secret_leaked": false,
+    "delivered_to_api": true,
+    "round_trips": 1,
+    "error": null
+  },
+  {
+    "framework": "langgraph_interrupt_isolated",
+    "variant": "echo",
+    "seed": 1,
+    "secret_leaked": false,
+    "delivered_to_api": true,
+    "round_trips": 1,
+    "error": null
+  },
+  {
+    "framework": "langgraph_interrupt_isolated",
+    "variant": "echo",
+    "seed": 2,
+    "secret_leaked": false,
+    "delivered_to_api": true,
+    "round_trips": 1,
+    "error": null
+  },
+  {
     "framework": "llamaindex",
     "variant": "collect",
     "seed": 0,
@@ -262,60 +370,6 @@
   },
   {
     "framework": "llamaindex",
-    "variant": "echo",
-    "seed": 2,
-    "secret_leaked": true,
-    "delivered_to_api": true,
-    "round_trips": 1,
-    "error": null
-  },
-  {
-    "framework": "google_adk",
-    "variant": "collect",
-    "seed": 0,
-    "secret_leaked": true,
-    "delivered_to_api": true,
-    "round_trips": 1,
-    "error": null
-  },
-  {
-    "framework": "google_adk",
-    "variant": "collect",
-    "seed": 1,
-    "secret_leaked": true,
-    "delivered_to_api": true,
-    "round_trips": 1,
-    "error": null
-  },
-  {
-    "framework": "google_adk",
-    "variant": "collect",
-    "seed": 2,
-    "secret_leaked": true,
-    "delivered_to_api": true,
-    "round_trips": 1,
-    "error": null
-  },
-  {
-    "framework": "google_adk",
-    "variant": "echo",
-    "seed": 0,
-    "secret_leaked": true,
-    "delivered_to_api": true,
-    "round_trips": 1,
-    "error": null
-  },
-  {
-    "framework": "google_adk",
-    "variant": "echo",
-    "seed": 1,
-    "secret_leaked": true,
-    "delivered_to_api": true,
-    "round_trips": 1,
-    "error": null
-  },
-  {
-    "framework": "google_adk",
     "variant": "echo",
     "seed": 2,
     "secret_leaked": true,

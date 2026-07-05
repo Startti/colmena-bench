@@ -111,13 +111,41 @@ Last updated: 2026-07-04.
 > Each is reported *alongside* the naive default arm, not replacing it. Framing:
 > "Colmena does declaratively what framework X requires you to hand-wire."
 
-- [x-decided] **C-1. demo05 `google_adk_artifacts` arm.** ADK's native `ArtifactService`
-  + `load_artifacts` tool keeps the doc out of standing context (near-exact
-  `load_attachment` twin). Implement a variant of `runners/google_adk/runner/tasks/task05.py`;
-  report next to the ADK default. Expected: narrows ADK's doc-gap from ~11× toward ~3–5×
-  (chart-binary tax remains). *(Confirmed by user; not yet built.)*
+- [x] **C-1. demo05 `google_adk_artifacts` arm — DONE 2026-07-04. Fairness concern REFUTED.**
+  Implemented the ADK-native steelman: `runners/google_adk/runner/tasks/task05.py` variant
+  `artifacts` (saves report via `ArtifactService`, agent gets built-in `load_artifacts`);
+  driver plumbing in `harness/orchestrator/demo05_run.py` (`_ARM_MAP` + `HEADER_CAPABLE`).
+  N=3, quality PASS. CORRECTED FINDING (after the ADK source + session inspection — an earlier
+  draft wrongly claimed the doc "persists"): ADK's `load_artifacts` IS a genuine ephemeral-
+  attachment equivalent for the DOCUMENT (session shows report text 0× in standing history vs
+  1× default = Colmena Mechanism A). It still did NOT close the gap — 467.9k vs 439.8k, both
+  ~11–12× Colmena's 39k — because the scenario's tax is dominated by the ~8k base64 CHART, which
+  accumulates in ADK history (ADK has no binary scrubber = Colmena Mechanism B), and load_artifacts
+  adds a reload round-trip per doc-turn re-sending the un-scrubbed history. ADK matches 1 of
+  Colmena's 2 context mechanisms, not both. §4.6, demo05-context-tax.md, and
+  `runs/demo05/steelman_adk_artifacts.json` all corrected to this.
 
-- [?] **C-2. demo07 LangChain `LLMToolSelectorMiddleware`.** Native, built-in since
+- [~] **C-2. demo07 LangChain `LLMToolSelectorMiddleware` — BUILT, BLOCKED on demo07 repro (2026-07-05).**
+  Arm implemented (`runners/langchain/runner/tasks/task07b_tools.py::_run_selector` via create_agent +
+  the middleware; driver config `langchain-selector` + `BENCH_LANGCHAIN_SELECTOR`). Two findings:
+  (1) the stock middleware does NOT work with gemini-2.5-flash via the proxy — its structured-output
+  schema is a `Union[Literal[name]]` (pydantic → `anyOf`/`const`), which Gemini-via-LiteLLM does not
+  enforce (selector returns descriptions / hallucinated names → "Model selected invalid tools"). A flat
+  JSON-Schema `enum` IS enforced (verified), so `_run_selector` monkeypatches the schema builder to emit
+  one. With that, the arm runs correctly (6/6 needle accuracy) at ~19.9k tokens (seed 0). (2) BLOCKER:
+  the default langchain arm in the CURRENT env measures ~287k / 100 LLM calls, but published Table 7 says
+  125,305 — a 2.3× discrepancy suggesting model/env DRIFT (the model now makes many more tool calls per
+  turn on the confusable toolset). The selector's 19.9k cannot be published against a baseline that no
+  longer reproduces. **Defer C-2's paper integration to the G-2 v0.9.0 re-run (fresh baselines); first
+  investigate the demo07 reproducibility gap (new item C-2a below).** Code is preserved and isolated.
+
+- [ ] **C-2a. NEW — investigate demo07 reproducibility (drift is ISOLATED to demo07, triaged 2026-07-05).**
+  Triage result: demo05 langchain reproduces EXACTLY today (452,600 / 13 calls vs published 452,158 / 13,
+  quality OK) → **no global model drift**; the v0.9.0 re-run (G-2) is safe for the other experiments.
+  Only demo07 is off: current-env langchain default = ~287k / ~100 LLM calls vs published 125,305. Most
+  likely the confusable-toolset scenario is high-variance in tool-call count (seed 0 outlier — published
+  is a 5-seed mean) rather than a model change. TODO: run all 5 seeds of demo07 default to check the mean
+  vs 125k, and inspect per-turn tool-call counts. Fold into G-2's demo07 re-run. Native, built-in since
   LangChain 1.0, **present at pinned 1.3.6**; a secondary LLM pre-selects ~5 of 30 tools,
   cutting per-turn schema tokens. We bind all 30 → **biggest exposure to the demo07 pitch**.
   Applies to LangGraph via `create_agent` too.
@@ -128,19 +156,29 @@ Last updated: 2026-07-04.
   the true lazy-fetch analog, ships only in 1.3.7 — one patch above the pin — so it's
   correctly excluded at the current pin.)
 
-- [?] **C-3. demo10 `langgraph_interrupt_isolated` arm.** LangGraph `interrupt()` inside a
-  tool node CAN collect a secret out-of-band and never route it to an LLM message (DIY,
-  but achievable) → "only Colmena 0%" is falsifiable at the mechanism level. Add a
-  hand-architected LangGraph arm; expected ~0% leak at a visible hand-wiring/LOC cost.
-  Reframes demo10 from "only Colmena can" to "Colmena does declaratively what LangGraph
-  requires you to hand-architect" (survives the strawman rebuttal).
-  Files: new arm under `runners/langgraph/runner/tasks/task10_secrets.py`.
+- [x] **C-3. demo10 `langgraph_interrupt_isolated` arm. DONE.** Built the hand-architected
+  LangGraph arm: `_run_isolated` in `runners/langgraph/runner/tasks/task10_secrets.py` uses a
+  `StateGraph` whose `connect` node calls `interrupt()` to collect the credentials out-of-band
+  (arrive via `Command(resume=...)` into a local var, never an LLM message) + a hand-written
+  echo scrub. Driver plumbing: `_ARM_MAP` in `harness/orchestrator/demo_secrets_run.py` maps the
+  pseudo-framework → (`langgraph` venv/runner, `BENCH_LANGGRAPH_ISOLATED=1`); added to
+  `HEADER_CAPABLE`. **Measured: 0% leak in BOTH variants (0/3 collect, 0/3 echo), delivered=True,
+  0 errors** — same 0% as Colmena. Cost: ~64 LOC of security-critical hand-wiring. Reframes the
+  claim from "only Colmena can" → "Colmena does declaratively what LangGraph makes you
+  hand-architect". Plots: added the arm as the rightmost bar in `demo10_plots.leak_rate`
+  (`_security_loc` also handles it); regenerated `runs/demo10/plots/leak_rate.png` + copied to
+  `docs/articles/assets/d10_leak_rate.png`. Docs updated: whitepaper §5.4 (measured steelman,
+  replaces the hand-wavy "LangGraph nuance"), Fig 7 caption, `docs/demos/demo10-secure-suspend.md`
+  (+ steelman section), `demo10-replication.md`. Summary now 42 rows (36 base + 6 arm, merged).
 
-- [?] **C-4. demo07 LlamaIndex `ObjectIndex` + `tool_retriever` — judgment call.** Native
-  and cuts tokens, BUT it's embedding-RAG (a different technique from compact-catalog +
-  on-demand fetch). Either add it as an explicitly-labeled RAG arm, or document it as a
-  different technique and exclude symmetrically. Docs:
-  `ObjectIndex.from_objects(...).as_retriever()` → `FunctionAgent(tool_retriever=...)`.
+- [x] **C-4. demo07 LlamaIndex `ObjectIndex` + `tool_retriever`. DONE (document only).**
+  Added a "Native tool-narrowing alternatives, disclosed and symmetrically excluded" paragraph
+  to whitepaper §8.4 covering BOTH LlamaIndex `ObjectIndex`+`tool_retriever` (embedding-RAG:
+  `VectorStoreIndex` + `similarity_top_k`, recall risk) AND LangChain `LLMToolSelectorMiddleware`
+  (extra LLM call; enforced variant one patch above pin) — excluded like the RAG family in §2.1.
+  URL verified (301 → `developers.llamaindex.ai/python/examples/agent/openai_agent_retrieval/`,
+  "Retrieval-Augmented Agents"); added to the References list. Mirrored a bullet into
+  `docs/demos/demo07-many-tools.md` §3. No arm.
 
 ---
 
@@ -220,6 +258,6 @@ Last updated: 2026-07-04.
 |---|---|
 | A-1 | CrewAI demo08: re-pin `<1.14.0` / migrate to E2B / mark N/A? |
 | C-2 | demo07 LangChain: add tool-selector arm, or symmetric exclusion rule? |
-| C-3 | demo10: add the `langgraph_interrupt_isolated` steelman arm? |
-| C-4 | demo07 LlamaIndex `tool_retriever`: add labeled RAG arm, or document + exclude? |
+| C-3 | demo10: add the `langgraph_interrupt_isolated` steelman arm? → DONE (arm built, 0% leak measured) |
+| C-4 | demo07 LlamaIndex `tool_retriever`: add labeled RAG arm, or document + exclude? → DONE (documented + symmetric exclusion in §8.4) |
 | E-1..E-4 | Sequence: multi-language section + ADK arm first (small), then full runners? |

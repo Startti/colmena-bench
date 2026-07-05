@@ -38,6 +38,14 @@ Subsets: `--frameworks`, `--variants collect,echo`, `--seeds N`, `--merge-baseli
   the user pastes the 3 secrets into the conversation (the leak), then the handler POSTs the
   real values to the mock. The LLM calls are best-effort (a transient empty completion can't
   sink the cell — the leak already fired on the request; the POST stays mandatory).
+- **Steelman arm** (`langgraph_interrupt_isolated`): a hardened LangGraph arm proving the
+  naive leak is a default-path choice, not a hard ceiling. Selected as a pseudo-framework via
+  `_ARM_MAP` in the driver (maps to the `langgraph` venv/runner + `BENCH_LANGGRAPH_ISOLATED=1`),
+  which routes `task10_secrets.run` into `_run_isolated`: a `StateGraph` whose `connect` node
+  calls `interrupt()` to collect the credentials out-of-band (they arrive via
+  `Command(resume=...)` into a local var, never an LLM message) and a hand-written scrub strips
+  the secret from the echoed response. Reaches 0% leak in both variants, still delivers. Run it
+  with `bash scripts/run_demo10.sh --frameworks langgraph_interrupt_isolated --seeds 3 --merge-baseline`.
 - **Mock** (`harness/orchestrator/mock_account_api.py`): records the POST body to
   `runs/demo10/received-<run_id>.json`; the `echo` variant echoes the body back.
 - **Leak detection**: the proxy callback `audit_messages_for_secret` scans each LLM
@@ -57,5 +65,6 @@ all 6; `delivered_to_api=true` everywhere; `round_trips=1`.
 
 ## Caveats (see demo10-secure-suspend.md)
 - Capability/counterfactual demo (not a metric sweep). LangGraph has durable pause; the
-  idiomatic collection still leaks. Secrets fake, endpoint mocked, audit writes only a
-  boolean.
+  idiomatic collection still leaks, but the `langgraph_interrupt_isolated` steelman arm shows
+  it can be hand-architected to 0% — the claim is "declarative vs hand-wired", not "only
+  Colmena can". Secrets fake, endpoint mocked, audit writes only a boolean.

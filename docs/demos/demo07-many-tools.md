@@ -232,6 +232,17 @@ does not 4xx even when handed all 200 full schemas.
   compaction it is *also* much cheaper than the competitors, so the lazy-vs-eager
   delta isolates only the lazy feature, while the colmena-vs-competitor delta
   reflects compaction + lazy together. Both deltas are reported separately above.
+- **Native tool-narrowing alternatives exist and are excluded symmetrically.**
+  LlamaIndex ships retrieval-augmented tool selection —
+  `ObjectIndex.from_objects(tools, index_cls=VectorStoreIndex).as_retriever(similarity_top_k=k)`
+  wired as `FunctionAgent(tool_retriever=...)` ([docs](https://developers.llamaindex.ai/python/examples/agent/openai_agent_retrieval/)) —
+  and LangChain ships an LLM pre-selector (`LLMToolSelectorMiddleware`). We don't
+  benchmark either as a Colmena-comparable arm: tool_retriever is **embedding-RAG**
+  (a different technique — embedding model + similarity cutoff + recall risk), and
+  the selector is an **extra LLM call** whose provider-enforced variant is one patch
+  above our pin. Both are the developer's to wire and tune, not an engine default;
+  we exclude them the same way §2.1 treats the RAG family as distinct prior art
+  rather than a baseline. (Whitepaper §8.4.)
 - **Single model, temp 0.** Provider-authoritative tokens; a different model could
   behave differently at the schema-volume extremes.
 - **Token accounting requires a serial sweep + one proxy.** Colmena's spans are

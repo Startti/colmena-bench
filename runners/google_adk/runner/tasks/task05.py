@@ -102,12 +102,29 @@ def run(
 
 
 async def _run_all_turns(llm: Any, args: RunnerArgs) -> tuple[list[str], dict[str, Any]]:
-    """Drive all 10 turns on a single persistent session."""
+    """Drive all 10 turns on a single persistent session.
+
+    Two variants:
+      default   — the report is pasted into turn 0 and re-sent in history every
+                  turn (the idiomatic ADK baseline; the context tax).
+      artifacts — the report is stored via ADK's native ArtifactService and the
+                  agent is given the built-in ``load_artifacts`` tool, so the doc
+                  stays OUT of standing context and is pulled in only on the turns
+                  the model chooses to load it (ADK's on-demand-attachment
+                  equivalent of Colmena's ``load_attachment``).
+    """
+    use_artifacts = args.variant == "artifacts"
+
+    tools: list[Any] = [generate_chart]
+    if use_artifacts:
+        from google.adk.tools import load_artifacts  # noqa: PLC0415
+        tools.append(load_artifacts)
+
     agent = Agent(
         name="responder",
         model=llm,
         instruction=SYSTEM_MESSAGE,
-        tools=[generate_chart],
+        tools=tools,
     )
     runner = InMemoryRunner(agent=agent, app_name=_APP)
 
@@ -120,13 +137,30 @@ async def _run_all_turns(llm: Any, args: RunnerArgs) -> tuple[list[str], dict[st
         session_id=session_id,
     )
 
+    if use_artifacts:
+        # Store the report as a native artifact instead of putting it in context.
+        await runner.artifact_service.save_artifact(
+            app_name=_APP,
+            user_id=_USER,
+            session_id=session.id,
+            filename="report.txt",
+            artifact=types.Part(text=REPORT_TEXT),
+        )
+
     answers: list[str] = []
     turn_boundaries: list[str] = [_now_iso()]  # boundary BEFORE turn 0
 
     for i, turn in enumerate(TURNS):
         try:
-            # Turn 0: seed the report in the user message.
-            if i == 0:
+            # Turn 0: seed the report (pasted in default; referenced in artifacts).
+            if i == 0 and use_artifacts:
+                user_text = (
+                    "A report for this conversation is stored as the artifact "
+                    "'report.txt'. Call the load_artifacts tool to read it whenever "
+                    "you need to answer a question about the report.\n\n"
+                    f"{turn['message']}"
+                )
+            elif i == 0:
                 user_text = (
                     f"Here is the report for this conversation:\n\n{REPORT_TEXT}\n\n"
                     f"{turn['message']}"

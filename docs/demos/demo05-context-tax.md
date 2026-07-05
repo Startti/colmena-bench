@@ -158,6 +158,18 @@ peak, not an end snapshot); CPU is `getrusage` user+sys.
 - *"Colmena wins by losing answer quality."* — Verified false: its doc-turn
   answers are correct (turn 1 "North America", turn 7 "Supply chain", turn 0
   "positive trend"); only the 3 chart turns return short confirmations by design.
+- *"You ignored Google ADK's native artifact store (`ArtifactService` +
+  `load_artifacts`), which loads documents on demand."* — Tested it as a tuned
+  arm (`google_adk_artifacts`, N=3, quality passed). ADK's `load_artifacts` **is** a
+  genuine ephemeral-attachment equivalent for the document — session inspection
+  confirms the report text appears 0× in the standing history (vs 1×, re-sent every
+  turn, in the default arm), matching Colmena's Mechanism A. But it did **not** close
+  the gap: mean 467.9k input tokens (range 403k–502k) vs 439.8k default, both ~11–12×
+  Colmena's 39k. Reason: the tax here is dominated by the ~8k-token base64 **chart**,
+  which accumulates in ADK's history (ADK has no binary scrubber = Colmena's Mechanism
+  B), and `load_artifacts` adds a reload round-trip each doc-turn that re-sends that
+  un-scrubbed history. ADK matches 1 of Colmena's 2 context defaults, not both. Data:
+  `runs/demo05/steelman_adk_artifacts.json`; whitepaper §4.6.
 
 Adversarial verdict: **the headline is sound and fair.**
 

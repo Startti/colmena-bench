@@ -53,6 +53,27 @@ a **single** round-trip.
   collection, so echo just re-confirms it; the echo variant's real point is that Colmena
   closes even this back-door path.)
 
+### Steelman: LangGraph reaches 0% too — by hand (`langgraph_interrupt_isolated`)
+To keep the claim honest we built a hardened LangGraph arm instead of asserting the
+naive leak is unavoidable. It uses LangGraph's native `interrupt()` to collect the
+credentials **out-of-band**: the values arrive through the `Command(resume=...)`
+channel into a graph node's local scope and are POSTed to the endpoint **without ever
+entering an LLM message**, plus a hand-written outbound scrub that strips the secret
+from the echoed response before the summarizing model sees it.
+
+| arm | secret_leaked (collect) | secret_leaked (echo) | delivered |
+|---|---|---|---|
+| langgraph (naive, idiomatic) | 3 / 3 | 3 / 3 | 3/3 |
+| **langgraph_interrupt_isolated** (hand-architected) | **0 / 3** | **0 / 3** | 3/3 |
+
+Same framework, two arms → the naive 100% leak is a **default-path choice, not a hard
+ceiling**. The cost is ~64 lines of security-critical wiring (route collection through
+the interrupt channel, remember the manual echo scrub) that the developer owns and must
+not get wrong. In Colmena the same guarantee is one `secure_suspend` node the engine
+enforces unconditionally. **The claim is "Colmena does declaratively what LangGraph makes
+you hand-architect", not "only Colmena can".** This arm is the rightmost bar in
+`leak_rate.png`; reproduce with `--frameworks langgraph_interrupt_isolated`.
+
 ## Capability matrix — `capability_matrix.png`
 What a careful hand-roll would need, by guarantee:
 
@@ -68,10 +89,12 @@ What a careful hand-roll would need, by guarantee:
 ## Honesty caveats
 - **Capability/counterfactual demo, not a metric sweep.** Security is Colmena's proven
   suit; the result is a guarantee (no leak, by construction, from one declarative node).
-- **LangGraph genuinely has durable HITL** (`interrupt()`) — stated in the matrix. The
-  point is that even with it, keeping the secret out of state + encrypting + auto-injecting
-  + echo-masking is all hand-rolled, and the *idiomatic* mid-conversation collection leaks
-  (our `langgraph` naive arm leaked 6/6, same as the rest).
+- **LangGraph genuinely has durable HITL** (`interrupt()`) and can reach 0% leak when
+  hand-architected — we measured it (the `langgraph_interrupt_isolated` steelman arm
+  above, 0/6). The point is not that only Colmena can, but that even with `interrupt()`,
+  keeping the secret out of state + encrypting + auto-injecting + echo-masking is all
+  hand-rolled, and the *idiomatic* mid-conversation collection leaks (our `langgraph`
+  naive arm leaked 6/6, same as the rest).
 - **All secrets fake; endpoint mocked; the proxy audit writes only a boolean** (never the
   raw secret to disk).
 - **`delivered_to_api` fairness guard** is true for all arms — competitors aren't penalized

@@ -90,6 +90,72 @@ def _invoke_with_retry(llm_with_tools: Any, messages: list[Any]) -> AIMessage:
     raise last_exc  # type: ignore[misc]
 
 
+def _run_selector(llm: Any, tools: list, session: dict) -> tuple[Any, dict[str, int], dict[str, Any]]:
+    """Multi-turn session driven by create_agent + LLMToolSelectorMiddleware.
+
+    Each turn re-invokes the agent on the growing message list; the middleware
+    picks the top-``max_tools`` relevant tools before the main model call, so only
+    that subset's schemas are sent. Selector and main calls both go through the
+    proxy, so cumulative-token accounting captures the real trade-off.
+    """
+    from langchain.agents import create_agent  # noqa: PLC0415
+    from langchain.agents.middleware import tool_selection as _ts  # noqa: PLC0415
+    from langchain.agents.middleware.tool_selection import LLMToolSelectorMiddleware  # noqa: PLC0415
+
+    # The stock middleware builds its structured-output schema from a Union of
+    # Literal[name] (pydantic emits `anyOf`/`const`), which gemini-2.5-flash via the
+    # LiteLLM proxy does NOT strictly enforce — the selector returns descriptions or
+    # hallucinated names, which the middleware rejects ("Model selected invalid
+    # tools"). A flat JSON-Schema string `enum` over the same names IS enforced by
+    # the same model (verified directly). Patch the schema builder to emit that flat
+    # enum so LangChain's native selector actually works against this provider.
+    class _FlatEnumSchema:
+        def __init__(self, names):
+            self._names = list(names)
+        def json_schema(self):
+            return {
+                "title": "ToolSelection", "type": "object",
+                "properties": {"tools": {"type": "array",
+                    "items": {"type": "string", "enum": self._names}}},
+                "required": ["tools"],
+            }
+
+    _ts._create_tool_selection_response = lambda tools: _FlatEnumSchema([t.name for t in tools])
+
+    agent = create_agent(
+        model=llm,
+        tools=tools,
+        system_prompt=_SYSTEM,
+        middleware=[LLMToolSelectorMiddleware(model=llm, max_tools=5)],
+    )
+
+    messages: list[Any] = []
+    answers: list[str] = []
+    turn_boundaries: list[str] = [_now_iso()]  # boundary BEFORE turn 0
+
+    for i, turn in enumerate(session["turns"]):
+        try:
+            messages.append(HumanMessage(content=turn["question"]))
+            result = agent.invoke({"messages": messages})
+            messages = result["messages"]
+            final_text = ""
+            for m in reversed(messages):
+                if isinstance(m, AIMessage) and m.content:
+                    final_text = m.content if isinstance(m.content, str) else str(m.content)
+                    break
+            answers.append(str(final_text))
+        except Exception as e:  # noqa: BLE001 — one bad turn must not sink the run
+            err_text = f"[ERROR turn {i}: {type(e).__name__}: {e}]"
+            answers.append(err_text)
+            messages.append(AIMessage(content=err_text))
+        finally:
+            turn_boundaries.append(_now_iso())  # boundary AFTER this turn
+
+    zero = {"input": 0, "output": 0, "cached": 0, "tool_calls": 0}
+    extras = {"turn_boundaries": turn_boundaries, "n_turns": len(session["turns"]), "answers": answers}
+    return {"ok": True}, zero, extras
+
+
 def run(
     task_def: dict[str, Any], llm: Any, args: RunnerArgs
 ) -> tuple[Any, dict[str, int], dict[str, Any]]:
@@ -102,6 +168,15 @@ def run(
         for t in session["tools"]
     ]
     by_name = {t.name: t for t in tools}
+
+    # Tuned "selector" arm: LangChain's native LLMToolSelectorMiddleware pre-selects
+    # a small relevant subset of tools before each model call (an extra selector LLM
+    # call), so only those schemas are bound — the framework's native answer to a
+    # large toolset. The trade-off (fewer schema tokens vs an extra call) is measured
+    # in full because both calls route through the proxy.
+    if os.environ.get("BENCH_LANGCHAIN_SELECTOR") == "1":
+        return _run_selector(llm, tools, session)
+
     llm_with_tools = llm.bind_tools(tools)
 
     messages: list[Any] = [SystemMessage(content=_SYSTEM)]

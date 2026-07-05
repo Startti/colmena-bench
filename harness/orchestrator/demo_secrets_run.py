@@ -68,6 +68,17 @@ from bench_common import scenario_secrets as ss  # noqa: E402
 FRAMEWORKS = ["colmena", "crewai", "langchain", "langgraph", "llamaindex", "google_adk"]
 VARIANTS = ["collect", "echo"]
 
+# Steelman arms: pseudo-framework names that reuse a real runner's venv/runner code
+# but flip an env switch to select a hand-architected variant. ``_ARM_MAP`` resolves
+# an arm to ``(runner_fw, extra_env)``. ``langgraph_interrupt_isolated`` drives the
+# LangGraph ``interrupt()`` out-of-band-collection arm (task10_secrets._run_isolated):
+# it collects the secret via the interrupt channel so it never reaches the LLM, the
+# hand-wired analog of Colmena's secure_suspend. Not in the default matrix — opt in
+# with ``--frameworks langgraph_interrupt_isolated``.
+_ARM_MAP: dict[str, tuple[str, dict[str, str]]] = {
+    "langgraph_interrupt_isolated": ("langgraph", {"BENCH_LANGGRAPH_ISOLATED": "1"}),
+}
+
 # The mask-audit needle. The PROXY must be started with this same value in its
 # process env (see module docstring) for the audit to fire.
 MASK_SECRET = ss.MARKER
@@ -77,7 +88,8 @@ MASK_SECRET = ss.MARKER
 # sends only Authorization + Content-Type, so its audit lands in the proxy's
 # session file (``mask-<PROXY_BENCH_RUN_ID>.json``). Same set + correlation
 # strategy as demo_refund_run's HEADER_CAPABLE.
-HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk"}
+HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk",
+                  "langgraph_interrupt_isolated"}
 
 # Base port for the per-cell mock; cell index is added (8810, 8811, ...).
 BASE_PORT = 8810
@@ -223,7 +235,11 @@ def _run_cell(fw: str, variant: str, seed: int, cell_index: int, task_path: Path
               runs_dir: Path, timeout: int, session_id: str) -> dict[str, Any]:
     """One framework x variant x seed cell. Starts a mock, runs, scores, shuts
     the mock down, returns the summary row."""
-    py = venv_python(fw)
+    # Resolve steelman arms to their backing runner + env switch (real frameworks
+    # map to themselves with no extra env).
+    runner_fw, arm_env = _ARM_MAP.get(fw, (fw, {}))
+
+    py = venv_python(runner_fw)
     if not py.exists():
         return {"framework": fw, "variant": variant, "seed": seed,
                 "secret_leaked": None, "delivered_to_api": False,
@@ -248,17 +264,18 @@ def _run_cell(fw: str, variant: str, seed: int, cell_index: int, task_path: Path
         if stale.exists():
             stale.unlink()
 
-    env = _env_for(fw, run_id, proxy_base_url, port, record_path)
+    env = _env_for(runner_fw, run_id, proxy_base_url, port, record_path)
+    env.update(arm_env)  # arm-specific switch (e.g. BENCH_LANGGRAPH_ISOLATED=1)
 
     srv = start_mock(port, str(record_path), echo=(variant == "echo"))
     try:
-        if fw == "colmena":
+        if runner_fw == "colmena":
             round_trips, error, _ = _run_colmena(
                 task_path, variant, model_alias, proxy_base_url, run_id,
                 cell_out, timeout, env)
         else:
             round_trips, error = _run_competitor(
-                fw, task_path, variant, model_alias, proxy_base_url, run_id,
+                runner_fw, task_path, variant, model_alias, proxy_base_url, run_id,
                 cell_out, timeout, env)
 
         secret_leaked = ss.read_leaked(str(_mask_path(spans_dir, fw, run_id, session_id)))

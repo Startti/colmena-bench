@@ -48,6 +48,13 @@ C_HI = "#1f9d55"    # colmena green — native / secure / guaranteed
 C_DIY = "#c0392b"   # red — DIY / leaks
 C_CODE = "#e1a948"  # amber — hand-rolled imperative code
 
+# The hand-architected LangGraph interrupt() steelman arm (see task10_secrets.
+# _run_isolated). Shown as an extra bar in the leak_rate chart to make the honest
+# point: the SAME framework reaches 0% leak once you hand-wire out-of-band
+# collection — the difference from its 100%-leaking naive arm is developer effort,
+# not a hard capability gap.
+ARM_ISOLATED = "langgraph_interrupt_isolated"
+
 # ordered display names
 FW_LABELS = {
     "colmena":    "colmena",
@@ -56,6 +63,7 @@ FW_LABELS = {
     "langchain":  "langchain",
     "llamaindex": "llamaindex",
     "google_adk": "google_adk",
+    ARM_ISOLATED: "langgraph\n+interrupt\n(steelman)",
 }
 
 
@@ -95,6 +103,25 @@ def _count_json_security_lines(path: Path) -> int:
                if keywords.search(line))
 
 
+def _count_loc_between(path: Path, start_marker: str, end_marker: str) -> int:
+    """Count non-blank, non-comment lines from the line containing ``start_marker``
+    (inclusive) up to — but not including — the line containing ``end_marker``.
+    Used to isolate one arm's hand-wired block inside a shared task file."""
+    if not path.exists():
+        return 0
+    lines = path.read_text(encoding="utf-8").splitlines()
+    start = next((i for i, ln in enumerate(lines) if start_marker in ln), None)
+    if start is None:
+        return 0
+    end = next((i for i, ln in enumerate(lines[start:], start) if end_marker in ln), len(lines))
+    count = 0
+    for line in lines[start:end]:
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#") and not stripped.startswith('"""') and stripped != '"""':
+            count += 1
+    return count
+
+
 def _security_loc(fw: str) -> int:
     """Security-relevant LOC for a framework's task10 implementation.
 
@@ -106,8 +133,16 @@ def _security_loc(fw: str) -> int:
     For competitors: count the full task10_secrets.py — every line is part of
     the hand-rolled collect+mask+POST pattern. No LOC is "free": the dev must
     write, read, test, and maintain it all.
+
+    For the ``langgraph_interrupt_isolated`` steelman arm: count only the isolated
+    hand-wiring block inside langgraph's task10 file — the interrupt()-based
+    collection, the POST, and the manual outbound scrub the dev must write to keep
+    the secret out of the LLM (Colmena does this declaratively).
     """
     runners = REPO_ROOT / "runners"
+    if fw == ARM_ISOLATED:
+        lg = runners / "langgraph" / "runner" / "tasks" / "task10_secrets.py"
+        return _count_loc_between(lg, "_SECRET_KEYS = (", "def run(")
     py_path = runners / fw / "runner" / "tasks" / "task10_secrets.py"
     if fw == COLMENA:
         dag_path = runners / fw / "runner" / "dags" / "secrets_agent.json"
@@ -130,10 +165,15 @@ def leak_rate(summary: list[dict], outdir: Path) -> None:
     variants = ["collect", "echo"]
     variant_colors = {"collect": "#3498db", "echo": "#9b59b6"}
 
+    # Include the hand-architected LangGraph interrupt() steelman arm as an extra
+    # bar: it reaches 0% leak, making the honest point that the naive 100% leak is a
+    # default-path choice, not a hard capability ceiling.
+    plot_fws = list(FRAMEWORKS) + [ARM_ISOLATED]
+
     # Gather per-framework-per-variant rates
     # fw -> variant -> (leaked_n, total_n)
     counts: dict[str, dict[str, list[int]]] = {
-        fw: {v: [0, 0] for v in variants} for fw in FRAMEWORKS
+        fw: {v: [0, 0] for v in variants} for fw in plot_fws
     }
     for row in summary:
         fw = row.get("framework", "")
@@ -149,8 +189,8 @@ def leak_rate(summary: list[dict], outdir: Path) -> None:
             counts[fw][v][0] += 1  # leaked
 
     # Only include frameworks that appear in the summary
-    seen_fws = sorted({r["framework"] for r in summary if r.get("framework") in FRAMEWORKS},
-                      key=lambda f: FRAMEWORKS.index(f))
+    seen_fws = sorted({r["framework"] for r in summary if r.get("framework") in plot_fws},
+                      key=lambda f: plot_fws.index(f))
 
     fig, ax = plt.subplots(figsize=(11, 5))
     x = list(range(len(seen_fws)))
@@ -178,7 +218,7 @@ def leak_rate(summary: list[dict], outdir: Path) -> None:
                         ha="center", va="bottom", fontsize=7.5)
 
     ax.set_xticks(x)
-    ax.set_xticklabels(seen_fws, fontsize=10)
+    ax.set_xticklabels([FW_LABELS.get(fw, fw) for fw in seen_fws], fontsize=9)
     ax.set_ylim(0, 1.35)
     ax.set_ylabel("Fraction of runs with secret_leaked = True")
     ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0%}"))
@@ -188,7 +228,10 @@ def leak_rate(summary: list[dict], outdir: Path) -> None:
         "Colmena's secure_suspend encrypts the secret into an opaque handle — "
         "the real value never enters the LLM/proxy transcript.\n"
         "Competitors use the idiomatic 'paste credentials' pattern; the secret "
-        "appears in the LLM messages every time.",
+        "appears in the LLM messages every time.\n"
+        "Rightmost bar: LangGraph hand-architected with interrupt() + a manual "
+        "outbound scrub also reaches 0% — the naive leak is a default-path choice, "
+        "not a hard ceiling.",
         fontsize=8.5, color="#555", pad=8,
     )
     ax.legend(loc="upper right", fontsize=9)

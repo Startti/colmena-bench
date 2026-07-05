@@ -60,6 +60,7 @@ CONFIGS: list[dict[str, Any]] = [
     {"name": "colmena-eager", "framework": "colmena", "lazy": "0"},
     {"name": "crewai", "framework": "crewai"},
     {"name": "langchain", "framework": "langchain"},
+    {"name": "langchain-selector", "framework": "langchain", "selector": "1"},
     {"name": "langgraph", "framework": "langgraph"},
     {"name": "llamaindex", "framework": "llamaindex"},
     {"name": "google_adk", "framework": "google_adk"},
@@ -124,6 +125,8 @@ def _env_for(cfg: dict, run_id: str, proxy_base_url: str,
         "LITELLM_PROXY_API_KEY": _proxy_key(),
         "PYTHONPATH": f"{REPO_ROOT/'runners'/fw}:{REPO_ROOT/'runners'/'_bench_common'}",
     })
+    if cfg.get("selector"):
+        env["BENCH_LANGCHAIN_SELECTOR"] = "1"
     if fw == "colmena":
         env["BENCH_COLMENA_LAZY"] = cfg.get("lazy", "1")
         # New develop memory path (PR #112) runs a cheap-model semantic summarizer

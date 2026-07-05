@@ -1,0 +1,50 @@
+{
+  "arm": "google_adk_artifacts",
+  "description": "Steelman: Google ADK native ArtifactService + load_artifacts tool for on-demand document loading (Context Tax).",
+  "n_seeds": 3,
+  "quality": "PASS (all 3 doc-turn substring checks on the smoke run)",
+  "google_adk_artifacts": {
+    "total_tokens_in": [
+      498453,
+      403242,
+      502006
+    ],
+    "mean": 467900,
+    "turn10_tokens_in": [
+      68423,
+      45972,
+      68347
+    ]
+  },
+  "google_adk_default": {
+    "total_tokens_in": [
+      432489,
+      454824,
+      432209
+    ],
+    "mean": 439841,
+    "turn10_tokens_in": [
+      71466,
+      71417,
+      71398
+    ]
+  },
+  "colmena_reference_mean": 39085,
+  "finding": "ADK's load_artifacts IS a genuine ephemeral-attachment equivalent for the document (session inspection: report text 0x in standing history vs 1x for default). It does NOT close the context-tax gap because the scenario's cost is dominated by the ~8k-token base64 chart, which accumulates in ADK history (ADK lacks Colmena's binary scrubber, Mechanism B), and load_artifacts adds a reload round-trip each doc-turn that re-sends the un-scrubbed history. ADK matches 1 of Colmena's 2 context mechanisms (ephemeral attachment) but not the other (binary scrubbing). Result: 468k vs 440k default, both ~11-12x Colmena's 39k. The gap is from ADK lacking a binary-scrubbing default, not from under-using its document handling.",
+  "session_inspection": {
+    "doc_in_standing_history": {
+      "artifacts": 0,
+      "default": 1,
+      "note": "0 => load_artifacts is ephemeral (doc not pinned to session); matches Colmena Mechanism A"
+    },
+    "chart_base64_in_standing_history": {
+      "artifacts": 2,
+      "default": 3,
+      "note": ">0 => chart accumulates; ADK has no binary scrubber (Colmena Mechanism B)"
+    },
+    "load_artifacts_calls": {
+      "artifacts": 4,
+      "default": 0
+    }
+  }
+}
