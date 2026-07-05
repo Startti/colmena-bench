@@ -243,6 +243,16 @@ does not 4xx even when handed all 200 full schemas.
   above our pin. Both are the developer's to wire and tune, not an engine default;
   we exclude them the same way §2.1 treats the RAG family as distinct prior art
   rather than a baseline. (Whitepaper §8.4.)
+- **Build note (`v0.9.0`).** These numbers are from Colmena `14beaba9`. On the later
+  `v0.9.0` build, the single-turn 200-tool result **recomposes** (colmena-lazy 23,213 vs
+  eager 55,574 input tokens = 2.39×, matching the published 22,190 / ~44.7k / ~2×). A
+  `v0.9.0` describe-before-use guard makes lazy loading sound (a tool can't be called
+  until its schema is loaded that turn; discovery re-forces per turn) — it doesn't touch
+  the single-turn case (one describe), but in the multi-turn 30-tool regime the per-turn
+  re-describe adds a round-trip, shifting lazy from ~1.11× *cheaper* than eager to slightly
+  *more expensive* at that small catalog. The high-tool-count differentiator is unaffected.
+  (Reproducing the 200-tool probe on current code needs the templated toolset generator —
+  the realistic confusable-cluster generator that replaced it caps at the 40-tool library.)
 - **Single model, temp 0.** Provider-authoritative tokens; a different model could
   behave differently at the schema-volume extremes.
 - **Token accounting requires a serial sweep + one proxy.** Colmena's spans are

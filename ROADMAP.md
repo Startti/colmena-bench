@@ -283,8 +283,23 @@ Last updated: 2026-07-04.
       TODO: docs (whitepaper Appendix B DAG excerpt + §7 tool name, `demo08-codeexec.md`, `demo08-replication.md`).
     - 📋 **demo09** — left as-is: data is pre-B-3 (pack 5), but §9.6 already discloses this honestly
       and it is not a central claim; a colmena-only merge would create a 5-vs-6 pack inconsistency.
-    - ⏳ **demo05** (flagship, colmena-only N=12 script ready in scratch), **demo07** (lazy guard
-      `078fc78f`), **task04** (likely same `data_run_python` migration as demo08).
+    - ✅ **demo07** — RESOLVED (Option 2 investigated → recomposes; kept published + v0.9.0 note).
+      Root-caused the "single-turn incoherence": NOT v0.9.0 and NOT span accounting — the current
+      `generate_toolset` (post-commit `4205138`, "realistic confusable-cluster generator replaces
+      templated") caps at the fixed 40-tool library, so the "n=200" re-run measured only 40 tools
+      (hence 3-7× low). The published Fig-8 200-tool probe came from the OLD templated generator
+      (arbitrary-N synthesis; data in `summary_smallgrid.json`, schema `count`/`difficulty`).
+      **Recomposition test** (restored old generator → real 200-tool set → colmena on v0.9.0):
+      **lazy@200 = 23,213 vs eager@200 = 55,574 (2.39×), matching published 22,190 / ~44.7k / ~2×**
+      — the high-tool-count lazy differentiator is INTACT on v0.9.0. The `078fc78f` describe-before-use
+      guard is real but only affects MULTI-turn low-tool-count (30 tools): per-turn re-describe shifts
+      lazy from ~1.11× cheaper to slightly more expensive than eager; `sel_acc` drop was the
+      `max_total_calls:14` budget (guard needs ~2 calls/turn). Central claim survives. Kept published
+      14beaba9 numbers + added v0.9.0 confirmation/guard notes to whitepaper §8.2 + §8.4 and
+      `demo07-many-tools.md` §3. Suspect re-run data discarded (committed data git-restored).
+      This also resolves the earlier C-2a flag (the demo07 "drift" was the 40-tool generator cap).
+    - ⏳ **demo05** (flagship, colmena-only N=12 script ready in scratch), **task04**
+      (uses `run_sql` python_script, NOT attachment_run_python — test separately).
 - [ ] **G-3. Regenerate the PDF** (`scripts/build_whitepaper_pdf.py` → Chrome headless; do
   NOT combine `--headless=new` with `--virtual-time-budget` / `--run-all-compositor-stages`).
 - [ ] **G-4. Final consistency audit** of the whitepaper after all edits (deterministic
