@@ -11,9 +11,10 @@ advantage and sharp about two places where there is:
    network). It blocks malicious model code **by default** — no opt-in flag, no
    Docker daemon, no reliance on the provider's server-side kernel.
 2. **Developer experience.** In Colmena, "attach a CSV and run pandas on it" is one
-   built-in tool with the DataFrame pre-loaded (`attachment_run_python`). The
-   competitors require instantiating a specialized dataframe agent — several shipped
-   only in `experimental` packages — and loading the DataFrame yourself.
+   built-in tool (`data_run_python`: bind the attachment, `df = pd.DataFrame(rows)`,
+   assign the answer to `output`). The competitors require instantiating a specialized
+   dataframe agent — several shipped only in `experimental` packages — and loading the
+   DataFrame yourself.
 
 **Honest non-claim:** analytics accuracy and tokens are roughly **at parity** among
 the frameworks that return clean JSON; this is **not** an accuracy or token win.
@@ -34,7 +35,7 @@ now for code execution instead of secret masking.
 
 | Framework | Component | Sandbox posture (as measured) |
 |---|---|---|
-| **colmena** | `attachment_run_python` (df pre-loaded) | `restricted` — AST allowlist, no fs/net, **in-process & declarative** |
+| **colmena** | `data_run_python` (bind attachment → `pd.DataFrame(rows)` → `output`) | `restricted` — AST allowlist, no fs/net, **in-process & declarative** |
 | llamaindex | `PandasQueryEngine` (`llama-index-experimental`) | library `safe_eval` restricts builtins |
 | langchain | `create_pandas_dataframe_agent` (`langchain-experimental`, `allow_dangerous_code=True`) | none — raw `PythonAstREPLTool` |
 | crewai | `DaytonaPythonTool`-style remote sandbox (`daytona` SDK) | remote cloud VM, no host fs (first-party `CodeInterpreterTool` removed in crewai-tools 1.14.0, CVE VU#221883) |
@@ -132,10 +133,10 @@ assumption. The real picture:
 | safe by default (no opt-in / Docker / server) | **native** | library | none | Docker | none | server |
 | blocks file read (probe) | **blocked** | blocked | leaked | blocked | leaked | blocked |
 
-**DX, concretely.** Colmena: add `attachment_run_python` to the agent node's tool
-aliases (declarative); the engine pre-loads `df` from the attachment and the model
-writes pandas. Every competitor: `pip install` an extra (often `experimental`)
-package, read the CSV into a DataFrame yourself, and instantiate a specialized agent
+**DX, concretely.** Colmena: add `data_run_python` to the agent node's tool
+configurations (declarative); the model binds the attachment and writes pandas over
+`pd.DataFrame(rows)`, returning only `output`. Every competitor: `pip install` an extra
+(often `experimental`) package, read the CSV into a DataFrame yourself, and instantiate a specialized agent
 (`PandasQueryEngine`, `create_pandas_dataframe_agent`, a Docker `CodeInterpreterTool`,
 or a hand-rolled exec tool). Same idiom for the model; more wiring for you.
 
@@ -152,12 +153,17 @@ shipped orders).
 
 | Framework | analytics acc (mean of measured S/M/L) | mutation |
 |---|--:|---|
-| colmena | 0.97 | ✓ correct |
-| llamaindex | 0.97 | ✓ correct |
+| colmena | 0.95 (S/M/L all 0.95) | ✓ correct |
+| llamaindex | 0.967 | ✓ correct |
 | langchain | 0.95 | ✓ correct |
-| crewai | 0.55 | n/a (Docker timeout) |
-| langgraph | 0.57 | ✓ correct |
-| google_adk | 0.68 | n/a (no text result) |
+| crewai | 0.967 | ✓ correct |
+| langgraph | 0.967 | ✓ correct |
+| google_adk | 0.967 | n/a (no text result) |
+
+*(Means from `runs/demo08/summary.json`. Colmena uses `data_run_python` on the pinned
+v0.9.0 engine — see the replication guide. Earlier low competitor numbers (crewai 0.55,
+langgraph/adk ~0.55–0.68) were harness artifacts fixed in the A-1/B-1 fairness pass, not
+capability gaps.)*
 
 The win is **security + DX, not accuracy or tokens.** Honest caveats on this axis:
 

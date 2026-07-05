@@ -287,7 +287,7 @@ That said, **CrewAI's Docker container offers stronger isolation than an in-proc
 
 ### 7.4 Analytical accuracy
 
-Where the analytical results were measured, accuracy is at parity across all six frameworks. Per-framework means across measured variants: Colmena 0.975 (M=0.95, L=1.0; the S variant was not measured in this run), CrewAI, LangGraph, and Google ADK each 0.967 (S=0.95, M=0.95, L=1.0), LlamaIndex 0.97, LangChain 0.95. Analytical accuracy therefore shows no advantage for Colmena. Two earlier low numbers were traced to harness artifacts — not framework capability — and fixed: CrewAI's M-variant 0.15 came from embedding the CSV inline in the code payload (brittle at 500+ rows; fixed by uploading the CSV as a file to the sandbox), and LangGraph and Google ADK's 0.55–0.60 came from a result-serialization step that stringified a correct pandas `Series`/`Timestamp` into a form the exact-match scorer rejected (fixed by normalizing answers to JSON-native types before scoring). The full cross-experiment accuracy picture is in §9.
+Where the analytical results were measured, accuracy is at parity across all six frameworks. Per-framework means across measured variants: Colmena 0.95 (S=0.95, M=0.95, L=0.95), CrewAI, LangGraph, and Google ADK each 0.967 (S=0.95, M=0.95, L=1.0), LlamaIndex 0.97, LangChain 0.95. Analytical accuracy therefore shows no advantage for Colmena — it sits at the low end of a tight 0.95–0.97 band. Two earlier low numbers were traced to harness artifacts — not framework capability — and fixed: CrewAI's M-variant 0.15 came from embedding the CSV inline in the code payload (brittle at 500+ rows; fixed by uploading the CSV as a file to the sandbox), and LangGraph and Google ADK's 0.55–0.60 came from a result-serialization step that stringified a correct pandas `Series`/`Timestamp` into a form the exact-match scorer rejected (fixed by normalizing answers to JSON-native types before scoring). The Colmena analytics arm runs on the engine's unified `data_run_python` tool; on the pinned v0.9.0 build the older `attachment_run_python`, soft-deprecated one release earlier, degraded on the larger datasets (the model retried and inflated context rather than keeping rows out of it), so the DAG was migrated to `data_run_python`, which restores the rows-out-of-context contract and the 0.95 parity. The full cross-experiment accuracy picture is in §9.
 
 ## 8. Tools at Scale
 
@@ -507,7 +507,7 @@ The multi-turn table (30-tool catalog, 10 turns, 5 seeds) is Table 7 in §8.3 an
 
 | Framework | Canary contained? | Analytics accuracy, mean (variants measured) |
 |---|---|--:|
-| **Colmena** | **Yes** — restricted in-process AST sandbox | 0.975 (M=0.95, L=1.0) |
+| **Colmena** | **Yes** — restricted in-process AST sandbox (`data_run_python`) | 0.95 (S=0.95, M=0.95, L=0.95) |
 | LlamaIndex | Yes — library `safe_eval` | 0.97 (S=0.95, M=0.95, L=1.0) |
 | CrewAI | Yes — remote Daytona sandbox | 0.967 (S=0.95, M=0.95, L=1.0) |
 | Google ADK | Yes — server-side kernel | 0.967 (S=0.95, M=0.95, L=1.0) |
@@ -653,12 +653,12 @@ def run_payment(order_id: str) -> str:
 "assistant": {
   "type": "llm_call",
   "config": {
-    "system_message": "You are a data analyst. A CSV is attached. Use the attachment_run_python tool: a pandas DataFrame `df` is pre-loaded from the attachment; write Python that computes the answer and assigns it to a `result` global (the tool returns that value). Pass the attachment's document_id (from the catalog) as attachment_id. Do not try to read files, import os, or use open/eval. Return only what is asked.",
+    "system_message": "You are a data analyst. A CSV is attached (find its document_id in the attachment catalog). Use the data_run_python tool to compute the answer server-side WITHOUT loading the rows into context: call it with bindings=[{\"var\": \"rows\", \"attachment_id\": \"<document_id>\"}], build `df = pd.DataFrame(rows)`, compute the answer, and assign it to the `output` global (only `output` is returned). Do not read files, import os, or use open/eval. Return only what is asked.",
     "tool_configurations": {
-      "attachment_run_python": {
-        "name": "attachment_run_python",
-        "node_type": "attachment_run_python",
-        "description": "Run pandas/numpy code against the attached CSV server-side; assign the answer to a `result` global. Returns result + stdout without loading the rows into context.",
+      "data_run_python": {
+        "name": "data_run_python",
+        "node_type": "data_run_python",
+        "description": "Run pandas/numpy code over the attached CSV server-side in a restricted sandbox. Bind the attachment via bindings=[{\"var\": \"rows\", \"attachment_id\": <document_id>}], build `df = pd.DataFrame(rows)`, and assign the answer to the `output` global. Rows never enter the LLM context; only `output` is returned.",
         "fixed_config": {}
       },
       "sql_inspect_attachment": {
@@ -672,7 +672,7 @@ def run_payment(order_id: str) -> str:
 }
 ```
 
-`attachment_run_python` runs in `restricted` sandbox mode: imports are AST-whitelisted; `open`, `exec`, `eval`, `compile`, `__import__` are banned builtins. This is declared once as a native tool in Colmena — no application-level sandbox code is required.
+`data_run_python` runs in `restricted` sandbox mode: imports are AST-whitelisted; `open`, `exec`, `eval`, `compile`, `__import__` are banned builtins. This is declared once as a native tool in Colmena — no application-level sandbox code is required. (It is the engine's unified tabular tool; the earlier `attachment_run_python` was soft-deprecated and the DAG was migrated to `data_run_python` for the pinned v0.9.0 build — see §7.4.)
 
 **LangChain** — `runners/langchain/runner/tasks/task08_codeexec.py`, prompt builder (probe mode shown, which demonstrates the unsandboxed execution):
 

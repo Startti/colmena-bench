@@ -12,7 +12,7 @@ Reproduce the sandboxed-code-execution-over-CSV demo end to end.
    ```
 2. **Per-framework venvs + extra deps.** `scripts/setup_all.sh` installs them,
    including the Sandboxed Code Execution additions:
-   - colmena venv: `pandas numpy scipy` (`attachment_run_python` runs in the
+   - colmena venv: `pandas numpy scipy` (`data_run_python` runs in the
      embedded CPython of this venv).
    - llamaindex venv: `llama-index-experimental` (ships `PandasQueryEngine`).
    - langchain venv: `langchain-experimental` (ships `create_pandas_dataframe_agent`).

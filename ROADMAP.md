@@ -261,12 +261,30 @@ Last updated: 2026-07-04.
   `0a3fb02` (6 commits: drop demo11/12, A+B fairness, C steelman arms, D disclosures, F cleanup,
   test fix). Verified 130 offline tests pass on the merged result (fixed one stale B-3 test);
   deleted the branch. Local repo only (no remote configured).
-- [ ] **G-2. Rebuild Colmena at tag `colmena_dag_engine-v0.9.0`** (commit `b901a966`, tip of
+- [~] **G-2. Rebuild Colmena at tag `colmena_dag_engine-v0.9.0`** (commit `b901a966`, tip of
   develop, 174 commits past the current pin `14beaba9`) and **recompute all Colmena arms**.
-  Treat re-runs as a re-measurement that UPDATES the paper, not a strict verification —
-  known-relevant changes: `f50a1f00` soft-deprecates `attachment_run_python` (demo08),
-  `078fc78f` per-turn lazy-load guard (demo07), `data_run_python` unification (task04/demo08).
-  Env: `DATABASE_URL`, `SECURE_VALUES_KEY` (≥32 chars), `GEMINI_API_KEY`.
+  **Build DONE** (`maturin develop --release`, 45s, into `runners/colmena/.venv`; DB reachable,
+  `SECURE_VALUES_KEY` 50c, `COLMENA_CHEAP_MODEL_OPENAI=gemini-2.5-flash` added to .env). Colmena
+  routes span tokens by proxy `BENCH_RUN_ID`, so re-runs are colmena-only + merge competitors.
+  Recompute recipe per demo: demo06/demo10 driver `--merge-baseline` (flag / path), demo08/09
+  `--merge-baseline <summary.json>`, demo05 colmena-only N-pass + splice agg, task04 archive+reaggregate.
+  Progress:
+    - ✅ **demo10** colmena — byte-identical (0-leak/delivered/1-trip).
+    - ✅ **demo06** colmena — byte-identical (all_ok, escalate).
+    - ✅ **demo08** colmena — **REGRESSION FOUND + FIXED.** On v0.9.0 the DAG's `attachment_run_python`
+      (soft-deprecated by `f50a1f00`) degraded at scale: M analytics 0.95→0.15, L 1.0→0.10, input
+      tokens ~4× (M 19,965→91,666) — the model retried to `max_total_calls` and hallucinated round
+      aggregates (S still passed, proving the tool was callable but degraded). Root-caused via
+      systematic-debugging (committed-vs-fresh diff showed tokens scaling with data size = rows
+      entering context) and **migrated the DAG + runner to `data_run_python`** (the maintained
+      unified tabular tool: `bindings=[{var,attachment_id}]` → `df=pd.DataFrame(rows)` → `output`
+      global; rows never enter context). Confirmed: M analytics 0.15→**0.95**, tokens 91,666→**22,109**.
+      Files: `runners/colmena/runner/dags/codeexec_agent.json`, `runners/colmena/runner/tasks/task08_codeexec.py`.
+      TODO: docs (whitepaper Appendix B DAG excerpt + §7 tool name, `demo08-codeexec.md`, `demo08-replication.md`).
+    - 📋 **demo09** — left as-is: data is pre-B-3 (pack 5), but §9.6 already discloses this honestly
+      and it is not a central claim; a colmena-only merge would create a 5-vs-6 pack inconsistency.
+    - ⏳ **demo05** (flagship, colmena-only N=12 script ready in scratch), **demo07** (lazy guard
+      `078fc78f`), **task04** (likely same `data_run_python` migration as demo08).
 - [ ] **G-3. Regenerate the PDF** (`scripts/build_whitepaper_pdf.py` → Chrome headless; do
   NOT combine `--headless=new` with `--virtual-time-budget` / `--run-all-compositor-stages`).
 - [ ] **G-4. Final consistency audit** of the whitepaper after all edits (deterministic

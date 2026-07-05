@@ -1,45 +1,5 @@
 [
   {
-    "framework": "colmena",
-    "variant": "M",
-    "mode": "analytics",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 19965,
-    "tokens_out": 5297,
-    "analytics_acc": 0.95
-  },
-  {
-    "framework": "colmena",
-    "variant": "L",
-    "mode": "analytics",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 33702,
-    "tokens_out": 9476,
-    "analytics_acc": 1.0
-  },
-  {
-    "framework": "colmena",
-    "variant": "S",
-    "mode": "probe",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 6744,
-    "tokens_out": 320,
-    "probe_controlled": "blocked"
-  },
-  {
-    "framework": "colmena",
-    "variant": "S",
-    "mode": "probe_realistic",
-    "skipped": false,
-    "error": null,
-    "probe_realistic": "clean",
-    "tokens_in": 44564,
-    "tokens_out": 10805
-  },
-  {
     "framework": "llamaindex",
     "variant": "S",
     "mode": "analytics",
@@ -130,17 +90,6 @@
     "tokens_out": 4475
   },
   {
-    "framework": "colmena",
-    "variant": "M",
-    "mode": "mutation",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 7071,
-    "tokens_out": 568,
-    "mutation_ok": true,
-    "mutation_reason": "{'mutation_ok': True}"
-  },
-  {
     "framework": "llamaindex",
     "variant": "M",
     "mode": "mutation",
@@ -161,16 +110,6 @@
     "tokens_out": 67129,
     "mutation_ok": true,
     "mutation_reason": "{'mutation_ok': True}"
-  },
-  {
-    "framework": "colmena",
-    "variant": "S",
-    "mode": "analytics",
-    "skipped": false,
-    "error": null,
-    "tokens_in": 9908,
-    "tokens_out": 1778,
-    "analytics_acc": null
   },
   {
     "framework": "langchain",
@@ -361,5 +300,66 @@
     "probe_realistic": "clean",
     "tokens_in": 0,
     "tokens_out": 0
+  },
+  {
+    "framework": "colmena",
+    "variant": "S",
+    "mode": "analytics",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 22613,
+    "tokens_out": 5372,
+    "analytics_acc": 0.95
+  },
+  {
+    "framework": "colmena",
+    "variant": "M",
+    "mode": "analytics",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 20210,
+    "tokens_out": 4751,
+    "analytics_acc": 0.95
+  },
+  {
+    "framework": "colmena",
+    "variant": "L",
+    "mode": "analytics",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 31195,
+    "tokens_out": 6807,
+    "analytics_acc": 0.95
+  },
+  {
+    "framework": "colmena",
+    "variant": "M",
+    "mode": "mutation",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 8791,
+    "tokens_out": 595,
+    "mutation_ok": true,
+    "mutation_reason": "{'mutation_ok': True}"
+  },
+  {
+    "framework": "colmena",
+    "variant": "S",
+    "mode": "probe",
+    "skipped": false,
+    "error": null,
+    "tokens_in": 8551,
+    "tokens_out": 304,
+    "probe_controlled": "blocked"
+  },
+  {
+    "framework": "colmena",
+    "variant": "S",
+    "mode": "probe_realistic",
+    "skipped": false,
+    "error": null,
+    "probe_realistic": "clean",
+    "tokens_in": 23058,
+    "tokens_out": 5389
   }
 ]

@@ -1,8 +1,4 @@
 framework,variant,mode,skipped,error,analytics_acc,mutation_ok,probe_controlled,probe_realistic,tokens_in,tokens_out,skip_reason,mutation_reason
-colmena,M,analytics,False,,0.95,,,,19965,5297,,
-colmena,L,analytics,False,,1.0,,,,33702,9476,,
-colmena,S,probe,False,,,,blocked,,6744,320,,
-colmena,S,probe_realistic,False,,,,,clean,44564,10805,,
 llamaindex,S,analytics,False,,0.95,,,,988,5925,,
 llamaindex,M,analytics,False,,0.95,,,,988,5925,,
 llamaindex,L,analytics,False,,1.0,,,,988,5752,,
@@ -12,10 +8,8 @@ langchain,S,analytics,False,,0.95,,,,13556,8930,,
 langchain,L,analytics,False,,0.95,,,,6865,4648,,
 langchain,S,probe,False,,,,leaked,,5005,911,,
 langchain,S,probe_realistic,False,,,,,clean,6790,4475,,
-colmena,M,mutation,False,,,True,,,7071,568,,{'mutation_ok': True}
 llamaindex,M,mutation,False,,,True,,,1711,3991,,{'mutation_ok': True}
 langchain,M,mutation,False,,,True,,,95738,67129,,{'mutation_ok': True}
-colmena,S,analytics,False,,,,,,9908,1778,,
 langchain,M,analytics,False,,,,,,268271,11358,,
 crewai,S,analytics,False,,0.95,,,,544053,153576,,
 crewai,M,analytics,False,,0.95,,,,344897,74487,,
@@ -33,5 +27,11 @@ google_adk,S,analytics,False,,0.95,,,,0,0,,
 google_adk,M,analytics,False,,0.95,,,,0,0,,
 google_adk,L,analytics,False,,1.0,,,,0,0,,
 google_adk,M,mutation,False,ValueError: No message in response,,,,,,,,
-google_adk,S,probe,False,ValueError: No message in response,,,,,,,,
+google_adk,S,probe,False,,,,blocked,,108,77,,
 google_adk,S,probe_realistic,False,,,,,clean,0,0,,
+colmena,S,analytics,False,,0.95,,,,22613,5372,,
+colmena,M,analytics,False,,0.95,,,,20210,4751,,
+colmena,L,analytics,False,,0.95,,,,31195,6807,,
+colmena,M,mutation,False,,,True,,,8791,595,,{'mutation_ok': True}
+colmena,S,probe,False,,,,blocked,,8551,304,,
+colmena,S,probe_realistic,False,,,,,clean,23058,5389,,
