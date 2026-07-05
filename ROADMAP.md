@@ -224,20 +224,34 @@ Last updated: 2026-07-04.
 
 ---
 
-## Group F — Repo cleanup for replicability
+## Group F — Repo cleanup for replicability — DONE (with grep-verified deviations)
 
-- [ ] **F-1. `.gitignore`** build artifacts & debris: `docs/articles/*.html`, `*.pdf`,
-  `**/uv.lock`, `spikes/*/.venv`, `spikes/*/node_modules`, debug `proxy/spans/mask-*`.
-- [ ] **F-2. Delete untracked debris** (~13 MB): `proxy/spans/mask-*.json`,
-  `runs/*/received-*.json`, `runs/demo08/{canary.txt,summary_smoke.json}`,
-  `runs/demo07/*oldbuild*` / `*_prefix.json`, remaining `scripts/_*_smoke.py` / `smoke_*.sh`.
-  **Rule: grep the whitepaper + docs/demos for a reference before deleting anything under
-  `runs/`** (e.g. `runs/demo07/summary_smallgrid.json` IS cited by Appendix A.3 — keep it).
-- [ ] **F-3. Delete stale docs** (user approved): `IMPLEMENTATION_PLAN.md`,
-  `docs/SELLING_COLMENA.md`, `docs/superpowers/{plans,specs}`. (git history preserves them.)
-- [ ] **F-4. Rewrite `README.md`** as a replication landing page (currently stale).
-- [ ] **F-5. Add `scripts/run_demo13.sh`** wrapper (Concurrency Ceiling only has
-  `harness/loadtest/` + the doc).
+- [x] **F-1. `.gitignore` DONE.** Added: `docs/articles/*.html` + `*.pdf`, `**/uv.lock`,
+  `proxy/spans/mask-*.json` + `mask*.txt`, `runs/*/received-*.json`, `runs/demo08/canary.txt`,
+  `runs/*/session_raw/*.toolcalls.jsonl` + `*.stderr`. (venvs/node_modules already covered
+  globally by `.venv/` + `node_modules/`, so spikes/* need no extra rule.)
+- [x] **F-2. Delete untracked debris DONE.** Removed 59 `proxy/spans/mask-*` audits, 42
+  `runs/demo10/received-*.json`, `runs/demo08/{canary.txt,summary_smoke.json,summary_baseline_*}`,
+  `runs/demo07/{session_records_oldbuild,session_summary_oldbuild,session_summary_prefix}.json`,
+  and orphaned `scripts/_dag_smoke.py`. **canary.txt is a runtime output** (`write_canary()`
+  re-creates it) → safe. **Kept `summary_smallgrid.json`** (A.3 source). **DEVIATION — kept the
+  smoke scripts** `smoke_colmena.sh` (ref'd by `runners/colmena/runner/llm.py`),
+  `smoke_demo05_colmena.sh` (ref'd by demo05 doc), `_secrets_smoke.py` (ref'd by demo10 doc +
+  `secrets_agent.json`): they are cited verification/derisk scripts, not debris — deleting would
+  dangle refs. Also removed tracked superseded `runs/demo05/report/agg_n12_oldbuild.json` +
+  `runs/demo06/summary_oldbuild.json`. **NOTE:** untracked `runs/demo07/summary.json` etc. are a
+  smaller-grid (5/10/20) exploratory run, NOT the published Fig-8 probe (5/50/200) — left
+  untracked; demo07 data will be settled by the G-2 re-run.
+- [x] **F-3. Delete stale docs — PARTIAL/DONE.** Removed `IMPLEMENTATION_PLAN.md` +
+  `docs/SELLING_COLMENA.md` (both stale — old "⏳ to build" Demo #1–#4 numbering — and orphaned;
+  git preserves them). **DEVIATION — kept `docs/superpowers/{plans,specs}`**: referenced by
+  demo05 doc, demo13 doc, and METHODOLOGY.md → it's linked design provenance, not debris;
+  deleting would dangle those refs.
+- [x] **F-4. Rewrite `README.md` DONE.** Now a replication landing page: paper links,
+  experiment→script→doc table, setup, `.env` keys, provenance note. Dropped the dead
+  `IMPLEMENTATION_PLAN.md` / `run_all.sh` references.
+- [x] **F-5. Add `scripts/run_demo13.sh` DONE.** Thin wrapper over `harness/loadtest/run_phase1.sh`
+  + `phase1_verdict`, matching the other `run_demoN.sh` style (sources .env, 0-token sweep).
 
 ---
 

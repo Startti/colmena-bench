@@ -67,3 +67,20 @@ runs/**/raw/
 
 # Task-run raw scratch (distilled into runs/task04 + committed reports)
 results/
+
+# Whitepaper build artifacts (the .md is the source of truth)
+docs/articles/*.html
+docs/articles/*.pdf
+
+# Regenerable lockfiles (runners pin via requirements/pyproject)
+**/uv.lock
+
+# Debug/audit + intermediate run outputs (regenerated each run; summaries are authoritative)
+proxy/spans/mask-*.json
+proxy/spans/mask*.txt
+runs/*/received-*.json
+runs/demo08/canary.txt
+
+# Per-seed tool-call instrumentation scratch (the session_summary/records are authoritative)
+runs/*/session_raw/*.toolcalls.jsonl
+runs/*/session_raw/*.stderr
