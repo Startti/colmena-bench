@@ -313,9 +313,17 @@ Last updated: 2026-07-04.
   (per-turn describe guard shifts multi-turn low-tool-count lazy; single-turn recomposes 2.39×).
   Everything else reproduces or improves on v0.9.0. Framing: `14beaba9` primary (conservative
   headline) + v0.9.0 re-validation notes; demo08 fully on v0.9.0 (it had broken).
-- [ ] **G-3. Regenerate the PDF** (`scripts/build_whitepaper_pdf.py` → Chrome headless; do
-  NOT combine `--headless=new` with `--virtual-time-budget` / `--run-all-compositor-stages`).
-- [ ] **G-4. Final consistency audit** of the whitepaper after all edits (deterministic
+- [x] **G-3. Regenerate the PDF. DONE.** `scripts/build_whitepaper_pdf.py` (md→HTML via the
+  `markdown` package; installed into `.venv-bench` via `uv pip`) then Chrome headless
+  (`--headless=new --no-pdf-header-footer --print-to-pdf`, no virtual-time-budget). Fresh HTML
+  120,276 bytes (has the v0.9.0 build notes) → `colmena-whitepaper.pdf` 1.7 MB, page 1 verified
+  clean. HTML+PDF are gitignored build artifacts (F-1); the committed script is the tooling.
+- [x] **G-4. Final consistency audit. DONE.** Deterministic grep checks + a fresh-eyes subagent
+  pass over the whitepaper. One genuine internal inconsistency found + fixed (commit 83f947b): the
+  code-exec accuracy band read "0.95–0.98" in §9.5 + Appendix A.4 but the per-framework means top
+  out at 0.97 (the 0.98 is the Context Tax LLM-judge, a different metric) → aligned to "0.95–0.97".
+  Two flagged non-issues confirmed benign (LlamaIndex 0.967→"0.97" consistent rounding; §4.6 ADK
+  N=3 vs N=12 cohorts). All cross-refs/tables/figures/references verified consistent.
   checks + fresh-eyes pass), then update companion docs (exec-brief, poster, business page).
 
 ---
