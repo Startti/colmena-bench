@@ -109,12 +109,14 @@ def test_materialize_deterministic(tmp_path):
     assert {p.name for p in a.iterdir()} == {p.name for p in b.iterdir()}
 
 
-def test_materialize_small_corpus_is_just_core_or_subset(tmp_path):
+def test_materialize_small_corpus_is_all_core_no_distractors(tmp_path):
+    # B-3 fairness fix: ALL core packs are ALWAYS materialized so every arm sees
+    # the same core knowledge; a pack_count at or below the core count therefore
+    # yields exactly the core packs and no distractors (n_distract =
+    # max(0, pack_count - len(core))).
     sk.materialize_corpus(str(tmp_path), 5, 0)
     dirs = {p.name for p in tmp_path.iterdir() if p.is_dir()}
-    assert len(dirs) == 5
-    # 6 core packs; with pack_count=5 the materializer keeps the FIRST 5 core packs
-    assert dirs.issubset(set(sk.CORE_PACKS))
+    assert dirs == set(sk.CORE_PACKS)
 
 
 def test_distractor_frontmatter_is_valid_yaml(tmp_path):
