@@ -421,7 +421,7 @@ The mechanism is tunable — the `KEEP_RECENT` and `recall_history` parameters g
 
 In Tools at Scale, every configuration — Colmena-lazy, Colmena-eager, and all five Python competitors — achieves **1.00 tool-selection accuracy** at the final session turn and on the 200-tool single-turn probe (Figure 14). The Tools at Scale result is a cost advantage at accuracy parity.
 
-In Sandboxed Code Execution, analytical accuracy is at parity across all six frameworks where measured (the per-framework means are in §7.4, all 0.95–0.98). Colmena has no accuracy advantage in Sandboxed Code Execution either.
+In Sandboxed Code Execution, analytical accuracy is at parity across all six frameworks where measured (the per-framework means are in §7.4, all 0.95–0.97). Colmena has no accuracy advantage in Sandboxed Code Execution either.
 
 ### 9.6 Progressive Knowledge Loading
 
@@ -522,7 +522,7 @@ The multi-turn table (30-tool catalog, 10 turns, 5 seeds) is Table 7 in §8.3 an
 | LangChain | **No** — raw `PythonAstREPLTool` | 0.95 (S=0.95, L=0.95) |
 | LangGraph | **No** — raw `exec` | 0.967 (S=0.95, M=0.95, L=1.0) |
 
-Not all variants completed for every framework (unmeasured variants are omitted from each mean). Colmena shows no accuracy advantage here — all six frameworks are at parity (0.95–0.98). Two earlier low numbers were harness artifacts since fixed: LangGraph and Google ADK's 0.55–0.60 came from stringifying a correct pandas `Series`/`Timestamp` into a form the exact-match scorer rejected (fixed by normalizing answers to JSON-native types), and CrewAI's M=0.15 came from embedding the CSV inline in the code payload, brittle at 500+ rows (fixed by uploading the CSV as a file to the sandbox).
+Not all variants completed for every framework (unmeasured variants are omitted from each mean). Colmena shows no accuracy advantage here — all six frameworks are at parity (0.95–0.97). Two earlier low numbers were harness artifacts since fixed: LangGraph and Google ADK's 0.55–0.60 came from stringifying a correct pandas `Series`/`Timestamp` into a form the exact-match scorer rejected (fixed by normalizing answers to JSON-native types), and CrewAI's M=0.15 came from embedding the CSV inline in the code payload, brittle at 500+ rows (fixed by uploading the CSV as a file to the sandbox).
 
 ---
 
