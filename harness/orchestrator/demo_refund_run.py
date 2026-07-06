@@ -51,7 +51,7 @@ from demo05_loc import count_loc  # noqa: E402
 from orchestrator.full_run import venv_python, _proxy_key  # noqa: E402
 from bench_common import scenario_refund  # noqa: E402
 
-FRAMEWORKS = ["colmena", "crewai", "langchain", "llamaindex", "langgraph", "google_adk", "pydantic_ai"]
+FRAMEWORKS = ["colmena", "crewai", "langchain", "llamaindex", "langgraph", "google_adk", "pydantic_ai", "openai_agents"]
 MASK_SECRET = scenario_refund.SECRET
 
 # Frameworks whose LLM adapter can forward the ``x-bench-run-id`` header, so the
@@ -59,7 +59,7 @@ MASK_SECRET = scenario_refund.SECRET
 # adapter sends only Authorization + Content-Type (see runners/colmena/runner/
 # llm.py), so its audit lands in the proxy's session file (``mask-<session_id>``)
 # instead — same correlation strategy as demo05's HEADER_CAPABLE set.
-HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk", "pydantic_ai"}
+HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk", "pydantic_ai", "openai_agents"}
 
 # Imperative code the developer writes/maintains (the node-vs-code "code" column).
 CODE_LOC_TARGETS: dict[str, list[str]] = {

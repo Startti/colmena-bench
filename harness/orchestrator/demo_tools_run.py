@@ -64,6 +64,7 @@ CONFIGS: list[dict[str, Any]] = [
     {"name": "llamaindex", "framework": "llamaindex"},
     {"name": "google_adk", "framework": "google_adk"},
     {"name": "pydantic_ai", "framework": "pydantic_ai"},
+    {"name": "openai_agents", "framework": "openai_agents"},
 ]
 
 TASK_PATH = REPO_ROOT / "harness" / "tasks" / "07_tools.yaml"

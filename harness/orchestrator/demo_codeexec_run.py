@@ -65,7 +65,7 @@ from task04_scorer import score_answers  # noqa: E402
 # Constants
 # ---------------------------------------------------------------------------
 
-FRAMEWORKS = ["colmena", "llamaindex", "langchain", "crewai", "langgraph", "google_adk", "pydantic_ai"]
+FRAMEWORKS = ["colmena", "llamaindex", "langchain", "crewai", "langgraph", "google_adk", "pydantic_ai", "openai_agents"]
 
 HEADER_CAPABLE = {"llamaindex", "langchain", "crewai", "langgraph", "google_adk"}
 

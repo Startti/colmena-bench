@@ -29,7 +29,7 @@ from demo05_loc import count_loc  # noqa: E402
 from orchestrator.full_run import venv_python, _read_spans, _proxy_key, usd_per_run, PRICING  # noqa: E402
 
 HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk",
-                  "google_adk_artifacts", "pydantic_ai"}
+                  "google_adk_artifacts", "pydantic_ai", "openai_agents"}
 
 # Steelman/tuned arms that run an existing framework's runner under a non-default
 # variant. Maps arm name -> (runner framework, --variant value).
