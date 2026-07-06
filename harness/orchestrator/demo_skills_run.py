@@ -67,7 +67,7 @@ sys.path.insert(0, str(HARNESS_DIR / "orchestrator"))
 sys.path.insert(0, str(REPO_ROOT / "runners" / "_bench_common"))
 sys.path.insert(0, str(HARNESS_DIR / "scoring"))
 
-from orchestrator.full_run import venv_python, _proxy_key  # noqa: E402
+from orchestrator.full_run import runner_cmd, runner_available, _proxy_key  # noqa: E402
 from bench_common import scenario_skills as sk  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -283,9 +283,7 @@ def _invoke(fw: str, run_id: str, model_alias: str, proxy_base_url: str,
     """Invoke the framework runner for one skills cell. The task yaml declares a
     "default" variant; the handler ignores --variant and reads the BENCH_SKILLS_*
     env, so we always pass --variant default."""
-    py = venv_python(fw)
-    cmd = [
-        str(py), "-m", "runner",
+    cmd = runner_cmd(fw) + [
         "--task", str(TASK_PATH),
         "--variant", "default",
         "--run-id", run_id,
@@ -341,8 +339,7 @@ def _run_cell(
         "pack": question.pack if question else None,
     }
 
-    py = venv_python(fw)
-    if not py.exists():
+    if not runner_available(fw):
         return {**base_row, "skipped": True, "skip_reason": "no venv"}
     if question is None:
         return {**base_row, "skipped": True, "skip_reason": f"unknown question id {qid}"}

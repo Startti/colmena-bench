@@ -44,7 +44,7 @@ sys.path.insert(0, str(HARNESS_DIR / "orchestrator"))
 sys.path.insert(0, str(HARNESS_DIR))
 sys.path.insert(0, str(REPO_ROOT / "runners" / "_bench_common"))
 
-from orchestrator.full_run import venv_python, _proxy_key  # noqa: E402
+from orchestrator.full_run import runner_cmd, runner_available, _proxy_key  # noqa: E402
 from orchestrator.demo05_buckets import bucket_spans_by_turn, _to_epoch  # noqa: E402
 from bench_common import scenario_tools  # noqa: E402
 
@@ -153,13 +153,12 @@ def _run_cell(cfg: dict, seed: int, model_alias: str, proxy_base_url: str,
         toolcall_log.unlink()
     out_path = raw_dir / f"{run_id}.json"
 
-    py = venv_python(fw)
     base = {"config": name, "framework": fw, "seed": seed, "run_id": run_id}
-    if not py.exists():
+    if not runner_available(fw):
         return {**base, "hard_error": True, "error": "no venv", "turns": []}
 
-    cmd = [
-        str(py), "-m", "runner", "--task", str(TASK_PATH),
+    cmd = runner_cmd(fw) + [
+        "--task", str(TASK_PATH),
         "--variant", "default", "--run-id", run_id,
         "--model-alias", model_alias, "--proxy-base-url", proxy_base_url,
         "--output", str(out_path), "--timeout-seconds", str(timeout),

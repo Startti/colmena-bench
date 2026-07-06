@@ -47,7 +47,7 @@ sys.path.insert(0, str(HARNESS_DIR / "orchestrator"))
 sys.path.insert(0, str(HARNESS_DIR))
 sys.path.insert(0, str(REPO_ROOT / "runners" / "_bench_common"))
 
-from orchestrator.full_run import venv_python, runner_cmd, _proxy_key  # noqa: E402
+from orchestrator.full_run import runner_cmd, _proxy_key  # noqa: E402
 from bench_common import scenario_tools  # noqa: E402
 
 DEFAULT_COUNTS = [5, 10, 20]

@@ -111,9 +111,9 @@ def run_framework(
     spans_dir: Path,
 ) -> list[dict]:
     """Run N reps, return enriched run-output dicts (tokens from proxy spans)."""
-    py = venv_python(framework)
-    if not py.exists():
-        print(f"  [skip] {framework}: no venv at {py} (run setup_all.sh)")
+    base_cmd = runner_cmd(framework)
+    if base_cmd is None:
+        print(f"  [skip] {framework}: runner not installed (run setup_all.sh)")
         return []
 
     fw_out = out_dir / framework
@@ -135,11 +135,11 @@ def run_framework(
         })
         try:
             proc = subprocess.run(
-                [str(py), "-m", "runner",
-                 "--task", str(task_path), "--variant", variant,
-                 "--run-id", run_id, "--model-alias", model_alias,
-                 "--proxy-base-url", proxy_base_url, "--output", str(out_path),
-                 "--timeout-seconds", str(task_def.get("timeout_seconds", 60))],
+                base_cmd + [
+                    "--task", str(task_path), "--variant", variant,
+                    "--run-id", run_id, "--model-alias", model_alias,
+                    "--proxy-base-url", proxy_base_url, "--output", str(out_path),
+                    "--timeout-seconds", str(task_def.get("timeout_seconds", 60))],
                 env=env, capture_output=True, text=True,
                 timeout=task_def.get("timeout_seconds", 60) + 30,
             )

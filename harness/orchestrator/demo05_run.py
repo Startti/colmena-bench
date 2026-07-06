@@ -26,7 +26,7 @@ sys.path.insert(0, str(HARNESS_DIR))
 
 from demo05_buckets import bucket_spans_by_turn  # noqa: E402
 from demo05_loc import count_loc  # noqa: E402
-from orchestrator.full_run import venv_python, runner_cmd, _read_spans, _proxy_key, usd_per_run, PRICING  # noqa: E402
+from orchestrator.full_run import runner_cmd, _read_spans, _proxy_key, usd_per_run, PRICING  # noqa: E402
 
 HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk", "mastra",
                   "google_adk_artifacts", "pydantic_ai", "openai_agents"}

@@ -57,7 +57,7 @@ sys.path.insert(0, str(HARNESS_DIR / "orchestrator"))
 sys.path.insert(0, str(REPO_ROOT / "runners" / "_bench_common"))
 sys.path.insert(0, str(HARNESS_DIR / "scoring"))
 
-from orchestrator.full_run import venv_python, _proxy_key  # noqa: E402
+from orchestrator.full_run import runner_cmd, runner_available, _proxy_key  # noqa: E402
 from bench_common import scenario_codeexec as sc  # noqa: E402
 from task04_scorer import score_answers  # noqa: E402
 
@@ -234,9 +234,7 @@ def _invoke(fw: str, run_id: str, variant: str,
             model_alias: str, proxy_base_url: str,
             mode: str, csv_path: str,
             out_path: Path, timeout: int) -> subprocess.CompletedProcess:
-    py = venv_python(fw)
-    cmd = [
-        str(py), "-m", "runner",
+    cmd = runner_cmd(fw) + [
         "--task", str(TASK_PATH),
         "--variant", variant,
         "--run-id", run_id,
@@ -271,13 +269,12 @@ def _run_cell(
 ) -> dict[str, Any]:
     """Run one (fw, variant, mode) cell; return a summary row dict."""
 
-    py = venv_python(fw)
     base_row: dict[str, Any] = {
         "framework": fw,
         "variant": variant,
         "mode": mode,
     }
-    if not py.exists():
+    if not runner_available(fw):
         return {**base_row, "skipped": True, "skip_reason": "no venv"}
 
     run_id = f"d8-{fw}-{variant}-{mode}"
@@ -421,8 +418,7 @@ def _run_probe_realistic(
         "mode": "probe_realistic",
     }
 
-    py = venv_python(fw)
-    if not py.exists():
+    if not runner_available(fw):
         return {**base_row, "skipped": True, "skip_reason": "no venv"}
 
     injected_csv = _make_injected_csv(Path(s_csv_path), tmp_dir)

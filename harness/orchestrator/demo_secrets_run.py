@@ -61,7 +61,7 @@ sys.path.insert(0, str(HARNESS_DIR))
 # bench_common lives in the shared runner dir; import scenario assets + scorers.
 sys.path.insert(0, str(REPO_ROOT / "runners" / "_bench_common"))
 
-from orchestrator.full_run import venv_python, runner_cmd, _proxy_key  # noqa: E402
+from orchestrator.full_run import runner_cmd, _proxy_key  # noqa: E402
 from mock_account_api import start_mock  # noqa: E402
 from bench_common import scenario_secrets as ss  # noqa: E402
 
