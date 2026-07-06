@@ -64,11 +64,18 @@ Last updated: 2026-07-04.
   path is cloud sandboxes. Document the free Daytona key ($200 credits, no card) in the
   replication guide. Re-run the CrewAI demo08 arm; update §7.4 / Appendix A.4.
 
-- [ ] **A-2. Stamp git provenance (SHA/tag) in every run summary.**
-  The runner stamps `metadata.version("colmena-ai")` = `0.4.0` for BOTH `14beaba9`
-  and tag `v0.9.0` → the pip string cannot distinguish builds. Add the Colmena git
-  SHA/tag to summaries so provenance is unambiguous.
-  Files: `runners/colmena/runner/__main__.py` (or the orchestrators that write summaries).
+- [x] **A-2. Stamp git provenance (SHA/tag) in every run summary. DONE 2026-07-06.**
+  The pip string `colmena-ai==0.4.0` is identical across builds (`14beaba9` and tag
+  `v0.9.0`), so it can't distinguish them. The colmena runner's `_version()` now
+  enriches it to `0.4.0+git:<describe>` (e.g.
+  `0.4.0+git:colmena_dag_engine-v0.9.0-4-g0675151d`), landing in every summary's
+  `framework_version` field. Provenance resolution: build-time stamp
+  `runners/colmena/COLMENA_BUILD.txt` (written by `setup_all.sh` right after
+  `maturin develop`, reflects the COMPILED commit) → falls back to a live
+  `git describe` of `$COLMENA_REPO` / the sibling `../colmena` → else bare pip
+  version. Stamp is gitignored (env-specific). Verified both paths. Only affects NEW
+  runs (committed summaries keep `0.4.0`). Files: `runners/colmena/runner/__main__.py`,
+  `scripts/setup_all.sh`, `.gitignore`.
 
 ---
 

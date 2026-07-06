@@ -51,7 +51,9 @@ The runner is responsible for:
   cross-checks this against proxy spans (METHODOLOGY §4); a delta of more
   than 1 fails the run.
 - Resolving `framework_version` at runtime (read from package metadata,
-  not hardcoded).
+  not hardcoded). The Colmena runner additionally appends the engine's git
+  tag/SHA (`0.4.0+git:<describe>`) because its pip version is build-indistinct
+  (see A-2); other runners' pip versions already identify their build.
 - Filling `success.ok` per the task's `success.kind` rule.
 
 ## Exit codes

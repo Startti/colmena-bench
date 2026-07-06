@@ -80,6 +80,12 @@ if make_venv "$dir"; then
         --manifest-path src/libs/colmena/Cargo.toml >/dev/null 2>&1 ) \
       && echo "  built colmena module from $COLMENA_REPO" \
       || echo "  ⚠ maturin build failed — check $COLMENA_REPO (need develop + base_url patch)"
+    # A-2: stamp the engine's git tag/SHA of the COMPILED commit so run summaries
+    # carry unambiguous provenance (the pip version 0.4.0 can't distinguish builds).
+    if _prov=$(git -C "$COLMENA_REPO" describe --tags --always --dirty 2>/dev/null); then
+      printf '%s\n' "$_prov" > "$REPO_ROOT/runners/colmena/COLMENA_BUILD.txt"
+      echo "  stamped colmena build provenance: $_prov"
+    fi
   else
     echo "  ⚠ COLMENA_REPO not found at $COLMENA_REPO — skipped colmena module build"
   fi
