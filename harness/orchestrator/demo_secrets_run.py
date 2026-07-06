@@ -89,7 +89,7 @@ MASK_SECRET = ss.MARKER
 # session file (``mask-<PROXY_BENCH_RUN_ID>.json``). Same set + correlation
 # strategy as demo_refund_run's HEADER_CAPABLE.
 HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk",
-                  "langgraph_interrupt_isolated"}
+                  "langgraph_interrupt_isolated", "pydantic_ai"}
 
 # Base port for the per-cell mock; cell index is added (8810, 8811, ...).
 BASE_PORT = 8810
