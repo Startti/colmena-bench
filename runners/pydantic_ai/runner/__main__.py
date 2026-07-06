@@ -7,7 +7,7 @@ from importlib import metadata
 from bench_common import run
 
 from .llm import build_llm
-from .tasks import task05, task07_tools, task10_secrets
+from .tasks import task05, task07_tools, task08_codeexec, task10_secrets
 
 
 def _version() -> str:
@@ -23,6 +23,7 @@ def _version() -> str:
 HANDLERS = {
     "05_context_scrubbing": task05.run,
     "07_tools": task07_tools.run,
+    "08_codeexec": task08_codeexec.run,
     "10_secrets": task10_secrets.run,
 }
 

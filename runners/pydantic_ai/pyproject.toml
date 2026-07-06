@@ -11,6 +11,8 @@ dependencies = [
     "pydantic>=2.7",
     "pyyaml",
     "psutil",
+    "pandas",   # task08 code-exec: the model runs pandas over the CSV (unsandboxed)
+    "numpy",
 ]
 
 [project.optional-dependencies]
