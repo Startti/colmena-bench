@@ -208,8 +208,17 @@ Last updated: 2026-07-04.
 
 ## Group E — Expansion: new frameworks + multi-language
 
-- [ ] **E-1. Pydantic AI runner** (start here — cleanest). Build tasks 05/06/07/08/10;
-  re-run. Pattern proven in `spikes/pydantic_ai/`.
+- [~] **E-1. Pydantic AI runner** — SCAFFOLD + task05 DONE, tasks 06/07/08/10 remain.
+  Built `runners/pydantic_ai/` (pyproject pinned `pydantic-ai==2.5.0`; `runner/{__init__,__main__,llm}.py`
+  + `tasks/task05.py`; venv via `uv`). `build_llm` returns an `OpenAIChatModel` over an `AsyncOpenAI`
+  client pointed at the proxy `/v1` with the `x-bench-run-id` header; task05 replays the 10-turn
+  Context Tax via `agent.run_sync(msg, message_history=all_messages())` (verbatim history; report
+  seeded as a pre-turn-0 `ModelRequest`/`ModelResponse` with no LLM call; `[chart_data_uri]:` prefix
+  workaround). Added `pydantic_ai` to demo05 driver `HEADER_CAPABLE`. **Verified end-to-end on
+  v0.9.0: total 454,124 input tokens (competitor range 404k-452k)** — pydantic_ai pays the full
+  context tax (no default scrubber), exactly as expected. NOT paper-integrated (proof-of-runner, N=1;
+  a paper arm would need N=12 + a whitepaper section). REMAINING: tasks 06 (refund/hardening), 07
+  (tools), 08 (code-exec), 10 (secrets) + add to each driver.
 - [ ] **E-2. OpenAI Agents SDK runner.** Note: force `set_default_openai_api("chat_completions")`
   + `set_tracing_disabled(True)`. Pattern in `spikes/openai_agents/`. Pin exactly (0.x churn).
 - [ ] **E-3. Mastra (TypeScript) runner.** Needs a Node subprocess the Python orchestrator
