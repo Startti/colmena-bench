@@ -45,13 +45,26 @@ def test_each_model_has_required_fields():
         )
 
 
+def _is_embedding(entry: dict) -> bool:
+    """Embedding models are served by the proxy (for the demo09 RAG arm) but are
+    intentionally absent from the pricing table, which prices chat input/output
+    tokens only (`test_each_model_has_required_fields` even requires
+    output_per_1m > 0, which embeddings have no analog for)."""
+    name = entry.get("model_name", "")
+    underlying = (entry.get("litellm_params") or {}).get("model", "")
+    return "embedding" in name or "embedding" in underlying
+
+
 def test_aliases_match_proxy_config():
     pricing = json.loads(PRICING_PATH.read_text())
     proxy = yaml.safe_load(PROXY_CONFIG_PATH.read_text())
-    proxy_aliases = {m["model_name"] for m in proxy["model_list"]}
+    # Compare CHAT aliases only — embedding models are priced separately (not at all
+    # here), so exclude them; a new chat alias in the proxy without a price, or a
+    # priced alias missing from the proxy, still fails (real drift detection).
+    proxy_aliases = {m["model_name"] for m in proxy["model_list"] if not _is_embedding(m)}
     pricing_aliases = set(pricing["models"].keys())
     assert proxy_aliases == pricing_aliases, (
-        f"alias drift between pricing and proxy: only in proxy={proxy_aliases - pricing_aliases}, "
+        f"chat alias drift between pricing and proxy: only in proxy={proxy_aliases - pricing_aliases}, "
         f"only in pricing={pricing_aliases - proxy_aliases}"
     )
 
