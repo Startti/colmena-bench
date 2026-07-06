@@ -208,7 +208,25 @@ Last updated: 2026-07-04.
 
 ## Group E — Expansion: new frameworks + multi-language
 
-- [~] **E-1. Pydantic AI runner** — SCAFFOLD + task05 DONE, tasks 06/07/08/10 remain.
+- [~] **E-1. Pydantic AI runner** — tasks 05/07/10 DONE, 08 probe-done/analytics-WIP, 06 not started.
+  **STATE (2026-07-05, paused mid-task08):** `runners/pydantic_ai/` exists (venv via `uv`, pinned
+  `pydantic-ai==2.5.0` + pandas/numpy). All committed on `main` (commits 3f085a3, abcc109, 3f5aa90,
+  4f13fda). Verified end-to-end on v0.9.0:
+    - **task05 Context Tax** ✅ — total 454,124 tokens (competitor range). `HEADER_CAPABLE` in demo05_run.
+    - **task07 Tools** ✅ — sel_acc 1.0, arg_acc 1.0 @ 20 tools (`Tool.from_schema` dynamic tools);
+      added to `demo_tools_run.py` CONFIGS. (Single-turn only; multi-turn task07b not built.)
+    - **task10 Secrets** ✅ — leaked=True + delivered=True (collect+echo); `HEADER_CAPABLE` in demo10 driver.
+    - **task08 code-exec** ⚠️ — PROBE works (leaked, unsandboxed exec reads canary); added to demo08
+      FRAMEWORKS. **ANALYTICS BLOCKED:** deterministic `IndexError` at
+      `pydantic_ai/models/openai.py:1011` (`response.choices[0]`) — Gemini-via-proxy returns
+      `choices=[]` (empty completion, tok_out=0) for pydantic_ai's 20-question analytics request shape.
+      NOT fixed by retry(4x) or `max_tokens=8192`. Other runners' analytics works → it's a pydantic_ai
+      request-shape × Gemini interaction. Handler degrades gracefully. **NEXT: diff the raw HTTP body
+      pydantic_ai sends vs langchain for analytics (tool schema strict-mode? system handling?), or try
+      disabling Gemini thinking via model_settings.**
+  **REMAINING for E-1:** fix task08 analytics; build task06 (Production Hardening — hardest: two-phase
+  HITL suspend/resume + critic-retry + DIY masking, mirror `runners/langgraph/runner/tasks/task06_refund.py`);
+  optionally task07b (multi-turn session). None are paper-integrated yet (proof-of-runner, N=1).
   Built `runners/pydantic_ai/` (pyproject pinned `pydantic-ai==2.5.0`; `runner/{__init__,__main__,llm}.py`
   + `tasks/task05.py`; venv via `uv`). `build_llm` returns an `OpenAIChatModel` over an `AsyncOpenAI`
   client pointed at the proxy `/v1` with the `x-bench-run-id` header; task05 replays the 10-turn
