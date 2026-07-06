@@ -236,9 +236,22 @@ Last updated: 2026-07-04.
   names; "low"+8 retries unreliable; graceful-degrades). Commit 15c62ed. Proof-of-runner (N=1).
   <br>ORIGINAL NOTE: force `set_default_openai_api("chat_completions")`
   + `set_tracing_disabled(True)`. Pattern in `spikes/openai_agents/`. Pin exactly (0.x churn).
-- [ ] **E-3. Mastra (TypeScript) runner.** Needs a Node subprocess the Python orchestrator
-  shells out to. Tool `execute` signature is `async (inputData) => ...` in 1.49. Pattern in
-  `spikes/mastra/`. Biggest credibility gain — kills "Python-only benchmark."
+- [x] **E-3. Mastra (TypeScript) runner — DONE (4/5 tasks).** `runners/mastra/` is a
+  Node subprocess the Python orchestrator shells out to via the new
+  `full_run.runner_cmd(fw)` helper (`["node", "runner/index.mjs"]`), which every driver now
+  calls so the harness branches on language in ONE place. `runner/core.mjs` emits the
+  identical output schema as `bench_common/core.py`; `runner/llm.mjs` is an OpenAI-compatible
+  provider at the proxy `/v1` with the `x-bench-run-id` header (mastra added to every driver's
+  `HEADER_CAPABLE`). Scenario fidelity: `data/bench_fixtures.json` is generated from the Python
+  `bench_common` by `scripts/export_ts_fixtures.py` (byte-identical assets, no hand-porting);
+  toolsets arrive via `BENCH_TOOLSET_PATH`. **Verified end-to-end on v0.9.0 through the real
+  drivers:** task05 context tax 3,353→71,276 input tok (21.3×, step jumps at the 3 chart turns) ✓;
+  task07 sel=1.00 / arg=1.00@20, tokens scale 1,192→3,228 ✓; task10 leaked=YES + delivered=True
+  both variants (the naive competitor arm) ✓; task06 all_ok=True, masking (leaked=no), two-phase
+  suspend/resume ✓. **`08_codeexec` intentionally NOT ported** — its arm runs model-written
+  pandas (Python-specific); a JS transliteration measures a different thing. `setup_all.sh` now
+  installs the node runner + regenerates the fixture. Kills "Python-only benchmark." (`node_modules`
+  gitignored; `spikes/mastra/` was the connectivity spike.)
 - [ ] **E-4. Colmena multi-language section (Rust / Python / TypeScript).** Run ONE
   representative experiment (e.g. Context Tax or hello-world) via each Colmena SDK to show
   the same engine runs in all three. New whitepaper section. No new competitor runners needed.

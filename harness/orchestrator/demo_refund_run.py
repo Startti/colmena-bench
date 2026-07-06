@@ -48,7 +48,7 @@ sys.path.insert(0, str(HARNESS_DIR))
 sys.path.insert(0, str(REPO_ROOT / "runners" / "_bench_common"))
 
 from demo05_loc import count_loc  # noqa: E402
-from orchestrator.full_run import venv_python, _proxy_key  # noqa: E402
+from orchestrator.full_run import venv_python, runner_cmd, _proxy_key  # noqa: E402
 from bench_common import scenario_refund  # noqa: E402
 
 FRAMEWORKS = ["colmena", "crewai", "langchain", "llamaindex", "langgraph", "google_adk", "pydantic_ai", "openai_agents"]
@@ -59,7 +59,7 @@ MASK_SECRET = scenario_refund.SECRET
 # adapter sends only Authorization + Content-Type (see runners/colmena/runner/
 # llm.py), so its audit lands in the proxy's session file (``mask-<session_id>``)
 # instead — same correlation strategy as demo05's HEADER_CAPABLE set.
-HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk", "pydantic_ai", "openai_agents"}
+HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk", "pydantic_ai", "openai_agents", "mastra"}
 
 # Imperative code the developer writes/maintains (the node-vs-code "code" column).
 CODE_LOC_TARGETS: dict[str, list[str]] = {
@@ -121,9 +121,9 @@ def _invoke(fw: str, task_path: Path, model_alias: str, proxy_base_url: str,
             run_id: str, out_path: Path, timeout: int,
             resume_state: Path | None = None,
             resume_answer: str | None = None) -> subprocess.CompletedProcess:
-    py = venv_python(fw)
-    cmd = [
-        str(py), "-m", "runner", "--task", str(task_path), "--variant", "default",
+    base_cmd = runner_cmd(fw)
+    cmd = base_cmd + [
+        "--task", str(task_path), "--variant", "default",
         "--run-id", run_id, "--model-alias", model_alias,
         "--proxy-base-url", proxy_base_url, "--output", str(out_path),
         "--timeout-seconds", str(timeout),
@@ -149,8 +149,7 @@ def _run_framework(fw: str, task_path: Path, model_alias: str, proxy_base_url: s
                    out_dir: Path, spans_dir: Path, timeout: int,
                    session_id: str) -> dict[str, Any]:
     """Two-process run of one framework; returns its summary row."""
-    py = venv_python(fw)
-    if not py.exists():
+    if runner_cmd(fw) is None:
         return {"framework": fw, "ok": False, "error": "no venv", "all_ok": False}
 
     run_id = f"refund-{fw}"

@@ -1,0 +1,16 @@
+{
+  "name": "colmena-bench-mastra-runner",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "TypeScript/Mastra runner — proves colmena-bench is not a Python-only harness.",
+  "scripts": {
+    "runner": "node runner/index.mjs"
+  },
+  "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.5",
+    "@mastra/core": "^1.49.0",
+    "yaml": "^2.6.1",
+    "zod": "^3.25.76"
+  }
+}

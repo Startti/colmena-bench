@@ -61,7 +61,7 @@ sys.path.insert(0, str(HARNESS_DIR))
 # bench_common lives in the shared runner dir; import scenario assets + scorers.
 sys.path.insert(0, str(REPO_ROOT / "runners" / "_bench_common"))
 
-from orchestrator.full_run import venv_python, _proxy_key  # noqa: E402
+from orchestrator.full_run import venv_python, runner_cmd, _proxy_key  # noqa: E402
 from mock_account_api import start_mock  # noqa: E402
 from bench_common import scenario_secrets as ss  # noqa: E402
 
@@ -88,7 +88,7 @@ MASK_SECRET = ss.MARKER
 # sends only Authorization + Content-Type, so its audit lands in the proxy's
 # session file (``mask-<PROXY_BENCH_RUN_ID>.json``). Same set + correlation
 # strategy as demo_refund_run's HEADER_CAPABLE.
-HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk",
+HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk", "mastra",
                   "langgraph_interrupt_isolated", "pydantic_ai", "openai_agents"}
 
 # Base port for the per-cell mock; cell index is added (8810, 8811, ...).
@@ -132,9 +132,9 @@ def _invoke(fw: str, task_path: Path, variant: str, model_alias: str,
     Competitors read the variant (collect/echo) to decide whether to fold the
     mock's echoed response back into the LLM; colmena ignores it but accepts it.
     """
-    py = venv_python(fw)
-    cmd = [
-        str(py), "-m", "runner", "--task", str(task_path), "--variant", variant,
+    base_cmd = runner_cmd(fw)
+    cmd = base_cmd + [
+        "--task", str(task_path), "--variant", variant,
         "--run-id", run_id, "--model-alias", model_alias,
         "--proxy-base-url", proxy_base_url, "--output", str(out_path),
         "--timeout-seconds", str(timeout),
@@ -239,8 +239,7 @@ def _run_cell(fw: str, variant: str, seed: int, cell_index: int, task_path: Path
     # map to themselves with no extra env).
     runner_fw, arm_env = _ARM_MAP.get(fw, (fw, {}))
 
-    py = venv_python(runner_fw)
-    if not py.exists():
+    if runner_cmd(runner_fw) is None:
         return {"framework": fw, "variant": variant, "seed": seed,
                 "secret_leaked": None, "delivered_to_api": False,
                 "round_trips": 0, "error": "no venv"}

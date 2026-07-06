@@ -38,7 +38,7 @@ sys.path.insert(0, str(HARNESS_DIR / "scoring"))
 from task04_scorer import score_answers  # noqa: E402
 
 FRAMEWORKS = ["colmena", "crewai", "langchain", "langgraph", "llamaindex", "google_adk"]
-HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk"}
+HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk", "mastra"}
 
 PRICING = json.loads((HARNESS_DIR / "pricing_table.json").read_text())
 QUESTIONS = json.loads((REPO_ROOT / "data/orders_synthetic/questions_20.json").read_text())
@@ -66,6 +66,30 @@ def _maybe_score_dataset_qa(ro: dict, task_def: dict, variant: str) -> None:
 
 def venv_python(framework: str) -> Path:
     return REPO_ROOT / "runners" / framework / ".venv" / "bin" / "python"
+
+
+def runner_cmd(framework: str) -> "list[str] | None":
+    """Base argv that invokes a framework's runner, or None if not installed.
+
+    Python runners run as `python -m runner` from their pinned venv. The Mastra
+    runner is a TypeScript/Node subprocess (`node runner/index.mjs`) — the same
+    CLI + output contract, a different interpreter. This is the one place the
+    harness branches on language, so every driver stays language-agnostic.
+    """
+    if framework == "mastra":
+        base = REPO_ROOT / "runners" / "mastra"
+        entry = base / "runner" / "index.mjs"
+        if not entry.exists() or not (base / "node_modules").exists():
+            return None
+        return ["node", str(entry)]
+    py = venv_python(framework)
+    if not py.exists():
+        return None
+    return [str(py), "-m", "runner"]
+
+
+def runner_available(framework: str) -> bool:
+    return runner_cmd(framework) is not None
 
 
 def _read_spans(path: Path) -> list[dict]:

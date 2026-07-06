@@ -47,7 +47,7 @@ sys.path.insert(0, str(HARNESS_DIR / "orchestrator"))
 sys.path.insert(0, str(HARNESS_DIR))
 sys.path.insert(0, str(REPO_ROOT / "runners" / "_bench_common"))
 
-from orchestrator.full_run import venv_python, _proxy_key  # noqa: E402
+from orchestrator.full_run import venv_python, runner_cmd, _proxy_key  # noqa: E402
 from bench_common import scenario_tools  # noqa: E402
 
 DEFAULT_COUNTS = [5, 10, 20]
@@ -65,6 +65,7 @@ CONFIGS: list[dict[str, Any]] = [
     {"name": "google_adk", "framework": "google_adk"},
     {"name": "pydantic_ai", "framework": "pydantic_ai"},
     {"name": "openai_agents", "framework": "openai_agents"},
+    {"name": "mastra", "framework": "mastra"},
 ]
 
 TASK_PATH = REPO_ROOT / "harness" / "tasks" / "07_tools.yaml"
@@ -145,18 +146,18 @@ def _run_cell(cfg: dict, count: int, trial: int,
         toolcall_log.unlink()
     out_path = raw_dir / f"{run_id}.json"
 
-    py = venv_python(fw)
+    base_cmd = runner_cmd(fw)
     rec: dict[str, Any] = {
         "config": name, "framework": fw, "count": count,
         "trial": trial, "run_id": run_id,
     }
-    if not py.exists():
+    if base_cmd is None:
         return {**rec, "hard_error": True, "error": "no venv",
                 "selection_ok": False, "arg_ok": False, "answer_ok": False,
                 "wrong_tool_called": False, "tokens_in": 0}
 
-    cmd = [
-        str(py), "-m", "runner", "--task", str(TASK_PATH),
+    cmd = base_cmd + [
+        "--task", str(TASK_PATH),
         "--variant", f"n{count}", "--run-id", run_id,
         "--model-alias", model_alias, "--proxy-base-url", proxy_base_url,
         "--output", str(out_path), "--timeout-seconds", str(timeout),

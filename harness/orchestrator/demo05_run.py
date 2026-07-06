@@ -26,9 +26,9 @@ sys.path.insert(0, str(HARNESS_DIR))
 
 from demo05_buckets import bucket_spans_by_turn  # noqa: E402
 from demo05_loc import count_loc  # noqa: E402
-from orchestrator.full_run import venv_python, _read_spans, _proxy_key, usd_per_run, PRICING  # noqa: E402
+from orchestrator.full_run import venv_python, runner_cmd, _read_spans, _proxy_key, usd_per_run, PRICING  # noqa: E402
 
-HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk",
+HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk", "mastra",
                   "google_adk_artifacts", "pydantic_ai", "openai_agents"}
 
 # Steelman/tuned arms that run an existing framework's runner under a non-default
@@ -48,9 +48,9 @@ LOC_TARGETS = {
 def _run_one(fw: str, task_path: Path, model_alias: str, proxy_base_url: str,
              out_dir: Path, run_id: str, timeout: int) -> dict | None:
     runner_fw, variant = _ARM_MAP.get(fw, (fw, "default"))
-    py = venv_python(runner_fw)
-    if not py.exists():
-        print(f"  [skip] {fw}: no venv")
+    base_cmd = runner_cmd(runner_fw)
+    if base_cmd is None:
+        print(f"  [skip] {fw}: runner not installed")
         return None
     fw_out = out_dir / fw
     fw_out.mkdir(parents=True, exist_ok=True)
@@ -63,10 +63,10 @@ def _run_one(fw: str, task_path: Path, model_alias: str, proxy_base_url: str,
         "PYTHONPATH": f"{REPO_ROOT/'runners'/runner_fw}:{REPO_ROOT/'runners'/'_bench_common'}",
     })
     proc = subprocess.run(
-        [str(py), "-m", "runner", "--task", str(task_path), "--variant", variant,
-         "--run-id", run_id, "--model-alias", model_alias,
-         "--proxy-base-url", proxy_base_url, "--output", str(out_path),
-         "--timeout-seconds", str(timeout)],
+        base_cmd + ["--task", str(task_path), "--variant", variant,
+                    "--run-id", run_id, "--model-alias", model_alias,
+                    "--proxy-base-url", proxy_base_url, "--output", str(out_path),
+                    "--timeout-seconds", str(timeout)],
         env=env, capture_output=True, text=True, timeout=timeout + 30,
     )
     if proc.returncode != 0:

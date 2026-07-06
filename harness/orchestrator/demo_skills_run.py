@@ -76,7 +76,7 @@ from bench_common import scenario_skills as sk  # noqa: E402
 
 FRAMEWORKS = ["colmena", "llamaindex", "langchain", "crewai", "langgraph", "google_adk"]
 
-HEADER_CAPABLE = {"llamaindex", "langchain", "crewai", "langgraph", "google_adk"}
+HEADER_CAPABLE = {"llamaindex", "langchain", "crewai", "langgraph", "google_adk", "mastra"}
 
 ARMS_BY_FW = {
     "colmena": ["colmena"],

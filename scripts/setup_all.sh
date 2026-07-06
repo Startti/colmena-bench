@@ -91,6 +91,24 @@ VIRTUAL_ENV="$dir" uv pip install -q --python "$dir/bin/python" pandas numpy sci
   && echo "  installed pandas numpy scipy into colmena venv (required by attachment_run_python)" \
   || echo "  ⚠ pandas/numpy/scipy install failed — attachment_run_python will not work"
 
+# TypeScript runner (Mastra) — a Node subprocess the Python orchestrator shells
+# out to, proving the harness is not Python-only. Needs Node (>=20) + npm. Its
+# scenario assets come from data/bench_fixtures.json, generated from the Python
+# bench_common (the source of truth) so the two languages share byte-identical data.
+echo "==> runner (node): mastra"
+if command -v npm >/dev/null 2>&1; then
+  ( cd "$REPO_ROOT/runners/mastra" && npm install --silent >/dev/null 2>&1 ) \
+    && echo "  installed node deps (runners/mastra/node_modules)" \
+    || echo "  ⚠ npm install failed in runners/mastra"
+  # Regenerate the shared fixture from the Python source of truth (idempotent).
+  _fix_py="$REPO_ROOT/runners/crewai/.venv/bin/python"
+  [[ -x "$_fix_py" ]] && PYTHONPATH="$REPO_ROOT/runners/_bench_common" "$_fix_py" \
+      "$REPO_ROOT/scripts/export_ts_fixtures.py" >/dev/null 2>&1 \
+    && echo "  regenerated data/bench_fixtures.json" || true
+else
+  echo "  ⚠ npm not found — skipped mastra runner (install Node >=20 to enable it)"
+fi
+
 echo
 echo "✓ setup complete. Venvs:"
 echo "    proxy:   .venv-bench"
