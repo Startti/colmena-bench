@@ -252,12 +252,20 @@ Last updated: 2026-07-04.
   pandas (Python-specific); a JS transliteration measures a different thing. `setup_all.sh` now
   installs the node runner + regenerates the fixture. Kills "Python-only benchmark." (`node_modules`
   gitignored; `spikes/mastra/` was the connectivity spike.)
-- [ ] **E-4. Colmena multi-language section (Rust / Python / TypeScript).** Run ONE
-  representative experiment (e.g. Context Tax or hello-world) via each Colmena SDK to show
-  the same engine runs in all three. New whitepaper section. No new competitor runners needed.
-  (`colmena-ai` on npm has a `typescript_dag` guide that executes DAGs.)
+- [x] **E-4. Colmena multi-language section — DONE.** `harness/multilang/run_multilang.py`
+  drives one deterministic DAG (`graphs/power.json`: mock_input(5)→exponential(3)→log ⇒ 125,
+  no LLM/DB) through all THREE of Colmena's language front doors — the Rust `dag_engine` CLI,
+  the Python PyO3 binding (`colmena.run_dag`), and the napi/Node binding (`colmena-ai` `runDag`)
+  — which all call the identical Rust core `dag_engine::api::run_dag`. Verified on v0.9.0: all
+  three return `{start:{input:5.0}, pow_step:{output:125.0}, log_result:125.0}`,
+  `identical_output=true` (`runs/demo_multilang/summary.json`). `setup_all.sh` builds the Rust
+  binary (`cargo build --release --bin dag_engine`) + Node binding (`npm install && npm run
+  build` in the colmena checkout). Whitepaper §3 gained a "Harness and engine portability"
+  paragraph pairing this with the E-1/E-2/E-3 runner diversity. **GROUP E COMPLETE.**
 
 > Effort: ~1.5–3 days per full runner (E-1..E-3). All three passed the connectivity spike.
+> Group E done: E-1 Pydantic AI (5/5), E-2 OpenAI Agents SDK (5, analytics flaky), E-3 Mastra/TS
+> (4/5, Node subprocess), E-4 multi-language (Rust/Python/TS, identical output).
 
 ---
 
