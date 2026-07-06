@@ -64,12 +64,17 @@ def run(
             "You are a data analyst. Use the run_python tool to compute answers over "
             "the pandas DataFrame `df`. Assign your result to the `output` global."
         ),
-        # gemini-2.5-flash reasons ("thinking") before answering; on the large
-        # analytics prompt the default output budget can be spent entirely on
-        # thinking, so Gemini returns an empty completion (choices=[]) that
-        # pydantic_ai's OpenAI adapter cannot parse. A generous max_tokens leaves
-        # room for the final answer after the reasoning.
-        model_settings={"temperature": 0.0, "max_tokens": 8192},
+        # gemini-2.5-flash "thinks" before answering; on the multi-answer analytics
+        # prompt with a tool, that thinking can consume the entire response so Gemini
+        # returns an empty completion (choices=[], 0 output tokens) that pydantic_ai's
+        # OpenAI adapter cannot parse (IndexError on response.choices[0]). Whether it
+        # engages is fragile — sensitive to prompt wording — so capping to "low" is
+        # unreliable; DISABLING reasoning (extra_body reasoning_effort=disable) avoids
+        # it deterministically (verified 3/3, correct 20-answer JSON). The task is
+        # deterministic pandas computation, so no reasoning is needed for accuracy.
+        # This is a Pydantic-AI + Gemini request-shape interaction; the other runners'
+        # analytics work under default thinking.
+        model_settings={"temperature": 0.0, "extra_body": {"reasoning_effort": "disable"}},
     )
 
     @agent.tool_plain
