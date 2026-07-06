@@ -225,7 +225,16 @@ Last updated: 2026-07-04.
   thinking can return empty `choices=[]` on tool/structured prompts (crashes pydantic_ai) → fixed with
   `model_settings extra_body reasoning_effort=disable` (task06/08). NOT paper-integrated (proof-of-runner,
   N=1; a paper arm would need N=12 + a whitepaper section + the multi-turn task07b for §8.3).
-- [ ] **E-2. OpenAI Agents SDK runner.** Note: force `set_default_openai_api("chat_completions")`
+- [x] **E-2. OpenAI Agents SDK runner — DONE (5 tasks, task08 analytics flaky).** `runners/openai_agents/`
+  (venv via `uv`, pinned `openai-agents==0.17.7`). `build_llm` wires the SDK's process-global client
+  (`set_default_openai_client` at proxy `/v1` + `x-bench-run-id` header, `set_default_openai_api("chat_completions")`,
+  `set_tracing_disabled(True)`) and returns the model string; tasks build `Agent` + `Runner.run_sync`.
+  Added to all 5 drivers. Verified on v0.9.0: task05 Context Tax 452,757 tokens ✓; task06 Hardening
+  all_ok (two-phase + masking) ✓; task07 Tools sel_acc 1.0 (dynamic `FunctionTool`) ✓; task10 Secrets
+  leaked+delivered ✓; task08 PROBE leaks ✓ but ANALYTICS flaky (gemini-2.5-flash via the Agents SDK
+  frequently returns empty `choices=[]` → ModelBehaviorError, and hallucinates pandas methods as tool
+  names; "low"+8 retries unreliable; graceful-degrades). Commit 15c62ed. Proof-of-runner (N=1).
+  <br>ORIGINAL NOTE: force `set_default_openai_api("chat_completions")`
   + `set_tracing_disabled(True)`. Pattern in `spikes/openai_agents/`. Pin exactly (0.x churn).
 - [ ] **E-3. Mastra (TypeScript) runner.** Needs a Node subprocess the Python orchestrator
   shells out to. Tool `execute` signature is `async (inputData) => ...` in 1.49. Pattern in
