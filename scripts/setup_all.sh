@@ -91,6 +91,28 @@ VIRTUAL_ENV="$dir" uv pip install -q --python "$dir/bin/python" pandas numpy sci
   && echo "  installed pandas numpy scipy into colmena venv (required by attachment_run_python)" \
   || echo "  ⚠ pandas/numpy/scipy install failed — attachment_run_python will not work"
 
+# Multi-language Colmena SDKs (E-4) — the SAME engine callable from Rust, Python
+# and TypeScript. The Python binding is built above (maturin). Build the Rust CLI
+# binary + the napi/Node binding from the colmena checkout so
+# harness/multilang/run_multilang.py can drive all three. Both are optional (only
+# needed for the polyglot demo); skipped cleanly if the checkout/toolchains are absent.
+echo "==> colmena multi-language SDKs (E-4: Rust CLI + Node binding)"
+if [[ -d "$COLMENA_REPO" ]]; then
+  ( cd "$COLMENA_REPO" && cargo build --release --bin dag_engine \
+      --manifest-path src/libs/colmena/Cargo.toml >/dev/null 2>&1 ) \
+    && echo "  built Rust dag_engine binary" \
+    || echo "  ⚠ cargo build dag_engine failed (need a Rust toolchain)"
+  if command -v npm >/dev/null 2>&1; then
+    ( cd "$COLMENA_REPO" && npm install --silent >/dev/null 2>&1 && npm run build >/dev/null 2>&1 ) \
+      && echo "  built colmena-ai Node binding (napi + tsc)" \
+      || echo "  ⚠ npm run build failed in $COLMENA_REPO (Node binding unavailable)"
+  else
+    echo "  ⚠ npm not found — skipped Node binding"
+  fi
+else
+  echo "  ⚠ COLMENA_REPO not found — skipped Rust/Node SDK builds"
+fi
+
 # TypeScript runner (Mastra) — a Node subprocess the Python orchestrator shells
 # out to, proving the harness is not Python-only. Needs Node (>=20) + npm. Its
 # scenario assets come from data/bench_fixtures.json, generated from the Python

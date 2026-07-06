@@ -1,0 +1,98 @@
+{
+  "dag": "harness/multilang/graphs/power.json",
+  "engine_fn": "dag_engine::api::run_dag (identical Rust core for all three)",
+  "sdks_run": [
+    "rust",
+    "python",
+    "node"
+  ],
+  "sdks_ok": [
+    "rust",
+    "python",
+    "node"
+  ],
+  "identical_output": true,
+  "shared_result": {
+    "pow_step": {
+      "output": 125.0
+    },
+    "log_result": 125.0,
+    "start": {
+      "input": 5.0
+    }
+  },
+  "per_sdk": {
+    "rust": {
+      "ok": true,
+      "result": {
+        "pow_step": {
+          "output": 125.0
+        },
+        "log_result": 125.0,
+        "start": {
+          "input": 5
+        },
+        "__colmena_session_id": "eac6710f-250d-4830-be4d-78faee11e1a7"
+      },
+      "latency_ms": 8561,
+      "entrypoint": "dag_engine run <file> (CLI binary)",
+      "normalized": {
+        "pow_step": {
+          "output": 125.0
+        },
+        "log_result": 125.0,
+        "start": {
+          "input": 5.0
+        }
+      }
+    },
+    "python": {
+      "ok": true,
+      "result": {
+        "start": {
+          "input": 5
+        },
+        "pow_step": {
+          "output": 125.0
+        },
+        "log_result": 125.0,
+        "__colmena_session_id": "595882d1-a9ed-4399-89b9-3a09cb7e2913"
+      },
+      "latency_ms": 8719,
+      "entrypoint": "colmena.run_dag (PyO3 binding)",
+      "normalized": {
+        "start": {
+          "input": 5.0
+        },
+        "pow_step": {
+          "output": 125.0
+        },
+        "log_result": 125.0
+      }
+    },
+    "node": {
+      "ok": true,
+      "result": {
+        "start": {
+          "input": 5
+        },
+        "log_result": 125,
+        "pow_step": {
+          "output": 125
+        },
+        "__colmena_session_id": "486c8cd6-6985-4c02-814c-622ba48cb962"
+      },
+      "latency_ms": 9526,
+      "entrypoint": "colmena-ai runDag (napi binding)",
+      "normalized": {
+        "start": {
+          "input": 5.0
+        },
+        "log_result": 125.0,
+        "pow_step": {
+          "output": 125.0
+        }
+      }
+    }
+  }
+}

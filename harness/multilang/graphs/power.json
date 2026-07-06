@@ -1,0 +1,29 @@
+{
+  "nodes": {
+    "start": {
+      "type": "mock_input",
+      "config": {
+        "input": 5
+      }
+    },
+    "pow_step": {
+      "type": "exponential",
+      "config": {
+        "exponent": 3
+      }
+    },
+    "log_result": {
+      "type": "log"
+    }
+  },
+  "edges": [
+    {
+      "from": "start",
+      "to": "pow_step"
+    },
+    {
+      "from": "pow_step",
+      "to": "log_result"
+    }
+  ]
+}
