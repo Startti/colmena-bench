@@ -208,36 +208,23 @@ Last updated: 2026-07-04.
 
 ## Group E — Expansion: new frameworks + multi-language
 
-- [~] **E-1. Pydantic AI runner** — tasks 05/07/10 DONE, 08 probe-done/analytics-WIP, 06 not started.
-  **STATE (2026-07-05, paused mid-task08):** `runners/pydantic_ai/` exists (venv via `uv`, pinned
-  `pydantic-ai==2.5.0` + pandas/numpy). All committed on `main` (commits 3f085a3, abcc109, 3f5aa90,
-  4f13fda). Verified end-to-end on v0.9.0:
-    - **task05 Context Tax** ✅ — total 454,124 tokens (competitor range). `HEADER_CAPABLE` in demo05_run.
-    - **task07 Tools** ✅ — sel_acc 1.0, arg_acc 1.0 @ 20 tools (`Tool.from_schema` dynamic tools);
-      added to `demo_tools_run.py` CONFIGS. (Single-turn only; multi-turn task07b not built.)
-    - **task10 Secrets** ✅ — leaked=True + delivered=True (collect+echo); `HEADER_CAPABLE` in demo10 driver.
-    - **task08 code-exec** ✅ — PROBE leaks (unsandboxed exec reads the canary) AND analytics works
-      (acc 0.90, real answers). Was blocked by a deterministic `IndexError` at
-      `pydantic_ai/models/openai.py:1011` (`response.choices[0]`): gemini-2.5-flash's default thinking
-      consumed the whole response → empty completion (`choices=[]`) that pydantic_ai crashes on. FIXED
-      by `model_settings={"extra_body":{"reasoning_effort":"disable"}}` — reliable 3/3 (capping to
-      "low" was flaky, prompt-wording-sensitive). The task is deterministic pandas compute so no
-      reasoning is needed. Commit 2731314. Added to demo08 FRAMEWORKS.
-  **REMAINING for E-1:** only **task06** (Production Hardening — hardest: two-phase HITL suspend/resume
-  + critic-retry + DIY masking, mirror `runners/langgraph/runner/tasks/task06_refund.py` with pydantic_ai's
-  HITL model). Note: watch for the same Gemini-thinking empty-completion on complex prompts
-  (workaround: `extra_body reasoning_effort=disable`). Optionally task07b (multi-turn session). None
-  paper-integrated yet (proof-of-runner, N=1).
-  Built `runners/pydantic_ai/` (pyproject pinned `pydantic-ai==2.5.0`; `runner/{__init__,__main__,llm}.py`
-  + `tasks/task05.py`; venv via `uv`). `build_llm` returns an `OpenAIChatModel` over an `AsyncOpenAI`
-  client pointed at the proxy `/v1` with the `x-bench-run-id` header; task05 replays the 10-turn
-  Context Tax via `agent.run_sync(msg, message_history=all_messages())` (verbatim history; report
-  seeded as a pre-turn-0 `ModelRequest`/`ModelResponse` with no LLM call; `[chart_data_uri]:` prefix
-  workaround). Added `pydantic_ai` to demo05 driver `HEADER_CAPABLE`. **Verified end-to-end on
-  v0.9.0: total 454,124 input tokens (competitor range 404k-452k)** — pydantic_ai pays the full
-  context tax (no default scrubber), exactly as expected. NOT paper-integrated (proof-of-runner, N=1;
-  a paper arm would need N=12 + a whitepaper section). REMAINING: tasks 06 (refund/hardening), 07
-  (tools), 08 (code-exec), 10 (secrets) + add to each driver.
+- [x] **E-1. Pydantic AI runner — COMPLETE (5/5 tasks).** `runners/pydantic_ai/` (venv via `uv`,
+  pinned `pydantic-ai==2.5.0` + pandas/numpy). `build_llm` → `OpenAIChatModel` over an `AsyncOpenAI`
+  client at the proxy `/v1` with the `x-bench-run-id` header. All tasks verified end-to-end on v0.9.0
+  and added to their drivers (`HEADER_CAPABLE`/`CONFIGS`/`FRAMEWORKS`). Commits: 3f085a3, abcc109,
+  3f5aa90, 4f13fda, 2731314, 54eca4c.
+    - **task05 Context Tax** — 454,124 tokens (competitor range; verbatim history, report seeded as a
+      pre-turn-0 `ModelRequest`/`ModelResponse`, `[chart_data_uri]:` prefix workaround).
+    - **task06 Production Hardening** — all_ok=True: DIY two-phase HITL (`<output>.state` JSON, no native
+      checkpointer) + critic-retry loop + DIY `run_payment` masking (secret_leaked=False). Decision
+      "escalate" (correct). Matches LangGraph/Colmena.
+    - **task07 Tools** — sel_acc 1.0 @ 20 tools (`Tool.from_schema` dynamic tools; single-turn only).
+    - **task08 code-exec** — probe leaks (unsandboxed exec reads canary) + analytics 0.90.
+    - **task10 Secrets** — leaked + delivered (naive competitor arm).
+  Two integration findings, both documented: dynamic tools need `Tool.from_schema`; gemini-2.5-flash
+  thinking can return empty `choices=[]` on tool/structured prompts (crashes pydantic_ai) → fixed with
+  `model_settings extra_body reasoning_effort=disable` (task06/08). NOT paper-integrated (proof-of-runner,
+  N=1; a paper arm would need N=12 + a whitepaper section + the multi-turn task07b for §8.3).
 - [ ] **E-2. OpenAI Agents SDK runner.** Note: force `set_default_openai_api("chat_completions")`
   + `set_tracing_disabled(True)`. Pattern in `spikes/openai_agents/`. Pin exactly (0.x churn).
 - [ ] **E-3. Mastra (TypeScript) runner.** Needs a Node subprocess the Python orchestrator
