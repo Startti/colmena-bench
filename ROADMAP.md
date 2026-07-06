@@ -146,22 +146,28 @@ Last updated: 2026-07-04.
   longer reproduces. **Defer C-2's paper integration to the G-2 v0.9.0 re-run (fresh baselines); first
   investigate the demo07 reproducibility gap (new item C-2a below).** Code is preserved and isolated.
 
-- [ ] **C-2a. NEW — investigate demo07 reproducibility (drift is ISOLATED to demo07, triaged 2026-07-05).**
-  Triage result: demo05 langchain reproduces EXACTLY today (452,600 / 13 calls vs published 452,158 / 13,
-  quality OK) → **no global model drift**; the v0.9.0 re-run (G-2) is safe for the other experiments.
-  Only demo07 is off: current-env langchain default = ~287k / ~100 LLM calls vs published 125,305. Most
-  likely the confusable-toolset scenario is high-variance in tool-call count (seed 0 outlier — published
-  is a 5-seed mean) rather than a model change. TODO: run all 5 seeds of demo07 default to check the mean
-  vs 125k, and inspect per-turn tool-call counts. Fold into G-2's demo07 re-run. Native, built-in since
-  LangChain 1.0, **present at pinned 1.3.6**; a secondary LLM pre-selects ~5 of 30 tools,
-  cutting per-turn schema tokens. We bind all 30 → **biggest exposure to the demo07 pitch**.
-  Applies to LangGraph via `create_agent` too.
+- [x] **C-2a. demo07 reproducibility + LangChain `LLMToolSelectorMiddleware` — RESOLVED 2026-07-06.**
+  Two parts, both closed:
+  (1) **The "drift"** was NOT model drift — G-2 root-caused it as the 40-tool cap of the new
+  `generate_toolset` (a "n=200" re-run only measured 40 tools). demo05 reproduces exactly; the
+  recomposition test restored the 2.39× lazy differentiator on v0.9.0 (see G-2, demo07 bullet).
+  (2) **The steelman decision** — add a LangChain `LLMToolSelectorMiddleware` arm, OR symmetric
+  exclusion — was decided as **symmetric exclusion**, and is already written in whitepaper §8.4
+  ("Native tool-narrowing alternatives, disclosed and symmetrically excluded"), paired with the
+  C-4 LlamaIndex `tool_retriever` exclusion on identical grounds.
+  **Honest rationale (2026-07-06 review):** `LLMToolSelectorMiddleware` is a DIFFERENT mechanism
+  class than `lazy_tool_loading`, not its native equivalent — it adds a SECOND LLM call that must
+  itself receive all 30 tool descriptions to pick ~5, so it pays its own input cost, adds a
+  per-turn round-trip, and introduces a selection-accuracy failure mode (drop the needle → wrong
+  answer, exactly what demo07 measures). Colmena's lazy loading is architectural (fetch-on-expressed-
+  intent; no extra inference, no recall threshold). Measuring the middleware would most likely
+  REINFORCE Colmena (selector overhead + accuracy risk), so the exclusion is if anything generous to
+  LangChain — which is what makes it defensible rather than headline-protecting. The true provider-
+  enforced analog (`ProviderToolSearchMiddleware`) ships in 1.3.7, one patch above the pin, so it is
+  correctly excluded by version discipline. **Optional future upgrade** (only for an adversarial
+  venue): run the middleware once as a *measured* mini-steelman (à la §4.6 ADK artifacts) to convert
+  the exclusion from asserted to demonstrated; not needed for the current claim.
   Import: `langchain.agents.middleware.tool_selection.LLMToolSelectorMiddleware`.
-  Files: `runners/{langchain,langgraph}/runner/tasks/task07_tools.py`.
-  **Decision needed:** add the arm, OR apply a symmetric "no LLM/RAG tool pre-selection"
-  rule to all frameworks and state it explicitly. (Note: `ProviderToolSearchMiddleware`,
-  the true lazy-fetch analog, ships only in 1.3.7 — one patch above the pin — so it's
-  correctly excluded at the current pin.)
 
 - [x] **C-3. demo10 `langgraph_interrupt_isolated` arm. DONE.** Built the hand-architected
   LangGraph arm: `_run_isolated` in `runners/langgraph/runner/tasks/task10_secrets.py` uses a
@@ -384,8 +390,10 @@ Last updated: 2026-07-04.
 
 | Task | Decision needed |
 |---|---|
-| A-1 | CrewAI demo08: re-pin `<1.14.0` / migrate to E2B / mark N/A? |
-| C-2 | demo07 LangChain: add tool-selector arm, or symmetric exclusion rule? |
+| A-1 | CrewAI demo08: re-pin `<1.14.0` / migrate to E2B / mark N/A? → DONE (Group A: representation + replicability fixed 2026-07-04) |
+| C-2 | demo07 LangChain: add tool-selector arm, or symmetric exclusion rule? → DONE (symmetric exclusion in §8.4; see C-2a rationale) |
 | C-3 | demo10: add the `langgraph_interrupt_isolated` steelman arm? → DONE (arm built, 0% leak measured) |
 | C-4 | demo07 LlamaIndex `tool_retriever`: add labeled RAG arm, or document + exclude? → DONE (documented + symmetric exclusion in §8.4) |
-| E-1..E-4 | Sequence: multi-language section + ADK arm first (small), then full runners? |
+| E-1..E-4 | Sequence: multi-language section + ADK arm first (small), then full runners? → DONE (E-1 Pydantic AI, E-2 OpenAI Agents SDK, E-3 Mastra/TS, E-4 multi-language all complete) |
+
+**No open decisions remain.**
