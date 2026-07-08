@@ -29,11 +29,14 @@ from demo05_loc import count_loc  # noqa: E402
 from orchestrator.full_run import runner_cmd, _read_spans, _proxy_key, usd_per_run, PRICING  # noqa: E402
 
 HEADER_CAPABLE = {"crewai", "langchain", "langgraph", "llamaindex", "google_adk", "mastra",
-                  "google_adk_artifacts", "pydantic_ai", "openai_agents"}
+                  "google_adk_artifacts", "google_adk_artifacts_scrub", "pydantic_ai", "openai_agents"}
 
 # Steelman/tuned arms that run an existing framework's runner under a non-default
 # variant. Maps arm name -> (runner framework, --variant value).
-_ARM_MAP = {"google_adk_artifacts": ("google_adk", "artifacts")}
+_ARM_MAP = {
+    "google_adk_artifacts": ("google_adk", "artifacts"),
+    "google_adk_artifacts_scrub": ("google_adk", "artifacts_scrub"),
+}
 
 LOC_TARGETS = {
     "colmena": ["runners/colmena/runner/tasks/task05.py"],

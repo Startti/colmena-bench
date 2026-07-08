@@ -23,11 +23,13 @@ Token accounting comes from the proxy spans (the orchestrator buckets spans by
 from __future__ import annotations
 
 import asyncio
+import base64
 from datetime import datetime, timezone
 from typing import Any
 
 from google.adk.agents import Agent
 from google.adk.runners import InMemoryRunner
+from google.adk.tools.tool_context import ToolContext
 from google.genai import types
 
 from bench_common import (
@@ -70,6 +72,40 @@ generate_chart.__qualname__ = CHART_TOOL_NAME
 generate_chart.__doc__ = CHART_TOOL_DESCRIPTION
 
 
+# ---------------------------------------------------------------------------
+# Tool-output-scrubbing variant (the "artifacts_scrub" deep steelman).
+# Instead of returning the ~8 KB base64 blob into the conversation (where ADK
+# re-sends it every subsequent turn), this hand-rolled tool stores the PNG bytes
+# via ADK's native ArtifactService and returns only a short HANDLE. The blob never
+# reaches the LLM context. This is the closest a determined ADK developer can get
+# to Colmena's engine-default binary scrubber — but it is application code the
+# developer must write in every tool, not a default. `tool_context` is auto-injected
+# by ADK (by type annotation) and excluded from the schema the model sees, so the
+# tool the model calls is identical to `generate_chart`.
+# ---------------------------------------------------------------------------
+async def generate_chart_scrub(description: str, tool_context: ToolContext) -> str:
+    """Generate a chart image from a natural-language description. Returns the chart as a base64 PNG data URI."""  # noqa: E501
+    data_uri = _generate_chart_asset(description)  # data:image/png;base64,<...>
+    png_bytes = base64.b64decode(data_uri.split(",", 1)[1])
+    n = int(tool_context.state.get("chart_count", 0)) + 1
+    tool_context.state["chart_count"] = n
+    filename = f"chart_{n}.png"
+    await tool_context.save_artifact(
+        filename=filename,
+        artifact=types.Part.from_bytes(data=png_bytes, mime_type="image/png"),
+    )
+    # Return only a short handle — the ~8 KB blob stays in the artifact store.
+    return (
+        f"Chart generated and stored as artifact '{filename}' (image/png). "
+        "The chart is ready; confirm to the user in one short sentence."
+    )
+
+
+generate_chart_scrub.__name__ = CHART_TOOL_NAME
+generate_chart_scrub.__qualname__ = CHART_TOOL_NAME
+generate_chart_scrub.__doc__ = CHART_TOOL_DESCRIPTION
+
+
 def run(
     task_def: dict[str, Any], llm: Any, args: RunnerArgs
 ) -> tuple[list[str], dict[str, int], dict[str, Any]]:
@@ -104,19 +140,25 @@ def run(
 async def _run_all_turns(llm: Any, args: RunnerArgs) -> tuple[list[str], dict[str, Any]]:
     """Drive all 10 turns on a single persistent session.
 
-    Two variants:
-      default   — the report is pasted into turn 0 and re-sent in history every
-                  turn (the idiomatic ADK baseline; the context tax).
-      artifacts — the report is stored via ADK's native ArtifactService and the
-                  agent is given the built-in ``load_artifacts`` tool, so the doc
-                  stays OUT of standing context and is pulled in only on the turns
-                  the model chooses to load it (ADK's on-demand-attachment
-                  equivalent of Colmena's ``load_attachment``).
+    Three variants:
+      default         — the report is pasted into turn 0 and re-sent in history
+                        every turn; ``generate_chart`` returns the ~8 KB base64 blob
+                        into context (the idiomatic ADK baseline; the context tax).
+      artifacts       — the report is stored via ADK's native ArtifactService and
+                        the agent gets the built-in ``load_artifacts`` tool, so the
+                        DOC stays out of standing context. The chart blob still lands
+                        in context (ADK has no default tool-output scrubbing).
+      artifacts_scrub — the deep steelman: DOC via ``load_artifacts`` AND the
+                        chart tool hand-rolled to ``save_artifact`` the PNG and
+                        return a short handle, so the chart blob also stays out of
+                        context. The closest ADK can get to Colmena's engine-default
+                        scrubber — via per-tool application code.
     """
-    use_artifacts = args.variant == "artifacts"
+    use_doc_artifact = args.variant in ("artifacts", "artifacts_scrub")
+    scrub_tool_output = args.variant == "artifacts_scrub"
 
-    tools: list[Any] = [generate_chart]
-    if use_artifacts:
+    tools: list[Any] = [generate_chart_scrub if scrub_tool_output else generate_chart]
+    if use_doc_artifact:
         from google.adk.tools import load_artifacts  # noqa: PLC0415
         tools.append(load_artifacts)
 
@@ -137,7 +179,7 @@ async def _run_all_turns(llm: Any, args: RunnerArgs) -> tuple[list[str], dict[st
         session_id=session_id,
     )
 
-    if use_artifacts:
+    if use_doc_artifact:
         # Store the report as a native artifact instead of putting it in context.
         await runner.artifact_service.save_artifact(
             app_name=_APP,
@@ -153,7 +195,7 @@ async def _run_all_turns(llm: Any, args: RunnerArgs) -> tuple[list[str], dict[st
     for i, turn in enumerate(TURNS):
         try:
             # Turn 0: seed the report (pasted in default; referenced in artifacts).
-            if i == 0 and use_artifacts:
+            if i == 0 and use_doc_artifact:
                 user_text = (
                     "A report for this conversation is stored as the artifact "
                     "'report.txt'. Call the load_artifacts tool to read it whenever "
