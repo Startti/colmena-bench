@@ -114,8 +114,10 @@ default arm.
     as retained binary tool outputs compound in the re-transmitted history,
     reaching $\approx$19k, $\approx$75k, and $\approx$120k input tokens by
     turns three, six, and nine; the \texttt{artifacts\_scrub} and Colmena
-    curves stay flat across the same turns, at $\approx$1.3--2.2k and
-    $\approx$1.8--5.7k input tokens respectively.}
+    curves instead stay flat across the whole session, ranging
+    $\approx$1.0--5.6k (\texttt{artifacts\_scrub}, narrowing to
+    $\approx$1.3--2.2k on the three chart turns) and $\approx$1.8--5.7k
+    (Colmena) input tokens per turn.}
   \label{fig:context}
 \end{figure}
 
@@ -123,9 +125,11 @@ The mechanism is visible in the per-turn token curves of
 Figure~\ref{fig:context}, which overlays three arms: Colmena's default,
 ADK's default, and ADK with \texttt{artifacts\_scrub}. On the chart turns
 the default ADK arm spikes---$\approx$19k, $\approx$75k, $\approx$120k
-input tokens---as retained blobs compound, while both the Colmena and the
-\texttt{artifacts\_scrub} curves stay flat, at $\approx$1.3--2.2k tokens on
-those same turns. The token counts are the evidence: the proxy spans of
+input tokens---as retained blobs compound, while both flat arms stay in the
+low thousands across the whole session: Colmena ranges $\approx$1.8--5.7k
+input tokens per turn, and \texttt{artifacts\_scrub} ranges
+$\approx$1.0--5.6k per turn overall, narrowing to $\approx$1.3--2.2k on the
+three chart turns themselves. The token counts are the evidence: the proxy spans of
 \S\ref{sec:methodology} are metadata only, and it is the measured token
 curve, not any transcript text, that establishes where the cost is spent.
 All three arms pass the task quality guardrail of \S\ref{sec:methodology}.

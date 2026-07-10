@@ -13,8 +13,9 @@ back to it as the \emph{engine boundary} (\S\ref{sec:model}).
 \label{subsec:declarative}
 
 In Colmena an agent is not a program. It is a declarative JSON document that
-describes a directed acyclic graph (DAG) of typed \emph{nodes} connected by typed
-\emph{edges}. Nodes name units of work; edges name the data that flows between
+describes a directed graph (a DAG augmented with optional bounded-retry
+cycles) of typed \emph{nodes} connected by typed \emph{edges}. Nodes name
+units of work; edges name the data that flows between
 them. A node's \texttt{type} selects a fixed behavior implemented by the engine
 rather than by the agent author: an \texttt{llm\_call} node performs a
 model-driven tool loop; a \texttt{python\_script} node runs a fixed body of code;
