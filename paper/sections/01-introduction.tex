@@ -1,2 +1,76 @@
 \section{Introduction}
 \label{sec:intro}
+
+Large language model (LLM) agents are increasingly deployed not as
+demonstrations but as production services, and in that transition they accrue
+costs and risks that are invisible in a prototype. A long-running session
+accumulates context: the transcript grows turn over turn, and stale tool
+outputs---binary blobs, large intermediate documents---are carried forward
+into every subsequent model call, inflating cost without adding information.
+Credentials collected mid-session to authenticate an external action pass
+through the model to reach the tool that needs them, and in doing so are
+written into the transcript, the provider's request history, and every cache
+the transcript touches. Making an agent durable, resumable, human-supervised,
+and self-correcting requires further machinery still. Mainstream agent
+frameworks leave each of these concerns to per-application code: the framework
+supplies the model loop and the tool-calling plumbing, and the developer is
+expected to prune context, isolate secrets, and wire up retry and
+human-in-the-loop control by hand. Teams routinely omit this work, or
+implement it inconsistently, because nothing in the framework requires it and
+the failure is silent until it is expensive.
+
+This paper studies Colmena, a declarative agent engine that takes a different
+position on where these concerns belong. In Colmena an agent is not a program
+but a declarative document describing a directed acyclic graph (DAG) of typed
+nodes and edges; the engine, not the agent author, implements each node's
+behavior. Because the agent is data the engine interprets rather than code the
+engine merely hosts, the engine is in a position to enforce properties of every
+agent it runs, uniformly and by construction, rather than trusting each
+application to supply them.
+
+Our thesis is that Colmena relocates production concerns---context lifecycle,
+credential handling, human-in-the-loop, and retry---from per-application code
+into invariants the engine enforces by construction, and that the declarative
+DAG-as-data execution model is the enabler of that relocation. We do not claim
+these concerns are unreachable in a conventional framework; we claim that
+reaching them there is the developer's responsibility, discharged in
+hand-written code that a team may omit or get wrong, whereas in Colmena they
+hold by default.
+
+We support this thesis with the following contributions.
+
+\begin{itemize}
+  \item We describe the Colmena execution model---the DAG-as-data agent, the
+    typed node behaviors the engine supplies, and the resulting
+    \emph{engine boundary} that separates engine-enforced behavior from
+    application logic (\S\ref{sec:model}).
+  \item We present a provider-authoritative evaluation methodology in which
+    every framework's LLM calls are routed through a shared proxy, so that
+    token counts and costs are read from the transcript that crossed the wire
+    rather than from any figure a framework self-reports (\S\ref{sec:methodology}).
+  \item We measure three relocated concerns against idiomatic-default
+    competitor implementations. \emph{Context} becomes an engine-managed
+    resource: over a fixed analyst session Colmena consumes
+    $\approx$\num{39085} input tokens against \numrange{404095}{452359} for
+    the competitor defaults, a gap a competitor closes only with hand-written
+    per-tool scrubbing code (\S\ref{sec:context}). \emph{Credential isolation}
+    holds by construction: plaintext secrets reach the model transcript in
+    $0\%$ of Colmena runs against $100\%$ for every competitor default, while
+    a hand-architected competitor arm also reaches $0\%$ (\S\ref{sec:credentials}).
+    \emph{Production hardening}---durable human-in-the-loop, credential
+    masking, automatic critic-retry, and secret isolation---is expressed as
+    declarative configuration of the agent document rather than as
+    hand-rolled application logic (\S\ref{sec:hardening}).
+  \item We give an honest default-versus-code account of the comparison,
+    reporting where it does not favor Colmena and stating plainly what the
+    engine does, and does not, uniquely provide (\S\ref{sec:limitations}).
+\end{itemize}
+
+The remainder of the paper proceeds as follows. Section~\ref{sec:related-work}
+situates Colmena among existing agent frameworks. Section~\ref{sec:model}
+develops the execution model on which the results rest, and
+Section~\ref{sec:methodology} the measurement basis they share.
+Sections~\ref{sec:context}, \ref{sec:credentials}, and \ref{sec:hardening}
+report the three concern results in turn. Section~\ref{sec:limitations}
+records the limitations and negative results, and
+Section~\ref{sec:conclusion} concludes.
