@@ -1,2 +1,71 @@
 \section{Limitations and Negative Results}
 \label{sec:limitations}
+
+The preceding sections argue that Colmena relocates three production
+concerns to engine-enforced invariants and measure the resulting gains.
+Honest evaluation requires reporting where the comparison does not favor
+Colmena and stating plainly what the engine's guarantees do, and do not,
+establish about the competitors. Two results follow.
+
+\subsection{Speed: round-trips traded for token volume}
+\label{subsec:limitations-speed}
+
+Colmena's per-call overhead is not the source of its token advantage. A
+single-tool-call calibration task ("hello world", ten trials per
+framework) isolates fixed per-call cost from the multi-turn dynamics of
+\S\ref{sec:context}: median per-call latency is at parity between Colmena
+and the fastest competitor---\SI{761}{ms} for Colmena versus \SI{738}{ms}
+for LangChain. Colmena's engine is not slower to answer a single call.
+
+What differs is the number of calls a session makes. Over the ten-turn
+context-tax session of \S\ref{sec:context}, Colmena issues approximately
+$18$ model round-trips against approximately $13$ for the competitor
+frameworks. The extra calls are a direct consequence of the same
+mechanisms that produce Colmena's token economy: lazy tool loading turns
+each on-demand schema or attachment fetch into its own model turn rather
+than folding it into an existing one, and history compaction periodically
+interposes a summarization turn in place of re-sending the full transcript.
+Both mechanisms trade a round-trip for the tokens that round-trip avoids
+resending on every subsequent turn.
+
+The net effect is that Colmena is \emph{not} faster per session. Holding
+per-call latency at parity, more calls means more wall-clock time and more
+round-trip overhead than a framework that resends a larger context in
+fewer, larger calls. This is a genuine trade-off, not an artifact of
+measurement: the same lazy loading and compaction that yield the
+order-of-magnitude token reduction of \S\ref{sec:context} are what add the
+extra round-trips. We report the exchange rate rather than obscure it---
+Colmena buys token volume with call count, and a deployment that is
+latency-bound on session wall-clock time rather than cost-bound on token
+volume should weigh the trade in that direction.
+
+\subsection{The central caveat: enforcement, not exclusivity}
+\label{subsec:limitations-caveat}
+
+Every engine-enforced invariant this paper measures is, on inspection,
+achievable by a competitor framework through hand-written code. We do not
+merely assert this; each of the two preceding results sections
+demonstrates it directly. The Google ADK \texttt{artifacts\_scrub} arm of
+\S\ref{sec:context} hand-rolls a per-tool artifact handle in place of the
+raw binary output and closes the context-tax gap against Colmena's
+default. The \texttt{langgraph\_interrupt\_isolated} arm of
+\S\ref{sec:credentials} hand-architects the credential path out of the
+model's reach using LangGraph's \texttt{interrupt()} primitive and a
+checkpointer, and reaches the same $0\%$ leak rate as Colmena's default.
+In both cases a competitor framework, correctly used by an author who
+anticipates the hazard and writes the mitigating code, matches the
+outcome the Colmena engine guarantees without any such code.
+
+The contribution this paper measures is therefore not that competitor
+frameworks are \emph{incapable} of the safe or efficient outcome. It is
+that Colmena makes that outcome the \emph{default}, enforced once at the
+engine boundary (\S\ref{sec:model}) for every agent that crosses it,
+whereas every competitor reaches the same outcome only as a
+\emph{construction}---code that a specific author must know to write,
+must test, and must maintain, separately, for every tool and every agent
+that needs it. The steelman arms are not exceptions that weaken the
+paper's measurements; they are the evidence that isolates what the
+measurements attribute to the engine. What Colmena guarantees by default,
+the field can reach by hand, and the gap this paper reports throughout is
+the gap between an invariant an author cannot omit and a practice an
+author must remember, and remember correctly, every time.
