@@ -1,2 +1,129 @@
 \section{Context as an Engine-Managed Resource}
 \label{sec:context}
+
+The first concern we relocate to the engine boundary
+(\S\ref{sec:model}) is the management of the model's context window. In a
+multi-turn agent, the context window is a finite, shared resource that
+accumulates the transcript of every prior turn: user messages, model
+responses, and---decisively---the outputs of every tool the model has
+invoked. Left unmanaged, that accumulation grows without bound, and each
+subsequent turn re-transmits the entire history to the model, so the cost
+of a session is quadratic in its length rather than linear. We call this
+the \emph{context tax}. This section shows that Colmena discharges the tax
+by engine default, and that a competitor framework can match the result
+only by adding hand-rolled, per-tool application code.
+
+\subsection{Design: context as a resource keyed off the graph}
+\label{subsec:context-design}
+
+Because every agent is a DAG interpreted by one engine
+(\S\ref{sec:model}), the engine---not the agent author---decides how the
+context window is assembled and pruned on each turn. Colmena treats the
+window as a managed resource and applies, by default, a family of policies
+keyed off the graph: attachments are passed by reference and materialized
+only for the node that consumes them rather than retained inline;
+binary tool outputs are scrubbed from the running history once produced;
+the conversation history is compacted as it grows; and tool schemas are
+loaded lazily rather than held resident for the whole session. None of
+these behaviors is written into the agent document. They are properties of
+the node types and of the engine that interprets them, and they therefore
+hold for every agent that passes through the boundary, with no per-agent
+code to author, apply, or forget. The remainder of this section isolates
+the single policy that dominates the cost---the scrubbing of binary
+tool outputs---and measures it.
+
+\subsection{The default tax}
+\label{subsec:context-default}
+
+We evaluate the policies on a fixed ten-turn analyst session, run
+identically across every framework through the measurement harness of
+\S\ref{sec:methodology}. The session loads a document,
+\texttt{Q3\_2026\_report.md} of $\approx$\num{3024} tokens across eleven
+sections, and exposes a single tool, \texttt{generate\_chart}, that
+returns a fixed $\approx$\num{8168}-token opaque base64 blob. The model is
+driven to call the tool on three of the ten turns (turns three, six, and
+nine). Every framework runs the same workload; only the engine's
+context management differs.
+
+Table~\ref{tab:context-totals} reports the total input tokens consumed
+over the session. The competitor frameworks cluster between \num{404095}
+and \num{452359} input tokens; Colmena consumes \num{39085}, an order of
+magnitude fewer, at a session cost of \$0.018 against \$0.125--\$0.142 for
+the competitors.
+
+\begin{table}[t]
+  \centering
+  \caption{Total input tokens over the fixed ten-turn analyst session
+    (\S\ref{sec:methodology}). The competitor frameworks re-transmit
+    retained binary tool outputs on every subsequent turn; Colmena scrubs
+    them by engine default. The Google ADK \texttt{artifacts\_scrub} arm
+    adds $\approx$15--20 lines of per-tool application code that reproduces
+    the effect (mean of $N=3$; \S\ref{subsec:context-closure}).}
+  \label{tab:context-totals}
+  \begin{tabular}{lS[table-format=6.0]}
+    \toprule
+    Framework & {Input tokens} \\
+    \midrule
+    Colmena (engine default)        & 39085 \\
+    \midrule
+    LangGraph                       & 404095 \\
+    LlamaIndex                      & 419934 \\
+    Google ADK                      & 445370 \\
+    LangChain                       & 452158 \\
+    CrewAI                          & 452359 \\
+    \midrule
+    Google ADK, \texttt{artifacts\_scrub} & 28795 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The escalation is not caused by the document. The document is loaded once
+and is small; a plain document turn costs $\approx$\num{3600} input tokens
+before any chart is produced. The cost is localized to the retained binary
+tool outputs. Tracing the LangChain arm turn by turn exposes the mechanism
+as a staircase: a document turn costs $\approx$3.6k tokens before the first
+chart, then $\approx$26k after chart one, $\approx$48k after chart two, and
+$\approx$71k after chart three. Each chart adds its $\approx$\num{8168}-token
+blob to the history, and because the full history is re-transmitted on every
+following turn, each retained blob is paid for again on each subsequent
+turn. The staircase, not the document, is the tax, and its steps coincide
+exactly with the three chart turns.
+
+\subsection{The closure}
+\label{subsec:context-closure}
+
+The gap in Table~\ref{tab:context-totals} is fully closable in a
+competitor framework. We demonstrate this directly. In the Google ADK
+\texttt{artifacts\_scrub} arm we hand-wrote a tool that calls
+\texttt{save\_artifact} on the PNG and returns only a handle in place of
+the blob, together with a \texttt{load\_artifacts} step for the document.
+This is the same behavior Colmena's engine applies by default, but written
+as per-tool application code---roughly fifteen to twenty lines. With it,
+ADK consumes \num{27904}, \num{30011}, and \num{28470} input tokens across
+three runs, a mean of \num{28795} ($N=3$), against the \num{445370} of its
+default arm.
+
+% TODO(Task 4): \ref{fig:context}
+The mechanism is visible in the per-turn token curves of
+Figure~\ref{fig:context}, which overlays three arms: Colmena's default,
+ADK's default, and ADK with \texttt{artifacts\_scrub}. On the chart turns
+the default ADK arm spikes---$\approx$19k, $\approx$75k, $\approx$120k
+input tokens---as retained blobs compound, while both the Colmena and the
+\texttt{artifacts\_scrub} curves stay flat, at $\approx$1.3--2.2k tokens on
+those same turns. The token counts are the evidence: the proxy spans of
+\S\ref{sec:methodology} are metadata only, and it is the measured token
+curve, not any transcript text, that establishes where the cost is spent.
+All three arms pass the task quality guardrail of \S\ref{sec:methodology}.
+
+\subsection{Reading}
+\label{subsec:context-reading}
+
+This concern is the first instantiation of the paper's default-versus-code
+thesis. Colmena delivers by engine default---with no line of agent
+code---the same context economy that the ADK reaches only by hand-rolled,
+per-tool application code. The \texttt{artifacts\_scrub} arm is not a
+Colmena weakness but the evidence for the thesis: it shows the win is real
+and reproducible, and it prices the alternative at fifteen to twenty lines
+of application code that every tool, in every agent, must carry and keep
+correct. What Colmena moves to the engine boundary, the competitor must
+re-implement per tool, and remember to.
