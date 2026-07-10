@@ -1,2 +1,120 @@
 \section{Experimental Methodology}
 \label{sec:methodology}
+
+The three concerns evaluated in this paper---context management
+(\S\ref{sec:context}), credential isolation (\S\ref{sec:credentials}), and
+production hardening (\S\ref{sec:hardening})---share one measurement basis.
+We state it once, here, and each concern section cites it rather than
+re-deriving it.
+
+\subsection{Provider-authoritative measurement}
+\label{subsec:method-proxy}
+
+Every LLM call made by every framework under test is routed through a
+single, shared LiteLLM proxy sitting in front of the model provider. Token
+counts and dollar costs are read from the proxy's own accounting of the
+request and response it forwarded, not from any figure a framework
+self-reports. This choice removes an entire class of measurement error: a
+framework's internal token estimate can be stale, provider-specific, or
+simply wrong, but the proxy sees the literal request that left the process
+and the literal response that came back, and it is that transcript we
+measure.
+
+Each proxy call is attributed to the run that issued it. For the five
+Python competitor frameworks, which support custom request headers, we tag
+every outbound call with a per-run identifier header and have the proxy
+route matching spans to a run-scoped log. Colmena's OpenAI-compatible
+client adapter does not expose a header-injection point, so its calls are
+instead correlated to a run by a session-file line-count delta: the number
+of new spans the proxy has recorded since the run began is read off the
+shared span log rather than off a header the call itself carries. Both
+methods attribute every call to exactly one run before any aggregate figure
+is computed.
+
+The proxy's span record is deliberately narrow: it captures token counts,
+timestamps, and the model identifier for each call, and nothing of the
+message content itself. The evidence this paper reports is therefore
+always a token \emph{count}, never an inspection of transcript text; where
+a later section states that "the token counts are the evidence"
+(\S\ref{sec:context}), this is the reason.
+
+\subsection{Frameworks and conditions}
+\label{subsec:method-frameworks}
+
+We evaluate six frameworks: Colmena, whose execution engine is written in
+Rust (\S\ref{sec:model}), and five Python frameworks in wide production
+use: CrewAI, LangChain, LangGraph, LlamaIndex, and Google ADK. All six are
+held to the same experimental conditions. Each uses the same model alias,
+\texttt{gemini-2.5-flash}, at temperature $0$, against the same proxy
+endpoint, and, within each concern's task, the same inputs. No framework
+is given an easier prompt, a different tool surface, or a different
+model.
+
+Within those fixed conditions, each framework is exercised
+\emph{idiomatically}: we construct each agent using that framework's own
+default conventions for memory, context retention, and tool invocation,
+rather than a conservative or hand-tuned configuration common to all six.
+This is a deliberate methodological choice, not an oversight. The paper's
+claim is about what a framework does \emph{by default}, for an author who
+follows its own documentation, and an idiomatic construction is the only
+construction that tests that claim. Where a competitor's default can be
+matched by hand-architected code, we say so explicitly and evaluate that
+steelman as a separate, clearly labeled arm (\S\ref{subsec:context-closure},
+\S\ref{subsec:cred-steelman})---never folded into the default comparison.
+
+\subsection{Price is a held constant; the measured variable is volume}
+\label{subsec:method-price}
+
+Because every framework is driven through the same proxy against the same
+model alias, the price charged per token is identical across all six
+arms of every comparison in this paper. We hold it constant by
+construction: no framework pays a different rate for an input or output
+token than any other. Consequently, every dollar figure this paper reports
+is a direct, fixed-rate function of a token count, and the quantity that
+varies---and the quantity this paper measures---is token \emph{volume}:
+how many tokens a framework's default construction sends and receives to
+accomplish the same task. A cost table is a token-count table read through
+a shared multiplier, not an independent measurement.
+
+We note, for scope only, that a provider offering prompt caching could
+lower the realized dollar cost of re-sending previously seen context
+without changing the underlying token count; such an optimization is
+orthogonal to what we measure and does not appear in any run reported
+here. This is not a caveat about the validity of the comparison---price
+per token is a constant by construction in every arm, not a variable that
+could favor or disadvantage any framework, and it is not treated as a
+limitation anywhere in this paper.
+
+\subsection{Quality guardrail}
+\label{subsec:method-guardrail}
+
+A framework that spends fewer tokens by producing a worse answer has not
+demonstrated an efficiency gain; every comparison in this paper is
+therefore gated on task quality before any token or leakage figure is
+taken to be meaningful. We fix a single guardrail, in advance of the runs,
+and apply it identically to every framework and every concern. On each
+task's designated scoring turns, the framework's answer is checked by an
+automated substring test against a fixed set of ground-truth strings
+established when the task was authored: the answer must contain the
+expected substrings for that turn to count as a pass. This check is
+mechanical and requires no judgment call at scoring time, which is why it
+is the criterion of record. We report, alongside it, a complementary score
+from an LLM judge that rates each answer's factual fidelity to the task's
+source material on a continuous scale, as a secondary corroborating
+signal. Each concern section reports its frameworks' pass or fail against
+this criterion before reporting the token, cost, or capability comparison
+that motivates the section.
+
+\subsection{Reproducibility}
+\label{subsec:method-repro}
+
+All Colmena figures in this paper are produced by the engine build tagged
+\texttt{colmena\_dag\_engine-v0.9.0}. Every run reported---for Colmena and
+for the five competitor frameworks alike---is driven by a shared benchmark
+harness: one proxy configuration, one span-logging mechanism, and one
+per-experiment driver script per task, invoked identically for every
+framework under test. A given experiment's task definition, scoring
+logic, and driver script are therefore the same artifact whether the
+framework being measured is Colmena or a competitor, which is what makes
+the comparisons in \S\ref{sec:context}--\S\ref{sec:hardening} a controlled
+measurement of the frameworks rather than of the harness that runs them.
