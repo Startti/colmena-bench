@@ -1,2 +1,104 @@
 \section{The Colmena Execution Model}
-\label{sec:execution-model}
+\label{sec:model}
+
+This section describes the machine on which the rest of the paper rests. The
+production concerns we relocate in Sections~\ref{sec:context}--\ref{sec:hardening}
+--- context lifecycle, credential handling, human-in-the-loop, and retry --- are
+enforced not by convention but by a single execution engine, and it is the shape
+of that engine, and of the agents it runs, that makes such enforcement possible.
+We therefore introduce the execution model once, here, and later sections refer
+back to it as the \emph{engine boundary} (\S\ref{sec:model}).
+
+\subsection{An agent is a declarative document}
+\label{subsec:declarative}
+
+In Colmena an agent is not a program. It is a declarative JSON document that
+describes a directed acyclic graph (DAG) of typed \emph{nodes} connected by typed
+\emph{edges}. Nodes name units of work; edges name the data that flows between
+them. A node's \texttt{type} selects a fixed behavior implemented by the engine
+rather than by the agent author: an \texttt{llm\_call} node performs a
+model-driven tool loop; a \texttt{python\_script} node runs a fixed body of code;
+a \texttt{secure\_suspend} node pauses execution to collect credentials and
+returns them only as opaque handles; a \texttt{data\_run\_python} node executes
+tabular code against an attachment inside a restricted sandbox; a \texttt{suspend}
+node halts for a human decision; and a \texttt{log} node records an outcome. An
+edge such as \texttt{draft.result $\rightarrow$ validate.draft\_json} routes one
+node's named output to another node's named input; edges may be marked
+\texttt{cyclic} to express bounded retry loops.
+
+Listing~\ref{lst:secure-suspend} shows a real fragment from the secure-credential
+agent used later in Section~\ref{sec:credentials}. The \texttt{secure\_suspend}
+node declares which secrets to collect; nothing about how they are stored,
+masked, or later injected appears in the document, because those are properties
+of the node type, not of the agent.
+
+\begin{lstlisting}[
+  caption={A \texttt{secure\_suspend} node from \texttt{secrets\_agent.json}. The
+    agent declares \emph{what} to collect; masking and injection are behaviors of
+    the node type.},
+  label={lst:secure-suspend},
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  captionpos=b]
+"get_secrets": {
+  "name": "get_secrets",
+  "node_type": "secure_suspend",
+  "node_schema": {
+    "secrets": {
+      "type": "array",
+      "fixed": [
+        { "name": "api_key",    "question": "Enter your API key" },
+        { "name": "api_secret", "question": "Enter your API secret" }
+      ]
+    }
+  }
+}
+\end{lstlisting}
+
+Because the agent is described as data, its meaning is fully determined by the
+node and edge types the engine understands; the author composes behaviors, but
+does not implement the cross-cutting ones.
+
+\subsection{One generic engine, and the boundary it creates}
+\label{subsec:engine}
+
+A single, generic Rust engine executes \emph{any} such document. Its public entry
+point is \texttt{dag\_engine::\allowbreak api::\allowbreak run\_dag}, which takes
+a DAG document and its
+inputs, schedules nodes according to the edges, and drives each node to
+completion. The engine contains no agent-specific logic: it is the same code path
+whether it runs a refund workflow, a credential exchange, or a data-analysis
+agent.
+
+This uniformity is the paper's central mechanism. Because every agent is data
+interpreted by one engine, that engine sits at a \emph{boundary} through which all
+agent execution necessarily passes. A cross-cutting concern implemented at this
+boundary --- how context is assembled and pruned, how a secret is masked before
+it re-enters a model, when a human must approve, how a failed step is retried ---
+holds for every agent by construction, because there is no execution path that
+bypasses the engine. The agent author cannot forget to apply it, disable it, or
+reimplement it inconsistently, since the behavior lives in the node type and the
+engine, not in per-agent code. The invariants developed in
+Sections~\ref{sec:context}--\ref{sec:hardening} are precisely properties made
+enforceable by this boundary: each is a concern moved out of application code and
+into the engine that interprets the DAG.
+
+The engine core is written in Rust and is exposed to host languages through
+foreign-function bindings --- a PyO3 binding surfaces \texttt{run\_dag} to Python
+as \texttt{colmena.run\_dag}, and an napi binding surfaces it to
+TypeScript/Node as \texttt{runDag} --- so the same engine, and the same boundary,
+is the unit of execution regardless of the language that launches it.
+
+\subsection{Deployment as a consequence of the model}
+\label{subsec:deployment}
+
+A practical consequence follows from treating agents as data. Adding a new agent,
+altering an existing one, or rolling one back is, for the cross-cutting concerns
+this paper addresses, a change to a configuration document rather than a code
+deploy: the workflow is edited as a DAG and re-interpreted by the same engine,
+with no change to the engine and no rebuild of its bindings. This does not mean an
+agent carries no authored logic --- its prompts, routing rules, and any custom
+tools remain engineered artifacts --- but the concerns we relocate to the engine
+boundary are configured, not coded, and evolve with the document rather than with
+a release of application code.
