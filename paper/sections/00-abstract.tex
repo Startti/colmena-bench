@@ -1,1 +1,20 @@
-\begin{abstract}\end{abstract}
+\begin{abstract}
+LLM agents deployed as production services accrue concerns invisible in a
+prototype: an unbounded context, credentials that pass through the model to
+reach a tool, and the durability, supervision, and self-correction a service
+requires. Mainstream frameworks leave each to per-application code, which
+teams omit or get wrong because nothing requires it. We study Colmena, a
+declarative engine in which an agent is not a program but a document
+describing a directed acyclic graph of typed nodes. Because the agent is
+data the engine interprets, the engine can enforce properties of every agent
+it runs. Our thesis is that this relocates production concerns from
+per-application code into engine-enforced invariants. Over a fixed session,
+Colmena consumes $\approx$\num{39085} input tokens against
+\numrange{404095}{452359} for competitor defaults, a gap a competitor closes
+only with hand-written per-tool code. Plaintext secrets reach the model
+transcript in $0\%$ of Colmena runs against $100\%$ for every competitor
+default, matched only by a hand-architected competitor arm. Production
+hardening is expressed as declarative configuration rather than hand-rolled
+code. The contribution is the engine's default and enforcement---guaranteed
+for every agent---not that competitors are incapable.
+\end{abstract}

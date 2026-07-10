@@ -1,2 +1,34 @@
 \section{Conclusion}
 \label{sec:conclusion}
+
+Production agents accrue concerns that prototypes do not: a context that
+grows without bound, credentials that pass through the model on their way to
+a tool, and the durability, supervision, and self-correction that separate a
+demonstration from a service. Mainstream frameworks leave each of these to
+per-application code. This paper has argued that Colmena instead relocates
+them into invariants that a single execution engine enforces by
+construction, and that the declarative DAG-as-data agent is what makes such
+relocation possible: because the agent is data the engine interprets rather
+than code it merely hosts, the engine can guarantee a property of every
+agent it runs rather than trusting each application to supply it.
+
+The three concerns we measured instantiate one thesis rather than three
+separate findings. Context becomes an engine-managed resource, and the safe
+size is the one the engine keeps by default. Credential isolation becomes a
+property of a node type, and the transcript that never sees a plaintext
+secret is the one the engine produces by default. Production hardening
+becomes a feature of the graph the engine interprets, and the durable,
+supervised, self-correcting agent is the one the configuration already
+describes. In each case the concern moves from something an author must
+remember to write, test, and maintain into something that holds without the
+author's attention---so that the safe and efficient path is not a discipline
+imposed on the agent but the default the engine follows. Our own honest
+accounting sharpens rather than softens this claim: each outcome is
+reachable by a competitor framework in hand-written code, and what the
+engine contributes is precisely that no author has to write it.
+
+We offer this as a design stance for agent frameworks. Where a framework can
+express an agent as data it interprets rather than as code it hosts, the
+production concerns that today are left to convention can instead be made
+invariants of the execution model---enforced once, uniformly, for every
+agent that crosses the engine boundary.
