@@ -1,2 +1,140 @@
 \section{Background and Related Work}
 \label{sec:related-work}
+
+This paper's claim is narrow and specific: a production concern relocated
+to an execution engine, and enforced there by default, is a different kind
+of guarantee than the same concern addressed by a technique an agent
+author must choose to apply. We situate that claim against four bodies of
+prior work---declarative agent authoring, context-management technique,
+secure agent execution, and benchmarking methodology---and close with the
+gap each leaves open.
+
+\subsection{Agents as code, and the move toward declarative definition}
+\label{subsec:rw-declarative}
+
+The dominant construction pattern in the mainstream agent frameworks we
+evaluate throughout this paper (\S\ref{subsec:method-frameworks}) is
+agents-as-code: an agent is a Python (or similar) program that
+imperatively wires together a language model, a set of tools, and a
+control loop. Recent work has begun to push back against this pattern by
+proposing that an agent be \emph{defined} declaratively rather than
+programmed. Oracle's Open Agent Specification~\cite{amini2025} proposes a
+unified, portable representation for an agent's capabilities, tools, and
+behavior, intended to let an agent definition be authored once and
+executed across runtimes. Auton~\cite{cao2026} similarly separates an
+agent's declarative specification from the framework that executes it,
+targeting portability and reduced boilerplate across agentic
+applications. Daunis~\cite{daunis2025} proposes a declarative language
+purpose-built for describing and orchestrating LLM-powered agent
+workflows, replacing hand-written orchestration code with a workflow
+description the runtime interprets.
+
+Colmena shares this family's premise---that an agent should be data
+interpreted by an engine, not a program the author writes
+(\S\ref{subsec:declarative})---but the family's stated goal is uniformly
+\emph{authoring}: a common, portable surface for specifying what an agent
+is and does, so that the same definition can move between runtimes or
+be authored with less code. None of these proposals treats the
+declarative surface as a place to bind production properties---context
+lifecycle, credential handling, retry semantics---as engine-enforced
+behavior of the node types themselves; the specification describes an
+agent's structure and capabilities, and what happens inside a node
+executing that structure remains outside its scope.
+
+\subsection{Context-management technique}
+\label{subsec:rw-context}
+
+A substantial body of technique addresses the cost and scaling of the
+model's context window, the concern of \S\ref{sec:context}. Provider-level
+prompt and context caching~\cite{anthropic_promptcaching,
+google_contextcaching} lets a framework re-send a previously seen prefix
+at a reduced marginal price; this lowers the \emph{price} charged for
+re-transmitted context but leaves the underlying token \emph{volume}, and
+therefore the size of the payload the framework constructs and the
+provider processes, unchanged---a distinction this paper holds fixed by
+construction (\S\ref{subsec:method-price}). Retrieval-augmented
+generation~\cite{lewis2020} addresses a different axis, replacing a static
+context with material retrieved on demand from an external store,
+reducing what must be included up front at the cost of a retrieval step
+and an indexing pipeline the application must build and maintain.
+Conversation summarization is a further, widely used technique: a
+framework periodically compresses prior turns into a shorter summary
+in place of the verbatim transcript. MemGPT~\cite{packer2023} generalizes
+the pattern into an operating-system-style memory hierarchy, paging
+context between an in-context working set and an external store as a
+session grows. Dynamic tool loading~\cite{gansun2025} applies the same
+retrieval principle to tool schemas rather than conversation history,
+loading only the tool definitions relevant to a given step instead of
+holding every tool's schema resident for the whole session.
+
+Each of these techniques is effective, and each is, in the framework
+that offers it, an \emph{option}: something an agent author selects,
+configures, and wires into their own application code, on a
+tool-by-tool or turn-by-turn basis, if they know the hazard and choose to
+address it. None is a default property of the frameworks we evaluate in
+\S\ref{sec:context}; our steelman arm demonstrates this directly, closing
+the token gap only after we hand-wrote the equivalent of one such
+technique into the framework's own tool code
+(\S\ref{subsec:context-closure}).
+
+\subsection{Secure agent execution and secret handling}
+\label{subsec:rw-security}
+
+A production agent frequently mediates a credential---an API key, a
+session token, a one-time password---between a user and a downstream
+tool or endpoint, and the language model sits, by construction in most
+frameworks, on the path that credential travels. Because the model's
+context is exactly the artifact that is logged, cached, and
+re-transmitted on every subsequent turn, any secret admitted into it is
+thereby admitted into the transcript, the provider's request history, and
+every downstream store the transcript touches. This hazard is
+increasingly recognized in practitioner and platform guidance around
+agent deployment, though it has not, to our knowledge, been treated as a
+problem to be closed by an execution engine's default behavior rather
+than by an application author's discipline; \S\ref{sec:credentials}
+evaluates exactly this gap, isolating the credential's inbound and
+outbound paths as two enforcement points an engine can guarantee rather
+than two hazards an author must remember to mitigate.
+
+\subsection{Benchmarking methodology: self-reported versus authoritative measurement}
+\label{subsec:rw-benchmarking}
+
+Reported comparisons between agent frameworks typically rely on figures a
+framework computes about itself---an internal token counter, a
+self-logged cost estimate---which is convenient but couples the
+measurement to the same code path being evaluated: a framework's internal
+accounting can be stale relative to the provider's tokenizer, can omit a
+call path the framework does not instrument, or can simply be wrong, and
+none of these failure modes is visible from inside the framework being
+measured. This paper adopts a different basis, developed in full in
+\S\ref{sec:methodology}: every framework under test is driven through a
+single shared proxy in front of the model provider, and every token count
+and dollar figure this paper reports is read from the proxy's own record
+of the request and response that actually crossed the wire, not from any
+framework's self-report. The measurement is therefore provider-authoritative
+and uniform across every framework compared, including Colmena.
+
+\subsection{The gap}
+\label{subsec:rw-gap}
+
+Read together, these strands leave one gap open. The declarative-agent
+proposals of \S\ref{subsec:rw-declarative} relocate how an agent is
+\emph{authored}---a portable specification in place of hand-written
+orchestration code---but leave what happens inside execution as
+unconstrained as it was before: nothing in Open Agent
+Spec~\cite{amini2025}, Auton~\cite{cao2026}, or Daunis's
+language~\cite{daunis2025} binds context lifecycle, credential handling,
+or retry semantics to the engine that interprets the specification. The
+context-management and security techniques of
+\S\ref{subsec:rw-context}--\S\ref{subsec:rw-security} are real and
+individually effective, but each is a technique a developer must
+recognize the need for, select, and wire into their own application
+code, framework by framework and tool by tool; none is a property the
+runtime supplies unconditionally to every agent that passes through it.
+In neither strand does a production \emph{property}---a guarantee that
+holds for every agent, by construction, whether or not its author knew to
+ask for it---get relocated to the execution engine as an enforced
+invariant. That relocation, and the consequence that a concern moved
+across the boundary in \S\ref{sec:model} need not be re-authored,
+correctly, in every agent that uses it, is this paper's contribution, and
+it is what \S\ref{sec:context}--\S\ref{sec:hardening} measure.
