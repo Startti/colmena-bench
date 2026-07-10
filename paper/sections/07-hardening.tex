@@ -1,2 +1,171 @@
 \section{Production Hardening as Declarative Configuration}
 \label{sec:hardening}
+
+\newcommand{\cmark}{\ensuremath{\bullet}}
+
+The third and final concern we relocate to the engine boundary
+(\S\ref{sec:model}) is the collection of capabilities that separate a
+demonstration agent from a production one: a durable human approval gate,
+an automatic critic-retry loop, and the isolation of secrets from the model
+context. Unlike the first two concerns, this one is not a performance or a
+leakage gap. Every framework we measure can be made to exhibit every one of
+these capabilities, and in our experiment all of them do. The distinction
+this section develops is therefore not one of \emph{whether} the capability
+is reachable but of \emph{how} it is authored and \emph{what} that authoring
+guarantees: in Colmena each capability is a property of the graph structure
+the engine interprets, whereas in every competitor it is imperative
+control-flow code the agent team writes, tests, and maintains by hand.
+
+\subsection{Design: hardening as graph structure}
+\label{subsec:hardening-design}
+
+Colmena expresses each production capability as a feature of the declarative
+agent document rather than as application logic. A durable human-in-the-loop
+approval gate is a suspend node: the engine's \texttt{secure\_suspend}
+primitive pauses execution at the node, persists the run state, and resumes
+it---across a fresh process, if need be---when the out-of-band decision
+arrives, so the pause survives the lifetime of any single worker. A
+critic-retry gate is a cyclic edge: the graph routes a candidate answer
+through a critic node and, on rejection, back to the producing node, so the
+retry loop is drawn in the graph rather than coded as a bounded \texttt{while}
+around a model call. Credential masking is a flag on the secure path,
+enforced at the engine boundary; its mechanism and its measured result are
+owned by \S\ref{sec:credentials}, and we do not re-argue them here. In each
+case the behavior lives in the node and edge types the engine understands
+(\S\ref{sec:model}), not in per-agent code.
+
+The competitor frameworks reach the same three capabilities by
+hand-rolling them as imperative control flow. The approval gate becomes an
+explicit interrupt-and-checkpoint construction the author wires around the
+model turn; the critic-retry loop becomes a hand-written control structure
+that re-invokes the producer on a failed check; the credential path becomes
+the out-of-band routing \S\ref{sec:credentials} anatomizes. This code is
+entirely writable---and, as the evaluation below shows, it works---but it is
+code, authored once per agent and owned thereafter by the team that wrote it.
+
+\subsection{Evaluation (EQ3): capability parity across frameworks}
+\label{subsec:hardening-eval}
+
+We evaluate the three capabilities on a refund-authorization task run
+identically across every framework through the measurement harness of
+\S\ref{sec:methodology}. A customer requests a \$250 refund for a
+duplicate charge against a policy that auto-approves at most \$100
+per agent; the correct disposition is therefore to \emph{escalate} rather
+than to approve. Each framework must reach that decision, route the
+escalation through a durable human approval gate that survives a
+process boundary, pass its candidate answer through a critic gate, and
+keep the collected credential off the model path. We score four binary
+criteria per framework---\emph{decision} (the escalate disposition is
+correct under policy), \emph{HITL} (the suspend/resume gate completes
+across a fresh process), \emph{critic} (the critic-retry gate fires), and
+\emph{masking} (no plaintext secret reaches the model provider, audited as
+in \S\ref{sec:credentials})---together with their conjunction
+\emph{all\,ok}.
+
+Every framework achieves every capability. Table~\ref{tab:hardening-caps}
+reports the result: all six frameworks reach the correct escalate decision,
+complete the durable approval gate, fire the critic gate, and mask the
+secret, so \emph{all\,ok} holds for each. This is the point of the
+experiment, not a limitation of it. The production capabilities are not a
+capability gap between Colmena and the field; they are reachable, and
+reached, everywhere. What differs is the authoring model behind identical
+outcomes.
+
+\begin{table}[t]
+  \centering
+  \caption{Capability results on the refund-authorization task
+    (\S\ref{sec:methodology}), scored as four binary criteria per framework
+    plus their conjunction. \emph{Dec.}: the escalate disposition is correct
+    under the \$100 policy. \emph{HITL}: the suspend/resume approval
+    gate completes across a fresh process. \emph{Critic}: the critic-retry
+    gate fires. \emph{Mask}: no plaintext secret reaches the model provider
+    (\S\ref{sec:credentials}). Every framework achieves every capability
+    (\cmark\ = pass).}
+  \label{tab:hardening-caps}
+  \begin{tabular}{lccccc}
+    \toprule
+    Framework & Dec. & HITL & Critic & Mask & All\,ok \\
+    \midrule
+    Colmena     & \cmark & \cmark & \cmark & \cmark & \cmark \\
+    \midrule
+    CrewAI      & \cmark & \cmark & \cmark & \cmark & \cmark \\
+    Google ADK  & \cmark & \cmark & \cmark & \cmark & \cmark \\
+    LangChain   & \cmark & \cmark & \cmark & \cmark & \cmark \\
+    LangGraph   & \cmark & \cmark & \cmark & \cmark & \cmark \\
+    LlamaIndex  & \cmark & \cmark & \cmark & \cmark & \cmark \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The authoring model is what the code-volume comparison exposes, and it must
+be read precisely. Table~\ref{tab:hardening-loc} splits, for each framework,
+the lines of imperative code from the lines of declarative configuration the
+solution comprises. Colmena's solution is \emph{not} the smallest: it
+authors \num{120} lines of code and \num{115} lines of configuration,
+\num{235} lines in total, more than every competitor's single-column count.
+We claim no line-count advantage, and the reader should draw none. The
+comparison is qualitative, not quantitative: the competitors carry their
+hardening entirely as imperative code---\numrange{93}{171} lines of it, and
+\emph{zero} lines of configuration---whereas the bulk of Colmena's logic,
+\num{115} lines, is declarative configuration that the generic engine
+interprets rather than control flow the team runs. The two columns measure
+different kinds of authoring, and it is the kind, not the size, that this
+section is about.
+
+\begin{table}[t]
+  \centering
+  \caption{Authoring-model split for the refund-authorization solution:
+    lines of imperative code versus lines of declarative configuration per
+    framework. Colmena is not the smallest solution---it authors the most
+    lines in total---but the majority of its logic is configuration the
+    engine interprets, whereas every competitor carries its hardening as
+    imperative code with no configuration. The comparison is of the kind of
+    authoring, not of size.}
+  \label{tab:hardening-loc}
+  \begin{tabular}{lS[table-format=3.0]S[table-format=3.0]}
+    \toprule
+    Framework & {Code (LOC)} & {Config (LOC)} \\
+    \midrule
+    Colmena     & 120 & 115 \\
+    \midrule
+    CrewAI      &  93 &   0 \\
+    LangChain   &  99 &   0 \\
+    LlamaIndex  &  99 &   0 \\
+    Google ADK  & 117 &   0 \\
+    LangGraph   & 171 &   0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{The guarantee, and its deployment consequence}
+\label{subsec:hardening-guarantee}
+
+Capability parity is genuine, but it is parity of \emph{outcome on a passing
+run}, and the two authoring models differ in what they guarantee off that
+run. Colmena's approval gate, critic loop, and masking are invariants of the
+engine that interprets the graph (\S\ref{sec:model}): they are keyed off the
+declarative structure and hold for every agent that crosses the boundary,
+with no execution path that bypasses them. The competitors' equivalents are
+hand-rolled code that each team must write, test, and maintain per agent, and
+hand-rolled safety code is omittable and can drift. The credential
+counterfactual of \S\ref{sec:credentials} is the direct proof: there the
+competitors' \emph{default} construction leaks the secret on every trial, and
+the safe outcome is recovered only by an author who knows the hazard and wires
+the isolated path by hand---the same capability, present when coded and absent
+when not. A passing row in Table~\ref{tab:hardening-caps} records that the
+code was written correctly for this agent, on this run; it does not, as the
+engine invariant does, guarantee the capability for the next agent the team
+authors.
+
+The deployment consequence follows from where the logic lives. Because
+Colmena's hardening is configuration the engine interprets rather than code
+the application runs, changing one of these cross-cutting behaviors---
+tightening the approval policy, adjusting the critic gate, extending the
+masked path---is an edit to the agent document, re-interpreted by the same
+engine, rather than a code deploy (\S\ref{subsec:deployment}). This is
+scoped precisely to the cross-cutting concerns this paper relocates: an
+agent still carries authored prompts, routing rules, and custom tools, and
+those remain engineered artifacts. What moves to the configuration surface
+is the production hardening---and with it, the guarantee that the hardening
+holds is moved off the shoulders of each agent's authors and onto the engine
+boundary they all share.
