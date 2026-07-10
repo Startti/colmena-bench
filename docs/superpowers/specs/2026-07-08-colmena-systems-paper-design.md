@@ -41,7 +41,7 @@ by engine invariant what others achieve only by hand-rolled per-app code" (defen
 | 5 | **Concern I — Context as an Engine-Managed Resource** | *Design:* ephemeral attachments + binary tool-output scrubbing + history compaction + lazy tool-schema loading as defaults keyed off the graph. *Eval (EQ1):* the Context Tax |
 | 6 | **Concern II — Credential Isolation** | *Design:* the credential invariant (no plaintext secret ever enters the model context), enforced on **inbound** (`secure_suspend`) and **outbound** (tool-result masking) paths. *Eval (EQ2):* binary leak result |
 | 7 | **Concern III — Production Hardening as Declarative Config** | *Design:* durable HITL suspend/resume + critic-retry as graph structure; the authoring/deployment consequence. *Eval (EQ3):* capability pass/fail + code-volume analysis |
-| 8 | **Limitations & Negative Results** | Speed/round-trips; concurrency (optional); **the central honest caveat** (invariants are achievable with code → contribution is default/enforcement, not exclusivity) |
+| 8 | **Limitations & Negative Results** | Speed/round-trips; **the central honest caveat** (invariants are achievable with code → contribution is default/enforcement, not exclusivity) |
 | 9 | **Conclusion** | Synthesis of the thesis across the three concerns |
 | — | **References / Appendix** | Full data tables, prompts, version pins |
 
@@ -115,9 +115,8 @@ tool-outputs + tool-schemas), not a separate experiment.
 2. **Speed:** per-call latency at parity (hello-world: Colmena 761 ms vs LangChain 738 ms);
    Colmena makes more round-trips per session (18 vs 13 — lazy + compaction), so it is **not
    faster per session**. Honest trade-off, in §8.
-3. **Concurrency (optional, user's call):** Colmena Serve serializes within a process
-   (~2.6 rps vs ~50 rps async LangGraph); scaling model is horizontal (many distinct agents)
-   with ~4× lower RAM. Include as a brief honest §8 note only if kept.
+3. **Concurrency — OMITTED.** The paper does not evaluate concurrency/throughput; no §8
+   note. (The load-test finding is out of scope for this tightened paper.)
 4. **The "config vs code" claim — calibrated.** Sellable kernel (evidence-anchored):
    *production concerns move from per-application code each team writes, tests, and maintains
    to engine-enforced configuration, eliminating per-agent re-implementation of cross-cutting
@@ -134,6 +133,7 @@ tool-outputs + tool-schemas), not a separate experiment.
 - **Multi-language portability (E-4)** as a section (→ at most one sentence in §3, if at all).
 - **Doc-only ADK steelman** as its own result (folded away; per-turn staircase subsumes it).
 - **Any "no-code / no dev team" claim** (too strong; unmeasured).
+- **Concurrency / throughput evaluation** (the load-test finding — out of scope here).
 - New framework runners (Pydantic AI, OpenAI Agents SDK, Mastra) as evaluation arms — they
   belong to harness portability, not this paper's evaluation.
 
@@ -141,9 +141,8 @@ tool-outputs + tool-schemas), not a separate experiment.
 
 ## 7. Open items for the writing plan
 
-- Decide concurrency inclusion (§8) — pending user.
-- Title (working): "Agents as Configuration: Relocating Production Concerns to Engine-Enforced
-  Invariants" — refine at the end.
+- **Title (locked, wording may be polished at the end):** *"Agents as Configuration:
+  Relocating Production Concerns to Engine-Enforced Invariants."*
 - LaTeX project layout (`paper/main.tex`, per-section files, `refs.bib`), build via Tectonic.
 - Figure/table asset list: Fig. 1 (three per-turn context curves); Table (context totals);
   Table (credential-leak matrix incl. steelman); Table (hardening capability + LOC).
