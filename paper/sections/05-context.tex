@@ -103,7 +103,22 @@ ADK consumes \num{27904}, \num{30011}, and \num{28470} input tokens across
 three runs, a mean of \num{28795} ($N=3$), against the \num{445370} of its
 default arm.
 
-% TODO(Task 4): \ref{fig:context}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/context_curves}
+  \caption{Per-turn input tokens over the fixed ten-turn analyst session,
+    overlaying three arms: Google ADK default, Google ADK with
+    \texttt{artifacts\_scrub}, and Colmena. Light vertical guides mark the
+    three chart turns (3, 6, 9), on which the model calls
+    \texttt{generate\_chart}. The ADK-default arm spikes on each chart turn
+    as retained binary tool outputs compound in the re-transmitted history,
+    reaching $\approx$19k, $\approx$75k, and $\approx$120k input tokens by
+    turns three, six, and nine; the \texttt{artifacts\_scrub} and Colmena
+    curves stay flat across the same turns, at $\approx$1.3--2.2k and
+    $\approx$1.8--5.7k input tokens respectively.}
+  \label{fig:context}
+\end{figure}
+
 The mechanism is visible in the per-turn token curves of
 Figure~\ref{fig:context}, which overlays three arms: Colmena's default,
 ADK's default, and ADK with \texttt{artifacts\_scrub}. On the chart turns
