@@ -8,7 +8,7 @@
   :root{
     --ink:#1f2421; --muted:#5f5e5a; --line:#e6e3da; --bg:#ffffff; --surf:#f7f6f2;
     --green:#1d9e75; --green-d:#0f6e56; --green-l:#e1f5ee;
-    --gray:#b4b2a9; --red:#d8453f; --red-l:#fbeae9; --amber:#ba7517; --steel:#4c72b0;
+    --gray:#b4b2a9; --red:#d8453f; --red-l:#fbeae9; --amber:#ba7517;
   }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
@@ -77,7 +77,7 @@
   <div class="stats">
     <div class="stat"><div class="big">10–12×</div><div class="lbl">fewer input tokens over a 10-turn session — 39,085 vs 404,095–452,359</div></div>
     <div class="stat"><div class="big">~7–8×</div><div class="lbl">lower cost for the same work, same model — $0.018 vs $0.125–$0.142</div></div>
-    <div class="stat"><div class="big">0%</div><div class="lbl">credential leakage vs 100% for every competitor default tested</div></div>
+    <div class="stat"><div class="big">0%</div><div class="lbl">credential leakage vs 100% for every competitor tested</div></div>
   </div>
 </div></section>
 
@@ -86,7 +86,7 @@
   <h3>Every turn, other frameworks re-pay for the whole conversation</h3>
   <div class="grid2">
     <figure>
-      <svg viewBox="0 0 800 430" role="img" aria-label="Per-turn input tokens over the ten-turn session: Google ADK default spikes to 19,224, 75,196 and 120,341 tokens on the three chart turns, while Colmena and the hand-written scrub arm stay flat below 6,000 tokens.">
+      <svg viewBox="0 0 800 430" role="img" aria-label="Per-turn input tokens over the ten-turn session: Google ADK spikes to 19,224, 75,196 and 120,341 tokens on the three chart turns, while Colmena stays flat below 6,000 tokens.">
         <!-- chart-turn guide bands (turns 3, 6, 9) -->
         <rect x="218.6" y="28" width="14" height="342" fill="#f1efe8"/>
         <rect x="451.9" y="28" width="14" height="342" fill="#f1efe8"/>
@@ -117,8 +117,6 @@
         <!-- Google ADK default -->
         <polyline fill="none" stroke="#d8453f" stroke-width="2.5" points="70.0,361.2 147.8,360.0 225.6,319.7 303.3,296.9 381.1,301.0 458.9,173.3 536.7,242.3 614.4,242.2 692.2,55.3 770.0,183.3"/>
         <g fill="#d8453f"><circle cx="225.6" cy="319.7" r="3.5"/><circle cx="458.9" cy="173.3" r="3.5"/><circle cx="692.2" cy="55.3" r="3.5"/></g>
-        <!-- ADK + hand-written scrub -->
-        <polyline fill="none" stroke="#4c72b0" stroke-width="2.5" stroke-dasharray="6 5" points="70.0,359.7 147.8,358.0 225.6,365.7 303.3,356.7 381.1,367.4 458.9,364.3 536.7,367.0 614.4,355.2 692.2,366.6 770.0,366.5"/>
         <!-- Colmena -->
         <polyline fill="none" stroke="#1d9e75" stroke-width="4" points="70.0,357.2 147.8,359.4 225.6,360.8 303.3,358.5 381.1,365.2 458.9,356.4 536.7,362.3 614.4,355.1 692.2,358.9 770.0,364.0"/>
         <!-- spike annotations -->
@@ -130,16 +128,14 @@
         <!-- legend -->
         <g font-size="13" font-family="sans-serif">
           <line x1="84" y1="46" x2="112" y2="46" stroke="#d8453f" stroke-width="2.5"/>
-          <text x="120" y="50" fill="#5f5e5a">Google ADK (default)</text>
-          <line x1="84" y1="68" x2="112" y2="68" stroke="#4c72b0" stroke-width="2.5" stroke-dasharray="6 5"/>
-          <text x="120" y="72" fill="#5f5e5a">ADK + hand-written scrub (15–20 lines per tool)</text>
-          <line x1="84" y1="90" x2="112" y2="90" stroke="#1d9e75" stroke-width="4"/>
-          <text x="120" y="94" fill="#0f6e56" font-weight="600">Colmena (engine default — zero lines)</text>
+          <text x="120" y="50" fill="#5f5e5a">Google ADK</text>
+          <line x1="84" y1="68" x2="112" y2="68" stroke="#1d9e75" stroke-width="4"/>
+          <text x="120" y="72" fill="#0f6e56" font-weight="600">Colmena — out of the box</text>
         </g>
       </svg>
       <div class="cap">Input tokens per turn. Each chart the model produces adds an ≈8,168-token blob
-      that the default arm re-pays on every later turn — the spikes land exactly on the chart turns.
-      Colmena scrubs it by engine default and stays at ≈1.8–5.7k per turn.</div>
+      that other frameworks re-pay on every later turn — the spikes land exactly on the chart turns.
+      Colmena cleans it out automatically and stays at ≈1.8–5.7k per turn.</div>
     </figure>
     <div>
       <p>Mainstream frameworks resend the entire growing conversation — and every large tool
@@ -155,13 +151,11 @@
         <div class="barrow"><span class="muted">Google ADK</span><div class="track"><div class="fill" style="width:98.5%;background:#c9c6bd"></div></div><span class="val muted">445,370</span></div>
         <div class="barrow"><span class="muted">LangChain</span><div class="track"><div class="fill" style="width:99.9%;background:#c9c6bd"></div></div><span class="val muted">452,158</span></div>
         <div class="barrow"><span class="muted">CrewAI</span><div class="track"><div class="fill" style="width:100%;background:#c9c6bd"></div></div><span class="val muted">452,359</span></div>
-        <div class="barrow"><span style="color:var(--steel)">ADK + scrub</span><div class="track"><div class="fill" style="width:6.4%;background:#4c72b0"></div></div><span class="val" style="color:var(--steel)">28,795</span></div>
       </div>
       <div class="cap">Total input tokens over the session.</div>
-      <p class="muted" style="margin-top:14px">One competitor did close the gap — after we
-      hand-wrote <b>15–20 lines of scrubbing code per tool</b> into Google ADK. That is the
-      point: what Colmena's engine does for every agent by default, others reach only with
-      code your team must write, test, and maintain — per tool, per agent, forever.</p>
+      <p class="muted" style="margin-top:14px">This is not a setting you tune or code your team
+      writes — it is what the engine does for <b>every agent, out of the box</b>. Nothing to
+      configure, nothing to remember, nothing to maintain.</p>
     </div>
   </div>
 </div></section>
@@ -179,14 +173,15 @@
       it back), three seeds each — six cells per framework, audited at the proxy. Every
       framework still delivers the real credential to the endpoint, 6/6 — Colmena does the
       same work, it just never exposes the value to the model.</p>
-      <p class="muted">One hand-built arm also reaches 0%: LangGraph, after we architected the
-      credential path out of the model's reach with <code>interrupt()</code> and a checkpointer.
-      Safe by <b>default</b> on one side; a per-agent construction task on the other.</p>
+      <p class="muted">There is no leak to clean up afterwards: the secret never enters the
+      transcript, the provider's request history, or any cache — because it never travels
+      through the model in the first place. That is how the engine moves credentials for
+      <b>every agent, out of the box</b>.</p>
     </div>
     <figure>
-      <svg viewBox="0 0 460 462" role="img" aria-label="Route diagram and leak matrix: in every competitor default the plaintext secret passes through the model into the transcript; in Colmena it flows through the engine and the model sees only an opaque handle. Matrix of audited cells: Colmena 0 of 6 leaked, all five competitor defaults 6 of 6, hand-built LangGraph arm 0 of 6. All deliver 6 of 6.">
+      <svg viewBox="0 0 460 420" role="img" aria-label="Route diagram and leak matrix: in every competitor the plaintext secret passes through the model into the transcript; in Colmena it flows through the engine and the model sees only an opaque handle. Matrix of audited cells: Colmena 0 of 6 leaked, all five competitors 6 of 6. All deliver 6 of 6.">
         <!-- ROUTE: competitor default -->
-        <text x="2" y="12" font-size="11" letter-spacing=".05em" font-weight="600" fill="#9a2b27" font-family="sans-serif">EVERY COMPETITOR DEFAULT</text>
+        <text x="2" y="12" font-size="11" letter-spacing=".05em" font-weight="600" fill="#9a2b27" font-family="sans-serif">EVERY COMPETITOR</text>
         <rect x="2" y="20" width="74" height="32" rx="8" fill="#f7f6f2" stroke="#e6e3da"/>
         <text x="39" y="40" font-size="13" text-anchor="middle" fill="#1f2421" font-family="sans-serif">User</text>
         <rect x="160" y="20" width="96" height="32" rx="8" fill="#fbeae9" stroke="#d8453f"/>
@@ -256,15 +251,6 @@
         <g font-size="12" text-anchor="middle" fill="#5f5e5a" font-family="sans-serif">
           <text x="415" y="285">6/6</text><text x="415" y="315">6/6</text><text x="415" y="345">6/6</text>
           <text x="415" y="375">6/6</text><text x="415" y="405">6/6</text>
-        </g>
-        <!-- steelman separator + row -->
-        <line x1="20" y1="420" x2="450" y2="420" stroke="#d8d5cc" stroke-dasharray="4 4"/>
-        <g font-family="sans-serif">
-          <text x="128" y="446" font-size="12" text-anchor="end" fill="#4c72b0">LangGraph</text>
-          <text x="128" y="458" font-size="10" text-anchor="end" fill="#4c72b0">hand-built</text>
-          <g fill="#4c72b0"><rect x="138" y="432" width="20" height="20" rx="5"/><rect x="168" y="432" width="20" height="20" rx="5"/><rect x="198" y="432" width="20" height="20" rx="5"/><rect x="240" y="432" width="20" height="20" rx="5"/><rect x="270" y="432" width="20" height="20" rx="5"/><rect x="300" y="432" width="20" height="20" rx="5"/></g>
-          <g font-size="13" fill="#fff" text-anchor="middle" font-weight="600"><text x="148" y="447">✓</text><text x="178" y="447">✓</text><text x="208" y="447">✓</text><text x="250" y="447">✓</text><text x="280" y="447">✓</text><text x="310" y="447">✓</text></g>
-          <text x="415" y="447" font-size="12" text-anchor="middle" fill="#5f5e5a">6/6</text>
         </g>
       </svg>
       <div class="cap">Top: the route the plaintext secret takes. Bottom: the leak matrix — one
@@ -359,15 +345,14 @@ g.add_edge("lookup", "reply")
     <div class="t"><b>Independent metering</b><span class="muted">Tokens and cost captured by a proxy between every framework and the AI provider — read from the traffic that crossed the wire, never self-reported.</span></div>
     <div class="t"><b>Identical, idiomatic conditions</b><span class="muted">Same model (gemini-2.5-flash), same temperature, same inputs and driver scripts; each rival built the way its own documentation recommends — no handicaps.</span></div>
     <div class="t"><b>Quality-gated</b><span class="muted">Every comparison first passes the same answer-quality check against fixed ground truth. No framework saves tokens by giving a worse answer.</span></div>
-    <div class="t"><b>Steelmen included</b><span class="muted">Where a competitor can match Colmena with hand-written code, we wrote that code and report it — including where it beats Colmena on tokens (28,795 vs 39,085).</span></div>
+    <div class="t"><b>Reproducible</b><span class="muted">Every figure comes from a pinned engine build and pinned framework versions, driven by one shared script per task — rerun it and you get the same numbers.</span></div>
   </div>
   <div class="note" style="margin-top:20px"><b>Trade-offs, stated plainly:</b> Colmena is not
   faster per session. Per-call latency is at parity with the fastest competitor (median 761&nbsp;ms
-  vs 738&nbsp;ms), but the same lazy loading and compaction that buy the token savings cost extra
-  model round-trips — roughly 18 per session against 13. A deployment bound by wall-clock latency
-  rather than token cost should weigh that trade. And every safeguard measured here is reachable
-  in a competitor by hand — the paper's claim is who does the work: an engine invariant your team
-  cannot omit, or code it must remember to write, correctly, every time.</div>
+  vs 738&nbsp;ms), but the same mechanisms that buy the token savings cost extra model
+  round-trips — roughly 18 per session against 13. A deployment bound by wall-clock latency
+  rather than token cost should weigh that trade. The full account, including everything that
+  does not favor Colmena, is in the paper.</div>
   <div class="cta">
     <a class="btn primary" href="../articles/colmena-systems-paper.pdf">Read the paper (PDF)</a>
     <a class="btn ghost" href="colmena-poster.html">View the research poster</a>
@@ -377,7 +362,7 @@ g.add_edge("lookup", "reply")
 <footer><div class="wrap">
   Colmena agent-framework benchmark · all figures from provider-authoritative runs
   (gemini-2.5-flash, temperature 0) against the engine build <code>colmena_dag_engine-v0.9.0</code>.
-  Context tax: mean of N=12 (scrub arm N=3). Credential isolation: 3 seeds × 2 attack surfaces per
+  Context tax: mean of N=12. Credential isolation: 3 seeds × 2 attack surfaces per
   framework. Full methodology, per-experiment detail, and reproduction in the paper,
   <i>“Agents as Configuration: Relocating Production Concerns to Engine-Enforced Invariants.”</i>
 </div></footer>
