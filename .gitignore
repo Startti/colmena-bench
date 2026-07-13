@@ -71,6 +71,8 @@ results/
 # Whitepaper build artifacts (the .md is the source of truth)
 docs/articles/*.html
 docs/articles/*.pdf
+# ...except the economics deck, whose .html IS the source (no other source file)
+!docs/articles/colmena-economics-deck.html
 
 # Regenerable lockfiles (runners pin via requirements/pyproject)
 **/uv.lock
