@@ -175,9 +175,9 @@ so it withstands scrutiny:
   and **Agent-construction LOC** (only the lines that stand up the agent/tool/
   memory — excludes imports and the benchmark replay loop).
 
-See the demo doc for the numbers and an honest reading (in the *simple multi-turn*
-demo, LOC does **not** favor Colmena — that pitch belongs to a production-agent
-demo, not this one).
+See the demo doc for the numbers and their reading (in the *simple multi-turn*
+demo, LOC is **not** where Colmena's advantage lies — that pitch belongs to a
+production-agent demo, not this one).
 
 ---
 
