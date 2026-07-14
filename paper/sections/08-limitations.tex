@@ -3,9 +3,9 @@
 
 The preceding sections argue that Colmena relocates three production
 concerns to engine-enforced invariants and measure the resulting gains.
-Honest evaluation requires reporting where the comparison does not favor
-Colmena and stating plainly what the engine's guarantees do, and do not,
-establish about the competitors. Two results follow.
+A complete evaluation also records the limitations of the comparison and
+delimits what the engine's guarantees do, and do not, establish about the
+competitors. Two limitations follow.
 
 \subsection{Speed: round-trips traded for token volume}
 \label{subsec:limitations-speed}
@@ -34,12 +34,12 @@ round-trip overhead than a framework that resends a larger context in
 fewer, larger calls. This is a genuine trade-off, not an artifact of
 measurement: the same lazy loading and compaction that yield the
 order-of-magnitude token reduction of \S\ref{sec:context} are what add the
-extra round-trips. We report the exchange rate rather than obscure it---
+extra round-trips. We state the exchange rate explicitly---
 Colmena buys token volume with call count, and a deployment that is
 latency-bound on session wall-clock time rather than cost-bound on token
 volume should weigh the trade in that direction.
 
-\subsection{The central caveat: enforcement, not exclusivity}
+\subsection{Scope of the contribution: enforcement, not exclusivity}
 \label{subsec:limitations-caveat}
 
 Every engine-enforced invariant this paper measures is, on inspection,
@@ -63,7 +63,7 @@ engine boundary (\S\ref{sec:model}) for every agent that crosses it,
 whereas every competitor reaches the same outcome only as a
 \emph{construction}---code that a specific author must know to write,
 must test, and must maintain, separately, for every tool and every agent
-that needs it. The steelman arms are not exceptions that weaken the
+that needs it. The steelman arms are not exceptions to the
 paper's measurements; they are the evidence that isolates what the
 measurements attribute to the engine. What Colmena guarantees by default,
 the field can reach by hand, and the gap this paper reports throughout is
