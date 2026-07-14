@@ -7,9 +7,8 @@ benchmark only sells if it measures real differences under identical conditions;
 this doc records how that fairness is engineered.
 
 > Companion docs: [demos/demo05-context-tax.md](demos/demo05-context-tax.md)
-> (the hero demo), [SELLING_COLMENA.md](SELLING_COLMENA.md) (the pitch),
-> [superpowers/specs/2026-06-11-benchmark-strategy-colmena-differentiators.md](superpowers/specs/2026-06-11-benchmark-strategy-colmena-differentiators.md)
-> (strategy).
+> (the hero demo), [../README.md](../README.md) (setup and how to run each
+> experiment), [../paper/main.pdf](../paper/main.pdf) (the full write-up).
 
 ---
 

@@ -33,9 +33,15 @@ Each run script owns the proxy lifecycle. A `<demo>-replication.md` beside each 
 
 ## Setup
 
+Building the Colmena runner requires a local checkout of
+[Startti/colmena](https://github.com/Startti/colmena) (Rust + maturin).
+Clone it, then point `setup_all.sh` at it:
+
 ```bash
+git clone https://github.com/Startti/colmena.git ../colmena   # or any path
+
 cp .env.example .env          # then fill in the keys below
-scripts/setup_all.sh          # builds the bench venv, the 5 framework venvs, the Colmena engine, the proxy
+COLMENA_REPO=../colmena scripts/setup_all.sh   # builds the bench venv, the 5 framework venvs, the Colmena engine, the proxy
 scripts/verify_baseline.sh    # quick end-to-end sanity check
 ```
 
