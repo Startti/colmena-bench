@@ -1,0 +1,64 @@
+{
+  "run_id": "d7s-langgraph-s4",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "langgraph",
+  "framework_version": "1.2.4",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-19T20:06:50.411384Z",
+  "ended_at": "2026-06-19T20:07:09.217108Z",
+  "latency_ms": 18805,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 105.41,
+  "cpu_user_s": 0.62,
+  "cpu_sys_s": 0.133,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-19T20:06:50.451099Z",
+      "2026-06-19T20:06:52.329488Z",
+      "2026-06-19T20:06:54.095776Z",
+      "2026-06-19T20:06:55.912997Z",
+      "2026-06-19T20:06:57.800748Z",
+      "2026-06-19T20:06:59.400199Z",
+      "2026-06-19T20:07:01.455634Z",
+      "2026-06-19T20:07:03.301382Z",
+      "2026-06-19T20:07:04.824889Z",
+      "2026-06-19T20:07:06.586678Z",
+      "2026-06-19T20:07:09.216836Z"
+    ],
+    "n_turns": 10,
+    "answers": [
+      "I've created a shipment for order A-1042 with 2-day delivery. The shipment ID is SHP-A-1042-CREATED.",
+      "I've sent the Q3 report to finance@acme.com.",
+      "I've charged customer c_77's card 49.99 for the subscription renewal. The charge ID is CHG-C77-CAPTURED.",
+      "I've opened a new ticket for customer c_31 regarding the checkout page crashing. The ticket ID is TKT-C31-OPENED.",
+      "I've sent a password reset link to user u_88 by email.",
+      "I've scheduled a 30-minute call with Ana for next Tuesday at 3pm. The meeting ID is MTG-ANA-CONFIRMED.",
+      "I've created a shipment for order A-1042 with 2-day delivery. The shipment ID is SHP-A-1042-CREATED.",
+      "I've sent the Q3 report to finance@acme.com.",
+      "I've charged customer c_77's card 49.99 for the subscription renewal. The charge ID is CHG-C77-CAPTURED.",
+      "I've opened a new ticket for customer c_31 regarding the checkout page crashing. The ticket ID is TKT-C31-OPENED."
+    ]
+  }
+}

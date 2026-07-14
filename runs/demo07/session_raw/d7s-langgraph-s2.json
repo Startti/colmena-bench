@@ -1,0 +1,64 @@
+{
+  "run_id": "d7s-langgraph-s2",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "langgraph",
+  "framework_version": "1.2.4",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-19T20:06:10.792354Z",
+  "ended_at": "2026-06-19T20:06:33.904572Z",
+  "latency_ms": 23112,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 105.22,
+  "cpu_user_s": 0.634,
+  "cpu_sys_s": 0.135,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-19T20:06:10.832505Z",
+      "2026-06-19T20:06:11.976887Z",
+      "2026-06-19T20:06:14.733174Z",
+      "2026-06-19T20:06:16.843120Z",
+      "2026-06-19T20:06:18.534759Z",
+      "2026-06-19T20:06:19.871051Z",
+      "2026-06-19T20:06:22.107714Z",
+      "2026-06-19T20:06:24.793341Z",
+      "2026-06-19T20:06:29.059898Z",
+      "2026-06-19T20:06:31.592190Z",
+      "2026-06-19T20:06:33.904214Z"
+    ],
+    "n_turns": 10,
+    "answers": [
+      "",
+      "I've sent a password reset link to u_88 and scheduled a 30-minute call with Ana for next Tuesday at 3 PM.",
+      "I've charged customer c_77's card 49.99 for the subscription renewal.",
+      "I've created a 2-day shipment for order A-1042.",
+      "I've adjusted the stock for SKU-991 by 50 units.",
+      "I've issued a 25 USD refund to the customer for order A-1042 due to a damaged item.",
+      "I've sent a password reset link to u_88 by email.",
+      "I've scheduled a 30-minute call with Ana for next Tuesday at 3 PM.",
+      "I've charged customer c_77's card 49.99 for the subscription renewal.",
+      "I've created a 2-day shipment for order A-1042."
+    ]
+  }
+}

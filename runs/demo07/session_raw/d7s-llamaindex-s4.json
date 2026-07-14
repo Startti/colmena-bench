@@ -1,0 +1,64 @@
+{
+  "run_id": "d7s-llamaindex-s4",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "llamaindex",
+  "framework_version": "0.14.22",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-19T20:08:23.111916Z",
+  "ended_at": "2026-06-19T20:08:40.935017Z",
+  "latency_ms": 17823,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 172.78,
+  "cpu_user_s": 0.929,
+  "cpu_sys_s": 0.224,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-19T20:08:23.174934Z",
+      "2026-06-19T20:08:26.133971Z",
+      "2026-06-19T20:08:27.633997Z",
+      "2026-06-19T20:08:29.403016Z",
+      "2026-06-19T20:08:31.058519Z",
+      "2026-06-19T20:08:32.995592Z",
+      "2026-06-19T20:08:35.098396Z",
+      "2026-06-19T20:08:36.792618Z",
+      "2026-06-19T20:08:38.114185Z",
+      "2026-06-19T20:08:39.539747Z",
+      "2026-06-19T20:08:40.934383Z"
+    ],
+    "n_turns": 10,
+    "answers": [
+      "Order A-1042 has been shipped with a 2-day delivery speed.",
+      "The Q3 report has been emailed to finance@acme.com.",
+      "The customer c_77 has been charged 49.99 for the subscription renewal.",
+      "A new bug report has been logged for customer c_31 regarding the checkout page crashing.",
+      "A password reset link has been sent to user u_88 via email.",
+      "A 30-minute call has been scheduled with Ana for next Tuesday at 3pm.",
+      "Order A-1042 has been shipped with a 2-day delivery speed.",
+      "The Q3 report has been emailed to finance@acme.com.",
+      "The customer c_77 has been charged 49.99 for the subscription renewal.",
+      "A new bug report has been logged for customer c_31 regarding the checkout page crashing."
+    ]
+  }
+}

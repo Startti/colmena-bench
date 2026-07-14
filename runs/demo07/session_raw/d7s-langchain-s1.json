@@ -1,0 +1,64 @@
+{
+  "run_id": "d7s-langchain-s1",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "langchain",
+  "framework_version": "1.3.6",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-19T20:04:23.544676Z",
+  "ended_at": "2026-06-19T20:04:41.664294Z",
+  "latency_ms": 18119,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 96.39,
+  "cpu_user_s": 0.495,
+  "cpu_sys_s": 0.097,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-19T20:04:23.563310Z",
+      "2026-06-19T20:04:25.591827Z",
+      "2026-06-19T20:04:27.537555Z",
+      "2026-06-19T20:04:29.619574Z",
+      "2026-06-19T20:04:31.623462Z",
+      "2026-06-19T20:04:32.963443Z",
+      "2026-06-19T20:04:35.327474Z",
+      "2026-06-19T20:04:36.859075Z",
+      "2026-06-19T20:04:38.695664Z",
+      "2026-06-19T20:04:40.307527Z",
+      "2026-06-19T20:04:41.664195Z"
+    ],
+    "n_turns": 10,
+    "answers": [
+      "Order A-1042 has shipped with a 2-day delivery speed.",
+      "25 USD has been refunded to the customer for order A-1042 due to a damaged item.",
+      "The customer c_77 has been charged 49.99 USD for the subscription renewal.",
+      "A new bug report has been logged for customer c_31 regarding the checkout page crashing.",
+      "50 units of SKU-991 have been added to stock.",
+      "A 30-minute call has been scheduled with Ana for next Tuesday at 3pm.",
+      "Order A-1042 has shipped with a 2-day delivery speed.",
+      "25 USD has been refunded to the customer for order A-1042 due to a damaged item.",
+      "The customer c_77 has been charged 49.99 USD for the subscription renewal.",
+      "A new bug report has been logged for customer c_31 regarding the checkout page crashing."
+    ]
+  }
+}

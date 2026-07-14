@@ -1,0 +1,64 @@
+{
+  "run_id": "d7s-google_adk-s4",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "google_adk",
+  "framework_version": "2.2.0",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-19T20:09:59.554989Z",
+  "ended_at": "2026-06-19T20:10:18.554794Z",
+  "latency_ms": 18999,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 250.36,
+  "cpu_user_s": 1.532,
+  "cpu_sys_s": 0.205,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-19T20:09:59.557439Z",
+      "2026-06-19T20:10:02.253310Z",
+      "2026-06-19T20:10:03.721570Z",
+      "2026-06-19T20:10:05.665374Z",
+      "2026-06-19T20:10:07.457288Z",
+      "2026-06-19T20:10:09.120242Z",
+      "2026-06-19T20:10:11.422783Z",
+      "2026-06-19T20:10:13.227040Z",
+      "2026-06-19T20:10:14.827967Z",
+      "2026-06-19T20:10:16.530458Z",
+      "2026-06-19T20:10:18.553260Z"
+    ],
+    "n_turns": 10,
+    "answers": [
+      "Order A-1042 has been shipped with a 2-day delivery speed. The shipment ID is SHP-A-1042-CREATED.",
+      "The Q3 report has been emailed to finance@acme.com.",
+      "The customer's card has been charged 49.99 for the subscription renewal.",
+      "A new ticket has been opened for customer c_31 regarding the checkout page crashing. The ticket ID is TKT-C31-OPENED.",
+      "A password reset link has been sent to u_88 by email.",
+      "A 30-minute call has been scheduled with Ana for next Tuesday at 3pm.",
+      "Order A-1042 has been shipped with a 2-day delivery speed. The shipment ID is SHP-A-1042-CREATED.",
+      "The Q3 report has been emailed to finance@acme.com.",
+      "The customer's card has been charged 49.99 for the subscription renewal.",
+      "A new ticket has been opened for customer c_31 regarding the checkout page crashing. The ticket ID is TKT-C31-OPENED."
+    ]
+  }
+}

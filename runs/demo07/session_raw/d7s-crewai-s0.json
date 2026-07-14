@@ -1,0 +1,64 @@
+{
+  "run_id": "d7s-crewai-s0",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "crewai",
+  "framework_version": "1.14.6",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-19T20:02:30.144675Z",
+  "ended_at": "2026-06-19T20:02:48.970060Z",
+  "latency_ms": 18825,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 279.58,
+  "cpu_user_s": 1.325,
+  "cpu_sys_s": 0.285,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-19T20:02:30.144790Z",
+      "2026-06-19T20:02:32.847321Z",
+      "2026-06-19T20:02:33.766370Z",
+      "2026-06-19T20:02:35.749529Z",
+      "2026-06-19T20:02:37.731304Z",
+      "2026-06-19T20:02:39.719665Z",
+      "2026-06-19T20:02:41.160562Z",
+      "2026-06-19T20:02:44.421165Z",
+      "2026-06-19T20:02:45.065235Z",
+      "2026-06-19T20:02:46.465809Z",
+      "2026-06-19T20:02:48.969938Z"
+    ],
+    "n_turns": 10,
+    "answers": [
+      "I've created a 2-day shipment for order A-1042. The shipment ID is SHP-A-1042-CREATED.",
+      "I can do that. What should the subject and body of the email be?",
+      "I've sent a password reset link to u_88 by email.",
+      "I've issued a refund of 25 USD for order A-1042 due to a damaged item.",
+      "I've charged customer c_77's card 49.99 USD for the subscription renewal. The charge ID is CHG-C77-CAPTURED.",
+      "I've adjusted the stock for SKU-991 by 50 units.",
+      "I've created a 2-day shipment for order A-1042. The shipment ID is SHP-A-1042-CREATED.",
+      "I can do that. What should the subject and body of the email be?",
+      "I've sent a password reset link to u_88 by email.",
+      "I've issued a refund of 25 USD for order A-1042 due to a damaged item."
+    ]
+  }
+}

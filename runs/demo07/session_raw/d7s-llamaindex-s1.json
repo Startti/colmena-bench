@@ -1,0 +1,64 @@
+{
+  "run_id": "d7s-llamaindex-s1",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "llamaindex",
+  "framework_version": "0.14.22",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-19T20:07:28.946190Z",
+  "ended_at": "2026-06-19T20:07:46.490896Z",
+  "latency_ms": 17544,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 173.44,
+  "cpu_user_s": 0.943,
+  "cpu_sys_s": 0.186,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-19T20:07:29.001071Z",
+      "2026-06-19T20:07:31.031760Z",
+      "2026-06-19T20:07:33.503373Z",
+      "2026-06-19T20:07:35.288252Z",
+      "2026-06-19T20:07:37.051059Z",
+      "2026-06-19T20:07:38.716077Z",
+      "2026-06-19T20:07:40.505237Z",
+      "2026-06-19T20:07:42.101700Z",
+      "2026-06-19T20:07:43.524189Z",
+      "2026-06-19T20:07:45.099031Z",
+      "2026-06-19T20:07:46.490093Z"
+    ],
+    "n_turns": 10,
+    "answers": [
+      "Order A-1042 has shipped with a 2-day delivery speed.",
+      "A refund of 25 USD has been issued to the customer for order A-1042 due to a damaged item.",
+      "The customer's card has been charged 49.99 USD for the subscription renewal.",
+      "A new bug report has been logged for customer c_31 regarding the checkout page crashing.",
+      "50 units of SKU-991 have been added to stock.",
+      "I can help schedule that, but first I need to know the full date of next Tuesday.",
+      "Order A-1042 has shipped with a 2-day delivery speed.",
+      "A refund of 25 USD has been issued to the customer for order A-1042 due to a damaged item.",
+      "The customer's card has been charged 49.99 USD for the subscription renewal.",
+      "A new bug report has been logged for customer c_31 regarding the checkout page crashing."
+    ]
+  }
+}

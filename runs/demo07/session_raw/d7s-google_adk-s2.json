@@ -1,0 +1,64 @@
+{
+  "run_id": "d7s-google_adk-s2",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "google_adk",
+  "framework_version": "2.2.0",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-19T20:09:19.419774Z",
+  "ended_at": "2026-06-19T20:09:41.199229Z",
+  "latency_ms": 21779,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 252.36,
+  "cpu_user_s": 1.531,
+  "cpu_sys_s": 0.235,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-19T20:09:19.423584Z",
+      "2026-06-19T20:09:22.124723Z",
+      "2026-06-19T20:09:24.542539Z",
+      "2026-06-19T20:09:26.374461Z",
+      "2026-06-19T20:09:28.111760Z",
+      "2026-06-19T20:09:29.499702Z",
+      "2026-06-19T20:09:31.615544Z",
+      "2026-06-19T20:09:34.327564Z",
+      "2026-06-19T20:09:36.647289Z",
+      "2026-06-19T20:09:38.957438Z",
+      "2026-06-19T20:09:41.198062Z"
+    ],
+    "n_turns": 10,
+    "answers": [
+      "OK. I've sent a password reset link to u_88 by email.",
+      "OK. I've set up a 30 minute call with Ana for next Tuesday at 3pm.",
+      "OK. I've charged customer c_77's card 49.99 for the subscription renewal.",
+      "OK. I've created a 2-day shipment for order A-1042.",
+      "OK. I've adjusted the stock for SKU-991 by 50 units.",
+      "OK. I've issued a 25 USD refund for order A-1042 due to a damaged item.",
+      "OK. I've sent a password reset link to u_88 by email.",
+      "OK. I've set up a 30 minute call with Ana for next Tuesday at 3pm.",
+      "OK. I've charged customer c_77's card 49.99 for the subscription renewal.",
+      "OK. I've created a 2-day shipment for order A-1042."
+    ]
+  }
+}

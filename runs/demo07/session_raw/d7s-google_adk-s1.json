@@ -1,0 +1,64 @@
+{
+  "run_id": "d7s-google_adk-s1",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "google_adk",
+  "framework_version": "2.2.0",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-19T20:09:00.394493Z",
+  "ended_at": "2026-06-19T20:09:18.448888Z",
+  "latency_ms": 18054,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 249.89,
+  "cpu_user_s": 1.526,
+  "cpu_sys_s": 0.24,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-19T20:09:00.398525Z",
+      "2026-06-19T20:09:02.372274Z",
+      "2026-06-19T20:09:04.935204Z",
+      "2026-06-19T20:09:06.742807Z",
+      "2026-06-19T20:09:08.159925Z",
+      "2026-06-19T20:09:09.595375Z",
+      "2026-06-19T20:09:12.239470Z",
+      "2026-06-19T20:09:13.828372Z",
+      "2026-06-19T20:09:15.330948Z",
+      "2026-06-19T20:09:16.666875Z",
+      "2026-06-19T20:09:18.447412Z"
+    ],
+    "n_turns": 10,
+    "answers": [
+      "",
+      "I've created a 2-day shipment for order A-1042 and issued a 25 USD refund for the damaged item on order A-1042.",
+      "I've charged customer c_77's card for 49.99 USD for the subscription renewal.",
+      "I've opened a new bug report ticket for customer c_31 regarding the checkout page crashing.",
+      "I've adjusted the stock for SKU-991 by adding 50 units.",
+      "I've scheduled a 30-minute call with Ana for next Tuesday at 3pm.",
+      "I've created a 2-day shipment for order A-1042.",
+      "I've issued a 25 USD refund for the damaged item on order A-1042.",
+      "I've charged customer c_77's card for 49.99 USD for the subscription renewal.",
+      "I've opened a new bug report ticket for customer c_31 regarding the checkout page crashing."
+    ]
+  }
+}

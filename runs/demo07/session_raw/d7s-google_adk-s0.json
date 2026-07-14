@@ -1,0 +1,64 @@
+{
+  "run_id": "d7s-google_adk-s0",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "google_adk",
+  "framework_version": "2.2.0",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-19T20:08:41.888576Z",
+  "ended_at": "2026-06-19T20:08:59.386371Z",
+  "latency_ms": 17497,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 250.45,
+  "cpu_user_s": 1.464,
+  "cpu_sys_s": 0.258,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-19T20:08:41.892814Z",
+      "2026-06-19T20:08:45.011731Z",
+      "2026-06-19T20:08:46.458799Z",
+      "2026-06-19T20:08:47.939941Z",
+      "2026-06-19T20:08:49.794612Z",
+      "2026-06-19T20:08:51.193651Z",
+      "2026-06-19T20:08:52.648086Z",
+      "2026-06-19T20:08:54.580183Z",
+      "2026-06-19T20:08:55.949113Z",
+      "2026-06-19T20:08:57.553600Z",
+      "2026-06-19T20:08:59.384946Z"
+    ],
+    "n_turns": 10,
+    "answers": [
+      "I've created a 2-day shipment for order A-1042. The shipment ID is SHP-A-1042-CREATED.",
+      "I've sent the Q3 report to finance@acme.com.",
+      "I've sent a password reset link to u_88 by email.",
+      "I've issued a refund of 25 USD for order A-1042 due to a damaged item.",
+      "I've charged customer c_77's card 49.99 USD for the subscription renewal. The payment ID is CHG-C77-CAPTURED.",
+      "I've added 50 units of SKU-991 to stock.",
+      "I've created a 2-day shipment for order A-1042. The shipment ID is SHP-A-1042-CREATED.",
+      "I've sent the Q3 report to finance@acme.com.",
+      "I've sent a password reset link to u_88 by email.",
+      "I've issued a refund of 25 USD for order A-1042 due to a damaged item."
+    ]
+  }
+}

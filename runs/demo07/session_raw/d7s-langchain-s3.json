@@ -1,0 +1,64 @@
+{
+  "run_id": "d7s-langchain-s3",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "langchain",
+  "framework_version": "1.3.6",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-19T20:04:57.733619Z",
+  "ended_at": "2026-06-19T20:05:13.353372Z",
+  "latency_ms": 15619,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 96.12,
+  "cpu_user_s": 0.467,
+  "cpu_sys_s": 0.095,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-19T20:04:57.752233Z",
+      "2026-06-19T20:04:58.575048Z",
+      "2026-06-19T20:05:00.346875Z",
+      "2026-06-19T20:05:02.206741Z",
+      "2026-06-19T20:05:03.989528Z",
+      "2026-06-19T20:05:05.975899Z",
+      "2026-06-19T20:05:08.096686Z",
+      "2026-06-19T20:05:09.054005Z",
+      "2026-06-19T20:05:10.514527Z",
+      "2026-06-19T20:05:12.029000Z",
+      "2026-06-19T20:05:13.353296Z"
+    ],
+    "n_turns": 10,
+    "answers": [
+      "I can do that. What should the subject and body of the email be?",
+      "OK. I've opened a new ticket, TKT-C31-OPENED, for the checkout page crashing.",
+      "I've charged customer c_77's card 49.99 for the subscription renewal. The payment ID is CHG-C77-CAPTURED.",
+      "I've adjusted the stock for SKU-991, adding 50 units.",
+      "I've issued a refund of 25 USD for order A-1042 due to a damaged item.",
+      "I've created a 2-day shipment for order A-1042. The shipment ID is SHP-A-1042-CREATED.",
+      "I can do that. What should the subject and body of the email be?",
+      "OK. I've opened a new ticket, TKT-C31-OPENED, for the checkout page crashing.",
+      "I've charged customer c_77's card 49.99 for the subscription renewal. The payment ID is CHG-C77-CAPTURED.",
+      "I've adjusted the stock for SKU-991, adding 50 units."
+    ]
+  }
+}

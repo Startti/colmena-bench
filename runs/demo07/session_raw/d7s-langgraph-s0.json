@@ -1,0 +1,64 @@
+{
+  "run_id": "d7s-langgraph-s0",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "langgraph",
+  "framework_version": "1.2.4",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-19T20:05:36.068531Z",
+  "ended_at": "2026-06-19T20:05:51.814380Z",
+  "latency_ms": 15745,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 105.33,
+  "cpu_user_s": 0.641,
+  "cpu_sys_s": 0.156,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-19T20:05:36.108461Z",
+      "2026-06-19T20:05:38.062867Z",
+      "2026-06-19T20:05:39.669968Z",
+      "2026-06-19T20:05:41.337700Z",
+      "2026-06-19T20:05:43.025012Z",
+      "2026-06-19T20:05:44.393006Z",
+      "2026-06-19T20:05:45.955930Z",
+      "2026-06-19T20:05:47.772256Z",
+      "2026-06-19T20:05:49.122107Z",
+      "2026-06-19T20:05:50.426299Z",
+      "2026-06-19T20:05:51.814142Z"
+    ],
+    "n_turns": 10,
+    "answers": [
+      "I've created a shipment for order A-1042 with 2-day delivery. The shipment ID is SHP-A-1042-CREATED.",
+      "I've sent the Q3 report to finance@acme.com.",
+      "I've sent a password reset link to u_88 by email.",
+      "I've issued a refund of 25 USD for order A-1042 due to a damaged item.",
+      "I've charged customer c_77's card 49.99 USD for the subscription renewal.",
+      "I've added 50 units of SKU-991 to stock.",
+      "I've created a shipment for order A-1042 with 2-day delivery. The shipment ID is SHP-A-1042-CREATED.",
+      "I've sent the Q3 report to finance@acme.com.",
+      "I've sent a password reset link to u_88 by email.",
+      "I've issued a refund of 25 USD for order A-1042 due to a damaged item."
+    ]
+  }
+}

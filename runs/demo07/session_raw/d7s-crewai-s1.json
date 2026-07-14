@@ -1,0 +1,64 @@
+{
+  "run_id": "d7s-crewai-s1",
+  "task_id": "07b_tools_session",
+  "variant": "default",
+  "framework": "crewai",
+  "framework_version": "1.14.6",
+  "model_alias": "gemini-2.5-flash",
+  "started_at": "2026-06-19T20:02:50.695753Z",
+  "ended_at": "2026-06-19T20:03:07.004439Z",
+  "latency_ms": 16308,
+  "cold_start_ms": 0,
+  "ttft_ms": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cached": 0
+  },
+  "tool_calls": 0,
+  "ram_peak_mb": 279.44,
+  "cpu_user_s": 1.235,
+  "cpu_sys_s": 0.204,
+  "success": {
+    "ok": false,
+    "reason": "success kind 'tool_session' not implemented in T1 scaffold"
+  },
+  "answer": {
+    "ok": true
+  },
+  "error": null,
+  "host": {
+    "hostname": "Daniels-MacBook-Pro.local",
+    "os": "Darwin 25.5.0",
+    "cpu_model": "arm",
+    "ram_gb": 24.0
+  },
+  "extras": {
+    "turn_boundaries": [
+      "2026-06-19T20:02:50.695875Z",
+      "2026-06-19T20:02:51.476877Z",
+      "2026-06-19T20:02:54.016225Z",
+      "2026-06-19T20:02:56.100266Z",
+      "2026-06-19T20:02:57.483592Z",
+      "2026-06-19T20:02:58.869378Z",
+      "2026-06-19T20:03:00.840914Z",
+      "2026-06-19T20:03:02.459727Z",
+      "2026-06-19T20:03:04.185766Z",
+      "2026-06-19T20:03:05.513000Z",
+      "2026-06-19T20:03:07.004370Z"
+    ],
+    "n_turns": 10,
+    "answers": [
+      "",
+      "I have shipped order A-1042 with 2-day delivery and issued a $25 refund for order A-1042 due to a damaged item.",
+      "I have charged customer c_77 $49.99 for the subscription renewal.",
+      "I have opened a new bug report ticket for customer c_31 regarding the checkout page crashing.",
+      "I have adjusted the stock for SKU-991, adding 50 units.",
+      "I have scheduled a 30-minute meeting with Ana for next Tuesday at 3pm.",
+      "I have shipped order A-1042 with 2-day delivery.",
+      "I have issued a $25 refund for order A-1042 due to a damaged item.",
+      "I have charged customer c_77 $49.99 for the subscription renewal.",
+      "I have opened a new bug report ticket for customer c_31 regarding the checkout page crashing."
+    ]
+  }
+}
