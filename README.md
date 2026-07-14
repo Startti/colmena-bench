@@ -8,10 +8,10 @@ Every LLM call from every framework routes through one shared LiteLLM proxy, and
 
 ## The paper
 
-The full write-up, with methodology, figures, and per-experiment analysis, is the whitepaper:
+The full write-up, with methodology, figures, and per-experiment analysis:
 
-- **[docs/articles/colmena-whitepaper.md](docs/articles/colmena-whitepaper.md)** — the primary deliverable
-- [docs/articles/colmena-exec-brief.md](docs/articles/colmena-exec-brief.md) — the executive brief
+- **[paper/main.pdf](paper/main.pdf)** — the primary deliverable ([LaTeX source](paper/main.tex))
+- [docs/site/colmena-business.html](docs/site/colmena-business.html) — business-facing summary
 - [METHODOLOGY.md](METHODOLOGY.md) · [LIMITATIONS.md](LIMITATIONS.md) · [docs/TECHNICAL.md](docs/TECHNICAL.md)
 
 ## Experiments
