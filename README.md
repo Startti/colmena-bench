@@ -20,6 +20,7 @@ Each experiment has a one-command run script and a write-up + replication guide 
 
 | Experiment | What it measures | Run | Write-up |
 |---|---|---|---|
+| Calibration | Single-tool-call latency/cost baseline, per framework | `scripts/run_task.sh 01` | [runs/task01/report/report.md](runs/task01/report/report.md) |
 | Context Tax | Multi-turn input-token growth (ephemeral attachments + scrubber) | `scripts/run_demo05.sh` | [demo05-context-tax.md](docs/demos/demo05-context-tax.md) |
 | Production Hardening | Graph + durable HITL + critic + masking as config vs code | `scripts/run_demo06.sh` | [demo06-refund-agent.md](docs/demos/demo06-refund-agent.md) |
 | Tools at Scale | Token cost of large tool catalogs (lazy loading + compaction) | `scripts/run_demo07.sh` | [demo07-many-tools.md](docs/demos/demo07-many-tools.md) |
